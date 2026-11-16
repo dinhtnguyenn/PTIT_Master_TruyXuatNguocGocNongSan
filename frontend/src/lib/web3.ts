@@ -38,7 +38,7 @@ export async function getProvider() {
     return new ethers.BrowserProvider(window.ethereum);
   }
   // Fallback đọc dữ liệu qua RPC công khai nếu người dùng không cài ví
-  return new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_RPC_URL || 'http://127.0.0.1:8545');
+  return new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_RPC_URL || 'https://polygon-amoy.drpc.org');
 }
 
 export async function getSigner() {
