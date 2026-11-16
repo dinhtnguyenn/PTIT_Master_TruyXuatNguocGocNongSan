@@ -1,0 +1,21 @@
+import { Module } from '@nestjs/common';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+import { PrismaService } from './prisma.service';
+import { AccountsModule } from './accounts/accounts.module';
+import { BatchesModule } from './batches/batches.module';
+import { UploadController } from './upload/upload.controller';
+
+@Module({
+  imports: [
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'),
+      serveRoot: '/uploads',
+    }),
+    AccountsModule,
+    BatchesModule,
+  ],
+  controllers: [UploadController],
+  providers: [PrismaService],
+})
+export class AppModule {}

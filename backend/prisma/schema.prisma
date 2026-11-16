@@ -1,0 +1,89 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model UserAccount {
+  id               String   @id @default(uuid())
+  walletAddress    String   @unique
+  role             String   // PRODUCER, INSPECTOR, LOGISTICS, DISTRIBUTOR, ADMIN
+  organizationName String
+  contactInfo      String
+  status           String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  txHashGrantRole  String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  batchesProduced  Batch[]
+}
+
+model Batch {
+  id                   String    @id @default(uuid())
+  batchId              String    @unique
+  stage                String    @default("CREATED") // CREATED, INSPECTED, IN_TRANSIT, DELIVERED
+  
+  // 1. BẢNG 1: ĐƠN VỊ SẢN XUẤT (PRODUCER)
+  productName          String
+  category             String
+  quantity             Float
+  weight               Float
+  seedOrigin           String
+  farmingSupplies      String
+  productionLocation   String
+  cultivationStartDate DateTime
+  harvestDate          DateTime
+  productImageUrl      String?
+  producerDataHash     String?
+  producerTxHash       String?
+  producerWallet       String?
+
+  // 2. BẢNG 2: ĐƠN VỊ KIỂM ĐỊNH (INSPECTOR)
+  inspectionResult     String?
+  inspectionCriteria   String?
+  certificateCode      String?
+  certificateType      String?
+  issuingAuthority     String?
+  issuedDate           DateTime?
+  expiryDate           DateTime?
+  certImageUrl         String?
+  inspectorDataHash    String?
+  inspectorTxHash      String?
+  inspectorWallet      String?
+
+  // 3. BẢNG 3: ĐƠN VỊ VẬN CHUYỂN (LOGISTICS)
+  transporterName      String?
+  transporterContact   String?
+  transporterType      String?   // Cá nhân hoặc Tổ chức
+  shippingCode         String?
+  originLocation       String?
+  destLocation         String?
+  departureTime        DateTime?
+  completionTime       DateTime?
+  temperature          Float?
+  humidity             Float?
+  storageNotes         String?
+  logisticsDataHash    String?
+  logisticsTxHash      String?
+  logisticsWallet      String?
+
+  // 4. BẢNG 4: ĐƠN VỊ PHÂN PHỐI (DISTRIBUTOR)
+  distributorName      String?
+  distributorContact   String?
+  distributorType      String?   // Cá nhân hoặc Tổ chức
+  receivedTime         DateTime?
+  actualQuantity       Float?
+  actualWeight         Float?
+  receiptNotes         String?
+  distributorDataHash  String?
+  distributorTxHash    String?
+  distributorWallet    String?
+
+  createdByAddress     String
+  creator              UserAccount @relation(fields: [createdByAddress], references: [walletAddress])
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+}
