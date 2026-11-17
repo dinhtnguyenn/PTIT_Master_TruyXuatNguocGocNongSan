@@ -1,0 +1,27 @@
+name: Deploy AgriTrace to VPS
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST || '180.93.136.201' }}
+          username: ${{ secrets.VPS_USER || 'root' }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            set -e
+            echo "🚀 Deploying AgriTrace on VPS..."
+            cd /var/www/agritrace
+            git pull origin main
+            docker compose down
+            docker compose up --build -d
+            docker system prune -f
+            echo "✅ Deployment completed successfully!"

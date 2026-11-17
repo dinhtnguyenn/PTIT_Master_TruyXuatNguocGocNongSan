@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: agritrace-backend
+    restart: always
+    environment:
+      - PORT=4000
+      - DATABASE_URL=postgresql://postgres.nttabfobsrwelejcygkz:Nongsanptit2026@aws-0-ap-northeast-1.pooler.supabase.com:5432/postgres
+      - RPC_URL=https://polygon-amoy-bor-rpc.publicnode.com
+      - CONTRACT_ADDRESS=0x68Af0988167fddD7Eb5CE70485EA41f3A4a582a6
+    volumes:
+      - backend_uploads:/app/uploads
+    networks:
+      - agritrace-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://180.93.136.201/api
+        - NEXT_PUBLIC_CONTRACT_ADDRESS=0x68Af0988167fddD7Eb5CE70485EA41f3A4a582a6
+        - NEXT_PUBLIC_RPC_URL=https://polygon-amoy-bor-rpc.publicnode.com
+    container_name: agritrace-frontend
+    restart: always
+    networks:
+      - agritrace-net
+
+  nginx:
+    image: nginx:alpine
+    container_name: agritrace-nginx
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - agritrace-net
+
+volumes:
+  backend_uploads:
+
+networks:
+  agritrace-net:
+    driver: bridge
