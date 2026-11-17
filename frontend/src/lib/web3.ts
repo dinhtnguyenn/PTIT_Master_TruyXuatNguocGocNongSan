@@ -48,7 +48,11 @@ export async function ensurePolygonAmoyNetwork() {
               chainId: '0x13882',
               chainName: 'Polygon Amoy Testnet',
               nativeCurrency: { name: 'POL', symbol: 'POL', decimals: 18 },
-              rpcUrls: ['https://polygon-amoy.drpc.org'],
+              rpcUrls: [
+                'https://polygon-amoy-bor-rpc.publicnode.com',
+                'https://rpc-amoy.polygon.technology',
+                'https://polygon-amoy.drpc.org'
+              ],
               blockExplorerUrls: ['https://amoy.polygonscan.com/'],
             },
           ],
@@ -56,6 +60,38 @@ export async function ensurePolygonAmoyNetwork() {
       } catch (addError) {}
     }
   }
+}
+
+/**
+ * Trả về cấu hình gas override cho Polygon Amoy Testnet.
+ * Mạng Polygon Amoy yêu cầu gas tip cap (maxPriorityFeePerGas) tối thiểu 25 Gwei (25_000_000_000 wei).
+ * Chúng ta đặt 30 - 35 Gwei để giao dịch luôn được validator chấp nhận ngay lập tức.
+ */
+export async function getGasOverrides() {
+  const minTipCap = ethers.parseUnits('30', 'gwei');
+  try {
+    if (typeof window !== 'undefined' && window.ethereum) {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const feeData = await provider.getFeeData();
+      const priorityFee = feeData.maxPriorityFeePerGas && feeData.maxPriorityFeePerGas > minTipCap
+        ? feeData.maxPriorityFeePerGas
+        : minTipCap;
+
+      const baseFee = feeData.gasPrice ? feeData.gasPrice * BigInt(2) : ethers.parseUnits('35', 'gwei');
+      const maxFee = baseFee + priorityFee;
+
+      return {
+        maxPriorityFeePerGas: priorityFee,
+        maxFeePerGas: maxFee,
+      };
+    }
+  } catch (e) {
+    console.warn('Lỗi lấy feeData, áp dụng mức fallback:', e);
+  }
+  return {
+    maxPriorityFeePerGas: minTipCap,
+    maxFeePerGas: ethers.parseUnits('65', 'gwei'),
+  };
 }
 
 export async function getSigner() {

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Wallet, CheckCircle2, Clock, ArrowRight } from 'lucide-react';
-import { connectWallet, getContract, truncateAddress, isWalletDisconnected } from '../../lib/web3';
+import { connectWallet, getContract, truncateAddress, isWalletDisconnected, getGasOverrides } from '../../lib/web3';
 import { API_BASE_URL, ROLE_LABELS, ADMIN_ADDRESS } from '../../lib/constants';
 
 export default function SupplyChainPortalPage() {
@@ -208,10 +208,12 @@ export default function SupplyChainPortalPage() {
       if (!res.ok) throw new Error(result.message || 'Lỗi lưu dữ liệu');
 
       const contract = await getContract(true);
+      const gasOverrides = await getGasOverrides();
       const tx = await contract.recordProduction(
         producerForm.batchId,
         producerForm.productName,
-        result.dataHash
+        result.dataHash,
+        gasOverrides
       );
       const receipt = await tx.wait();
 
@@ -255,7 +257,8 @@ export default function SupplyChainPortalPage() {
       if (!res.ok) throw new Error(result.message || 'Lỗi lưu dữ liệu');
 
       const contract = await getContract(true);
-      const tx = await contract.recordInspection(inspectorForm.batchId, result.dataHash);
+      const gasOverrides = await getGasOverrides();
+      const tx = await contract.recordInspection(inspectorForm.batchId, result.dataHash, gasOverrides);
       const receipt = await tx.wait();
 
       await fetch(`${API_BASE_URL}/batches/${inspectorForm.batchId}/tx`, {
@@ -298,7 +301,8 @@ export default function SupplyChainPortalPage() {
       if (!res.ok) throw new Error(result.message || 'Lỗi lưu dữ liệu');
 
       const contract = await getContract(true);
-      const tx = await contract.recordLogistics(logisticsForm.batchId, result.dataHash);
+      const gasOverrides = await getGasOverrides();
+      const tx = await contract.recordLogistics(logisticsForm.batchId, result.dataHash, gasOverrides);
       const receipt = await tx.wait();
 
       await fetch(`${API_BASE_URL}/batches/${logisticsForm.batchId}/tx`, {
@@ -341,7 +345,8 @@ export default function SupplyChainPortalPage() {
       if (!res.ok) throw new Error(result.message || 'Lỗi lưu dữ liệu');
 
       const contract = await getContract(true);
-      const tx = await contract.recordDistribution(distributorForm.batchId, result.dataHash);
+      const gasOverrides = await getGasOverrides();
+      const tx = await contract.recordDistribution(distributorForm.batchId, result.dataHash, gasOverrides);
       const receipt = await tx.wait();
 
       await fetch(`${API_BASE_URL}/batches/${distributorForm.batchId}/tx`, {

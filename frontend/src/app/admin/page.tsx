@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Users, BarChart3, Wallet, RefreshCw } from 'lucide-react';
-import { connectWallet, getContract, truncateAddress, isWalletDisconnected } from '../../lib/web3';
+import { connectWallet, getContract, truncateAddress, isWalletDisconnected, getGasOverrides } from '../../lib/web3';
 import { API_BASE_URL, ROLE_HASHES, ROLE_LABELS, ADMIN_ADDRESS } from '../../lib/constants';
 
 export default function AdminPage() {
@@ -92,7 +92,8 @@ export default function AdminPage() {
       if (!roleHash) throw new Error('Vai trò không hợp lệ');
 
       const contract = await getContract(true);
-      const tx = await contract.grantRole(roleHash, userAcc.walletAddress);
+      const gasOverrides = await getGasOverrides();
+      const tx = await contract.grantRole(roleHash, userAcc.walletAddress, gasOverrides);
       const receipt = await tx.wait();
 
       const res = await fetch(`${API_BASE_URL}/accounts/${userAcc.id}/status`, {
