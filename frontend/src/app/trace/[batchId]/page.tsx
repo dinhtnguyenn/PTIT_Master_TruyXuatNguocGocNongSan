@@ -3,48 +3,24 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import {
-  ShieldCheck,
   CheckCircle2,
-  AlertTriangle,
   Clock,
-  ExternalLink,
-  Sprout,
-  CheckCircle,
-  Truck,
-  Store,
-  QrCode,
   Download,
-  Calendar,
-  MapPin,
-  FileCheck,
-  Thermometer,
-  Layers,
+  AlertTriangle,
+  ExternalLink,
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { API_BASE_URL, STAGE_LABELS, CONTRACT_ADDRESS } from '../../../lib/constants';
-import { computeSha256, getContract, truncateAddress } from '../../../lib/web3';
+import { getContract, truncateAddress } from '../../../lib/web3';
 
-export default function TraceBatchDetailPage() {
+export default function TraceDetailPage() {
   const params = useParams();
   const batchId = params?.batchId as string;
 
   const [batch, setBatch] = useState<any>(null);
-  const [onChainProof, setOnChainProof] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
-  const [verificationResult, setVerificationResult] = useState<{
-    verified: boolean;
-    producerMatch: boolean;
-    inspectorMatch: boolean;
-    logisticsMatch: boolean;
-    distributorMatch: boolean;
-  }>({
-    verified: false,
-    producerMatch: false,
-    inspectorMatch: false,
-    logisticsMatch: false,
-    distributorMatch: false,
-  });
+  const [verified, setVerified] = useState(false);
 
   useEffect(() => {
     if (!batchId) return;
@@ -52,58 +28,28 @@ export default function TraceBatchDetailPage() {
     async function loadData() {
       setLoading(true);
       try {
-        // 1. Lấy dữ liệu từ Backend
         const res = await fetch(`${API_BASE_URL}/batches/${batchId}`);
-        if (!res.ok) throw new Error('Không tìm thấy thông tin lô hàng');
+        if (!res.ok) throw new Error('Không tìm thấy thông tin');
         const data = await res.json();
         setBatch(data);
 
-        // Sinh mã QR đại diện cho lô hàng
-        const currentUrl = typeof window !== 'undefined' ? window.location.href : `https://trace.ptit.edu.vn/trace/${batchId}`;
-        const qrUrl = await QRCode.toDataURL(currentUrl, { width: 300, margin: 2 });
+        // Sinh mã QR
+        const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+        const qrUrl = await QRCode.toDataURL(currentUrl, { width: 200, margin: 1 });
         setQrDataUrl(qrUrl);
 
-        // 2. Lấy bằng chứng trực tiếp từ Smart Contract
+        // Đối chiếu với Smart Contract
         try {
           const contract = await getContract(false);
           const proof = await contract.getBatchProof(batchId);
-          setOnChainProof(proof);
-
-          // 3. Tiến hành đối soát mã băm 1:1 ngay trên trình duyệt
-          let pMatch = false;
-          let iMatch = false;
-          let lMatch = false;
-          let dMatch = false;
-
-          // Đối soát Producer
-          if (data.producerDataHash && proof.production.dataHash !== '0x0000000000000000000000000000000000000000000000000000000000000000') {
-            pMatch = data.producerDataHash.toLowerCase() === proof.production.dataHash.toLowerCase();
+          if (
+            data.producerDataHash &&
+            proof.production.dataHash.toLowerCase() === data.producerDataHash.toLowerCase()
+          ) {
+            setVerified(true);
           }
-          // Đối soát Inspector
-          if (data.inspectorDataHash && proof.inspection.dataHash !== '0x0000000000000000000000000000000000000000000000000000000000000000') {
-            iMatch = data.inspectorDataHash.toLowerCase() === proof.inspection.dataHash.toLowerCase();
-          }
-          // Đối soát Logistics
-          if (data.logisticsDataHash && proof.logistics.dataHash !== '0x0000000000000000000000000000000000000000000000000000000000000000') {
-            lMatch = data.logisticsDataHash.toLowerCase() === proof.logistics.dataHash.toLowerCase();
-          }
-          // Đối soát Distributor
-          if (data.distributorDataHash && proof.distribution.dataHash !== '0x0000000000000000000000000000000000000000000000000000000000000000') {
-            dMatch = data.distributorDataHash.toLowerCase() === proof.distribution.dataHash.toLowerCase();
-          }
-
-          setVerificationResult({
-            verified: pMatch, // Ít nhất khâu sản xuất phải khớp
-            producerMatch: pMatch,
-            inspectorMatch: iMatch,
-            logisticsMatch: lMatch,
-            distributorMatch: dMatch,
-          });
-        } catch (contractErr) {
-          console.warn('Không thể đọc Smart Contract (có thể chưa deploy local):', contractErr);
-        }
+        } catch (err) {}
       } catch (err) {
-        console.error(err);
       } finally {
         setLoading(false);
       }
@@ -113,306 +59,197 @@ export default function TraceBatchDetailPage() {
   }, [batchId]);
 
   if (loading) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-20 text-center text-slate-500">
-        Đang xác thực và tải nguồn gốc nông sản từ Blockchain...
-      </div>
-    );
+    return <div className="text-center py-20 text-xs text-slate-400">Đang tải thông tin nguồn gốc...</div>;
   }
 
   if (!batch) {
     return (
-      <div className="max-w-xl mx-auto px-4 py-20 text-center">
-        <AlertTriangle className="w-12 h-12 text-rose-500 mx-auto mb-3" />
-        <h1 className="text-xl font-bold text-slate-900">Không tìm thấy mã lô nông sản</h1>
-        <p className="text-sm text-slate-600 mt-1">Mã lô <strong>{batchId}</strong> không tồn tại trên hệ thống.</p>
-        <a href="/trace" className="mt-4 inline-block text-sm text-brand-600 font-semibold hover:underline">
-          Quay lại danh sách tra cứu
-        </a>
+      <div className="max-w-md mx-auto py-20 text-center">
+        <AlertTriangle className="w-10 h-10 text-rose-500 mx-auto mb-2" />
+        <h1 className="text-base font-bold text-slate-800">Không tìm thấy mã lô</h1>
+        <p className="text-xs text-slate-500 mt-1">Mã lô {batchId} không tồn tại trên hệ thống.</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-10">
-      {/* 1. Header & Huy hiệu Xác thực Blockchain */}
-      <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 mb-8 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-6 border-b border-slate-100">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-xs font-mono font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-lg">
-                MÃ LÔ: {batch.batchId}
-              </span>
-              <span
-                className={`text-xs px-2.5 py-0.5 rounded-full font-semibold border ${
-                  STAGE_LABELS[batch.stage]?.color || 'bg-slate-100 text-slate-700'
-                }`}
-              >
-                {STAGE_LABELS[batch.stage]?.label || batch.stage}
-              </span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">{batch.productName}</h1>
-            <p className="text-sm text-slate-500 mt-1">
-              Chủng loại: <strong>{batch.category}</strong> • Tổng khối lượng: <strong>{batch.weight} kg</strong> ({batch.quantity} đơn vị)
-            </p>
+    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+      {/* Product Summary Header */}
+      <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-mono font-bold bg-slate-100 text-slate-800 px-2 py-0.5 rounded">
+              {batch.batchId}
+            </span>
+            <span
+              className={`text-[11px] px-2 py-0.5 rounded font-semibold border ${
+                STAGE_LABELS[batch.stage]?.color || 'bg-slate-100 text-slate-700'
+              }`}
+            >
+              {STAGE_LABELS[batch.stage]?.label || batch.stage}
+            </span>
           </div>
-
-          {/* QR Code Mini Card */}
-          {qrDataUrl && (
-            <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-200 self-start sm:self-auto">
-              <img src={qrDataUrl} alt="QR Code" className="w-16 h-16 rounded-lg" />
-              <div>
-                <p className="text-[11px] font-bold text-slate-700">MÃ TEM QR GỐC</p>
-                <a
-                  href={qrDataUrl}
-                  download={`QR-${batch.batchId}.png`}
-                  className="inline-flex items-center gap-1 text-[11px] text-brand-600 hover:text-brand-700 font-semibold mt-1"
-                >
-                  <Download className="w-3 h-3" /> Tải tem QR
-                </a>
-              </div>
-            </div>
-          )}
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900">{batch.productName}</h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Loại: {batch.category} • Số lượng: {batch.quantity} • Trọng lượng: {batch.weight} kg
+          </p>
         </div>
 
-        {/* Khối Xác thực Toàn vẹn 100% on-chain */}
-        <div className="mt-6">
-          {verificationResult.verified ? (
-            <div className="rounded-2xl p-4 bg-emerald-50 border border-emerald-200 flex items-start gap-3.5">
-              <CheckCircle2 className="w-6 h-6 text-emerald-600 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-bold text-emerald-950 uppercase tracking-wide">
-                    Đã xác thực toàn vẹn 100% trên Blockchain
-                  </h2>
-                  <span className="text-[11px] font-mono text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
-                    POLYGON EVM
-                  </span>
-                </div>
-                <p className="text-xs text-emerald-800 mt-1">
-                  Mã băm dữ liệu đối chiếu trùng khớp hoàn toàn với dữ liệu ký số on-chain. Không có sự sai lệch hay can thiệp trái phép.
-                </p>
-                <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] font-mono text-emerald-900">
-                  <span>Hợp đồng: {truncateAddress(CONTRACT_ADDRESS)}</span>
-                  {batch.producerTxHash && (
-                    <span className="flex items-center gap-1">
-                      TxHash: {truncateAddress(batch.producerTxHash)}
-                    </span>
-                  )}
-                </div>
-              </div>
+        {qrDataUrl && (
+          <div className="flex items-center gap-3 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+            <img src={qrDataUrl} alt="QR Code" className="w-14 h-14 rounded" />
+            <div>
+              <p className="text-[10px] font-bold text-slate-600 uppercase">Mã QR Sản Phẩm</p>
+              <a
+                href={qrDataUrl}
+                download={`QR-${batch.batchId}.png`}
+                className="inline-flex items-center gap-1 text-[11px] text-emerald-600 hover:text-emerald-700 font-semibold mt-1"
+              >
+                <Download className="w-3 h-3" /> Tải về
+              </a>
             </div>
-          ) : (
-            <div className="rounded-2xl p-4 bg-amber-50 border border-amber-200 flex items-start gap-3.5">
-              <Clock className="w-6 h-6 text-amber-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <h2 className="text-sm font-bold text-amber-950">Dữ liệu đang được đồng bộ và xác thực</h2>
-                <p className="text-xs text-amber-800 mt-1">
-                  Thông tin đang được xử lý hoặc được đối chiếu trong môi trường thử nghiệm.
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
-      {/* 2. Dòng thời gian 4 Chặng Chuỗi Cung Ứng */}
-      <div className="space-y-6">
-        <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-          <Layers className="w-5 h-5 text-brand-600" />
-          Tiến Trình Nguồn Gốc 4 Giai Đoạn
-        </h2>
+      {/* Blockchain Verification Badge */}
+      <div
+        className={`rounded-xl p-3.5 border flex items-center justify-between text-xs ${
+          verified
+            ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+            : 'bg-slate-50 border-slate-200 text-slate-700'
+        }`}
+      >
+        <div className="flex items-center gap-2">
+          {verified ? (
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+          ) : (
+            <Clock className="w-4 h-4 text-slate-400 flex-shrink-0" />
+          )}
+          <span>
+            {verified
+              ? 'Dữ liệu được xác thực toàn vẹn trên Blockchain Polygon'
+              : 'Dữ liệu đang được đồng bộ và xác thực trên hệ thống'}
+          </span>
+        </div>
+        {batch.producerTxHash && (
+          <a
+            href={`https://amoy.polygonscan.com/tx/${batch.producerTxHash}`}
+            target="_blank"
+            rel="noreferrer"
+            className="text-[11px] font-mono text-emerald-700 hover:underline flex items-center gap-1"
+          >
+            Tx: {truncateAddress(batch.producerTxHash)} <ExternalLink className="w-3 h-3" />
+          </a>
+        )}
+      </div>
 
-        {/* ========================================================================= */}
-        {/* CHẶNG 1: SẢN XUẤT (PRODUCER) */}
-        {/* ========================================================================= */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-2 h-full bg-emerald-500" />
-          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-emerald-100 text-emerald-700">
-                <Sprout className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="font-bold text-slate-900">Giai đoạn 1: Canh tác & Thu hoạch (Producer)</h3>
-                <p className="text-xs text-slate-500">Người khởi tạo: {batch.creator?.organizationName || 'Nhà sản xuất'}</p>
-              </div>
+      {/* 4 DATA TABLES ACCORDING TO SPECIFICATION */}
+      <div className="space-y-5">
+        {/* BẢNG 1: THÔNG TIN SẢN XUẤT (PRODUCER) */}
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+          <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200">
+            <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+              Bảng 1: Thông tin cung cấp bởi Producer (Đơn vị Sản xuất)
+            </h2>
+          </div>
+          <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-700">
+            <p><span className="text-slate-400 font-medium">Mã lô sản phẩm:</span> <strong className="font-mono">{batch.batchId}</strong></p>
+            <p><span className="text-slate-400 font-medium">Tên sản phẩm:</span> {batch.productName}</p>
+            <p><span className="text-slate-400 font-medium">Loại sản phẩm:</span> {batch.category}</p>
+            <p><span className="text-slate-400 font-medium">Số lượng:</span> {batch.quantity}</p>
+            <p><span className="text-slate-400 font-medium">Trọng lượng:</span> {batch.weight} kg</p>
+            <p><span className="text-slate-400 font-medium">Nguồn gốc giống:</span> {batch.seedOrigin}</p>
+            <p><span className="text-slate-400 font-medium">Địa điểm sản xuất:</span> {batch.productionLocation}</p>
+            <p><span className="text-slate-400 font-medium">Ngày bắt đầu canh tác:</span> {new Date(batch.cultivationStartDate).toLocaleDateString('vi-VN')}</p>
+            <p><span className="text-slate-400 font-medium">Ngày thu hoạch:</span> {new Date(batch.harvestDate).toLocaleDateString('vi-VN')}</p>
+            <p><span className="text-slate-400 font-medium">Ví Producer:</span> <span className="font-mono">{truncateAddress(batch.producerWallet)}</span></p>
+            <div className="sm:col-span-2 pt-1 border-t border-slate-100">
+              <span className="text-slate-400 font-medium">Vật tư nông nghiệp:</span> {batch.farmingSupplies}
             </div>
-            {verificationResult.producerMatch && (
-              <span className="text-xs font-semibold px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Khớp Hash On-chain
-              </span>
+            {batch.productImageUrl && (
+              <div className="sm:col-span-2 pt-2">
+                <span className="text-slate-400 font-medium block mb-1">Ảnh nông sản / ruộng trồng:</span>
+                <img src={batch.productImageUrl} alt="Ảnh sản phẩm" className="h-32 object-cover rounded-lg border border-slate-200" />
+              </div>
             )}
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 text-xs text-slate-700">
-            <div className="space-y-2">
-              <p><span className="font-semibold text-slate-500">Mã lô sản phẩm:</span> <strong className="font-mono text-slate-900">{batch.batchId}</strong></p>
-              <p><span className="font-semibold text-slate-500">Tên nông sản:</span> {batch.productName}</p>
-              <p><span className="font-semibold text-slate-500">Loại sản phẩm:</span> {batch.category}</p>
-              <p><span className="font-semibold text-slate-500">Số lượng / Trọng lượng:</span> {batch.quantity} đơn vị ({batch.weight} kg)</p>
-              <p><span className="font-semibold text-slate-500">Nguồn gốc giống:</span> {batch.seedOrigin}</p>
-            </div>
-            <div className="space-y-2">
-              <p><span className="font-semibold text-slate-500">Địa điểm sản xuất:</span> {batch.productionLocation}</p>
-              <p><span className="font-semibold text-slate-500">Ngày bắt đầu canh tác:</span> {new Date(batch.cultivationStartDate).toLocaleDateString('vi-VN')}</p>
-              <p><span className="font-semibold text-slate-500">Ngày thu hoạch:</span> {new Date(batch.harvestDate).toLocaleDateString('vi-VN')}</p>
-              <p><span className="font-semibold text-slate-500">Vật tư nông nghiệp:</span> {batch.farmingSupplies}</p>
-              <p><span className="font-semibold text-slate-500">Ví Producer:</span> <span className="font-mono">{truncateAddress(batch.producerWallet)}</span></p>
-            </div>
-          </div>
-
-          {batch.productImageUrl && (
-            <div className="mt-4 pt-4 border-t border-slate-100">
-              <span className="text-xs font-semibold text-slate-500 block mb-2">Ảnh minh chứng nông sản tại ruộng:</span>
-              <img
-                src={batch.productImageUrl}
-                alt="Ảnh nông sản"
-                className="w-48 h-32 object-cover rounded-xl border border-slate-200"
-              />
-            </div>
-          )}
         </div>
 
-        {/* ========================================================================= */}
-        {/* CHẶNG 2: KIỂM ĐỊNH (INSPECTOR) */}
-        {/* ========================================================================= */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm relative overflow-hidden">
-          <div className={`absolute top-0 left-0 w-2 h-full ${batch.inspectionResult ? 'bg-blue-500' : 'bg-slate-300'}`} />
-          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-xl ${batch.inspectionResult ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-400'}`}>
-                <CheckCircle className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="font-bold text-slate-900">Giai đoạn 2: Giám định Chất lượng & An toàn (Inspector)</h3>
-                <p className="text-xs text-slate-500">
-                  {batch.inspectionResult ? `Đơn vị cấp: ${batch.issuingAuthority}` : 'Chưa thực hiện kiểm định'}
-                </p>
-              </div>
-            </div>
-            {batch.inspectionResult && verificationResult.inspectorMatch && (
-              <span className="text-xs font-semibold px-2.5 py-1 bg-blue-100 text-blue-800 rounded-full flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Khớp Hash On-chain
-              </span>
-            )}
+        {/* BẢNG 2: THÔNG TIN KIỂM ĐỊNH (INSPECTOR) */}
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+          <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200">
+            <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+              Bảng 2: Thông tin cung cấp bởi Inspector (Đơn vị Kiểm định)
+            </h2>
           </div>
-
           {batch.inspectionResult ? (
-            <div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 text-xs text-slate-700">
-                <div className="space-y-2">
-                  <p><span className="font-semibold text-slate-500">Kết quả kiểm định:</span> <strong className="text-emerald-700">{batch.inspectionResult}</strong></p>
-                  <p><span className="font-semibold text-slate-500">Chỉ tiêu kiểm định:</span> {batch.inspectionCriteria}</p>
-                  <p><span className="font-semibold text-slate-500">Mã chứng nhận:</span> <span className="font-mono font-bold">{batch.certificateCode}</span></p>
-                </div>
-                <div className="space-y-2">
-                  <p><span className="font-semibold text-slate-500">Loại chứng nhận:</span> <strong className="text-blue-700">{batch.certificateType}</strong></p>
-                  <p><span className="font-semibold text-slate-500">Cơ quan cấp:</span> {batch.issuingAuthority}</p>
-                  <p><span className="font-semibold text-slate-500">Hiệu lực:</span> {new Date(batch.issuedDate).toLocaleDateString('vi-VN')} đến {new Date(batch.expiryDate).toLocaleDateString('vi-VN')}</p>
-                  <p><span className="font-semibold text-slate-500">Ví Inspector:</span> <span className="font-mono">{truncateAddress(batch.inspectorWallet)}</span></p>
-                </div>
-              </div>
+            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-700">
+              <p><span className="text-slate-400 font-medium">Kết quả kiểm định:</span> <strong>{batch.inspectionResult}</strong></p>
+              <p><span className="text-slate-400 font-medium">Chỉ tiêu kiểm định:</span> {batch.inspectionCriteria}</p>
+              <p><span className="text-slate-400 font-medium">Mã chứng nhận:</span> <strong className="font-mono">{batch.certificateCode}</strong></p>
+              <p><span className="text-slate-400 font-medium">Loại chứng nhận:</span> {batch.certificateType}</p>
+              <p><span className="text-slate-400 font-medium">Cơ quan cấp:</span> {batch.issuingAuthority}</p>
+              <p><span className="text-slate-400 font-medium">Ngày cấp:</span> {new Date(batch.issuedDate).toLocaleDateString('vi-VN')}</p>
+              <p><span className="text-slate-400 font-medium">Ngày hết hạn:</span> {new Date(batch.expiryDate).toLocaleDateString('vi-VN')}</p>
+              <p><span className="text-slate-400 font-medium">Ví Inspector:</span> <span className="font-mono">{truncateAddress(batch.inspectorWallet)}</span></p>
               {batch.certImageUrl && (
-                <div className="mt-4 pt-4 border-t border-slate-100">
-                  <span className="text-xs font-semibold text-slate-500 block mb-2">Ảnh giấy chứng nhận chất lượng:</span>
-                  <img
-                    src={batch.certImageUrl}
-                    alt="Chứng nhận"
-                    className="w-48 h-32 object-cover rounded-xl border border-slate-200"
-                  />
+                <div className="sm:col-span-2 pt-2 border-t border-slate-100">
+                  <span className="text-slate-400 font-medium block mb-1">Ảnh giấy chứng nhận:</span>
+                  <img src={batch.certImageUrl} alt="Chứng nhận" className="h-32 object-cover rounded-lg border border-slate-200" />
                 </div>
               )}
             </div>
           ) : (
-            <p className="text-xs text-slate-400 mt-4 italic">Lô hàng đang chờ đơn vị kiểm định lấy mẫu và công bố kết quả.</p>
+            <div className="p-4 text-xs text-slate-400 italic">Chưa có thông tin kiểm định cho lô này.</div>
           )}
         </div>
 
-        {/* ========================================================================= */}
-        {/* CHẶNG 3: VẬN CHUYỂN (LOGISTICS) */}
-        {/* ========================================================================= */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm relative overflow-hidden">
-          <div className={`absolute top-0 left-0 w-2 h-full ${batch.transporterName ? 'bg-amber-500' : 'bg-slate-300'}`} />
-          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-xl ${batch.transporterName ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-400'}`}>
-                <Truck className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="font-bold text-slate-900">Giai đoạn 3: Hành trình Vận chuyển (Logistics)</h3>
-                <p className="text-xs text-slate-500">
-                  {batch.transporterName ? `Đơn vị: ${batch.transporterName}` : 'Chưa vận chuyển'}
-                </p>
-              </div>
-            </div>
-            {batch.transporterName && verificationResult.logisticsMatch && (
-              <span className="text-xs font-semibold px-2.5 py-1 bg-amber-100 text-amber-800 rounded-full flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Khớp Hash On-chain
-              </span>
-            )}
+        {/* BẢNG 3: THÔNG TIN VẬN CHUYỂN (LOGISTICS) */}
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+          <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200">
+            <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+              Bảng 3: Thông tin cung cấp bởi Logistics (Đơn vị Vận chuyển)
+            </h2>
           </div>
-
           {batch.transporterName ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 text-xs text-slate-700">
-              <div className="space-y-2">
-                <p><span className="font-semibold text-slate-500">Đơn vị vận chuyển:</span> {batch.transporterName} ({batch.transporterType})</p>
-                <p><span className="font-semibold text-slate-500">Liên hệ:</span> {batch.transporterContact}</p>
-                <p><span className="font-semibold text-slate-500">Mã vận chuyển:</span> <span className="font-mono">{batch.shippingCode}</span></p>
-                <p><span className="font-semibold text-slate-500">Lộ trình:</span> {batch.originLocation} $\rightarrow$ {batch.destLocation}</p>
-              </div>
-              <div className="space-y-2">
-                <p><span className="font-semibold text-slate-500">Khởi hành:</span> {new Date(batch.departureTime).toLocaleString('vi-VN')}</p>
-                <p><span className="font-semibold text-slate-500">Hoàn tất:</span> {new Date(batch.completionTime).toLocaleString('vi-VN')}</p>
-                <p><span className="font-semibold text-slate-500">Điều kiện bảo quản:</span> <strong>{batch.temperature}°C</strong> • Độ ẩm: <strong>{batch.humidity}%</strong></p>
-                <p><span className="font-semibold text-slate-500">Ghi chú:</span> {batch.storageNotes || 'Không'}</p>
-                <p><span className="font-semibold text-slate-500">Ví Logistics:</span> <span className="font-mono">{truncateAddress(batch.logisticsWallet)}</span></p>
-              </div>
+            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-700">
+              <p><span className="text-slate-400 font-medium">Tên đơn vị vận chuyển:</span> {batch.transporterName}</p>
+              <p><span className="text-slate-400 font-medium">Thông tin liên hệ:</span> {batch.transporterContact}</p>
+              <p><span className="text-slate-400 font-medium">Loại chủ thể:</span> {batch.transporterType}</p>
+              <p><span className="text-slate-400 font-medium">Mã vận chuyển:</span> <strong className="font-mono">{batch.shippingCode}</strong></p>
+              <p><span className="text-slate-400 font-medium">Điểm đi:</span> {batch.originLocation}</p>
+              <p><span className="text-slate-400 font-medium">Điểm đến:</span> {batch.destLocation}</p>
+              <p><span className="text-slate-400 font-medium">Thời gian khởi hành:</span> {new Date(batch.departureTime).toLocaleString('vi-VN')}</p>
+              <p><span className="text-slate-400 font-medium">Thời gian hoàn tất:</span> {new Date(batch.completionTime).toLocaleString('vi-VN')}</p>
+              <p><span className="text-slate-400 font-medium">Nhiệt độ:</span> {batch.temperature}°C</p>
+              <p><span className="text-slate-400 font-medium">Độ ẩm:</span> {batch.humidity}%</p>
+              <p className="sm:col-span-2"><span className="text-slate-400 font-medium">Ghi chú bảo quản:</span> {batch.storageNotes || 'Không'}</p>
             </div>
           ) : (
-            <p className="text-xs text-slate-400 mt-4 italic">Chưa phát sinh chuyến hàng vận chuyển cho lô này.</p>
+            <div className="p-4 text-xs text-slate-400 italic">Chưa có thông tin vận chuyển cho lô này.</div>
           )}
         </div>
 
-        {/* ========================================================================= */}
-        {/* CHẶNG 4: PHÂN PHỐI (DISTRIBUTOR) */}
-        {/* ========================================================================= */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm relative overflow-hidden">
-          <div className={`absolute top-0 left-0 w-2 h-full ${batch.distributorName ? 'bg-purple-500' : 'bg-slate-300'}`} />
-          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-xl ${batch.distributorName ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-400'}`}>
-                <Store className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="font-bold text-slate-900">Giai đoạn 4: Tiếp nhận Phân phối (Distributor)</h3>
-                <p className="text-xs text-slate-500">
-                  {batch.distributorName ? `Điểm phân phối: ${batch.distributorName}` : 'Chưa tiếp nhận'}
-                </p>
-              </div>
-            </div>
-            {batch.distributorName && verificationResult.distributorMatch && (
-              <span className="text-xs font-semibold px-2.5 py-1 bg-purple-100 text-purple-800 rounded-full flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Khớp Hash On-chain
-              </span>
-            )}
+        {/* BẢNG 4: THÔNG TIN PHÂN PHỐI (DISTRIBUTOR) */}
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+          <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200">
+            <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+              Bảng 4: Thông tin cung cấp bởi Distributor (Đơn vị Phân phối)
+            </h2>
           </div>
-
           {batch.distributorName ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 text-xs text-slate-700">
-              <div className="space-y-2">
-                <p><span className="font-semibold text-slate-500">Đơn vị phân phối:</span> {batch.distributorName} ({batch.distributorType})</p>
-                <p><span className="font-semibold text-slate-500">Thông tin liên hệ:</span> {batch.distributorContact}</p>
-                <p><span className="font-semibold text-slate-500">Thời gian tiếp nhận:</span> {new Date(batch.receivedTime).toLocaleString('vi-VN')}</p>
-              </div>
-              <div className="space-y-2">
-                <p><span className="font-semibold text-slate-500">Số lượng / Trọng lượng thực nhận:</span> <strong>{batch.actualQuantity} đơn vị ({batch.actualWeight} kg)</strong></p>
-                <p><span className="font-semibold text-slate-500">Ghi chú tiếp nhận:</span> {batch.receiptNotes}</p>
-                <p><span className="font-semibold text-slate-500">Ví Distributor:</span> <span className="font-mono">{truncateAddress(batch.distributorWallet)}</span></p>
-              </div>
+            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-700">
+              <p><span className="text-slate-400 font-medium">Tên đơn vị phân phối:</span> {batch.distributorName}</p>
+              <p><span className="text-slate-400 font-medium">Thông tin liên hệ:</span> {batch.distributorContact}</p>
+              <p><span className="text-slate-400 font-medium">Loại chủ thể:</span> {batch.distributorType}</p>
+              <p><span className="text-slate-400 font-medium">Thời gian tiếp nhận:</span> {new Date(batch.receivedTime).toLocaleString('vi-VN')}</p>
+              <p><span className="text-slate-400 font-medium">Số lượng thực nhận:</span> {batch.actualQuantity}</p>
+              <p><span className="text-slate-400 font-medium">Trọng lượng thực nhận:</span> {batch.actualWeight} kg</p>
+              <p className="sm:col-span-2"><span className="text-slate-400 font-medium">Ghi chú tiếp nhận:</span> {batch.receiptNotes}</p>
             </div>
           ) : (
-            <p className="text-xs text-slate-400 mt-4 italic">Đơn vị phân phối chưa xác nhận tiếp nhận lô hàng.</p>
+            <div className="p-4 text-xs text-slate-400 italic">Chưa có thông tin phân phối cho lô này.</div>
           )}
         </div>
       </div>

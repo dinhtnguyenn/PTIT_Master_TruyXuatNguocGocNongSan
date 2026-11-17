@@ -1,19 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import {
-  Sprout,
-  CheckCircle,
-  Truck,
-  Store,
-  Wallet,
-  Upload,
-  AlertCircle,
-  Clock,
-  ArrowRight,
-  ShieldCheck,
-  CheckCircle2,
-} from 'lucide-react';
+import Link from 'next/link';
+import { Wallet, CheckCircle2, Clock, ArrowRight } from 'lucide-react';
 import { connectWallet, getContract, truncateAddress } from '../../lib/web3';
 import { API_BASE_URL, ROLE_LABELS, ADMIN_ADDRESS } from '../../lib/constants';
 
@@ -25,13 +14,13 @@ export default function SupplyChainPortalPage() {
   const [activeBatches, setActiveBatches] = useState<any[]>([]);
   const [statusAlert, setStatusAlert] = useState<{ type: 'success' | 'error'; message: string; txHash?: string } | null>(null);
 
-  // 1. Form Producer State (Bảng 1)
+  // Form Producer (Bảng 1)
   const [producerForm, setProducerForm] = useState({
     batchId: `BATCH-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
     productName: '',
-    category: 'Trái cây',
-    quantity: 1000,
-    weight: 2000,
+    category: '',
+    quantity: 100,
+    weight: 200,
     seedOrigin: '',
     farmingSupplies: '',
     productionLocation: '',
@@ -40,20 +29,20 @@ export default function SupplyChainPortalPage() {
     productImageUrl: '',
   });
 
-  // 2. Form Inspector State (Bảng 2)
+  // Form Inspector (Bảng 2)
   const [inspectorForm, setInspectorForm] = useState({
     batchId: '',
-    inspectionResult: 'Đạt tiêu chuẩn an toàn thực phẩm VietGAP',
-    inspectionCriteria: 'Dư lượng thuốc BVTV, hàm lượng kim loại nặng và vi sinh vật gây hại',
+    inspectionResult: 'Đạt tiêu chuẩn an toàn',
+    inspectionCriteria: 'Dư lượng thuốc BVTV, vi sinh vật',
     certificateCode: `CERT-${Math.floor(100000 + Math.random() * 900000)}`,
     certificateType: 'VietGAP',
-    issuingAuthority: 'Trung tâm Giám định & Chứng nhận Vinacert',
+    issuingAuthority: '',
     issuedDate: '',
     expiryDate: '',
     certImageUrl: '',
   });
 
-  // 3. Form Logistics State (Bảng 3)
+  // Form Logistics (Bảng 3)
   const [logisticsForm, setLogisticsForm] = useState({
     batchId: '',
     transporterName: '',
@@ -64,28 +53,28 @@ export default function SupplyChainPortalPage() {
     destLocation: '',
     departureTime: '',
     completionTime: '',
-    temperature: 15.5,
-    humidity: 75.0,
-    storageNotes: 'Bảo quản container lạnh nhiệt độ ổn định',
+    temperature: 20.0,
+    humidity: 70.0,
+    storageNotes: '',
   });
 
-  // 4. Form Distributor State (Bảng 4)
+  // Form Distributor (Bảng 4)
   const [distributorForm, setDistributorForm] = useState({
     batchId: '',
     distributorName: '',
     distributorContact: '',
     distributorType: 'Tổ chức',
     receivedTime: '',
-    actualQuantity: 1000,
-    actualWeight: 2000,
-    receiptNotes: 'Hàng nguyên tem mác, bao bì không rách vỡ, chất lượng tươi tốt',
+    actualQuantity: 100,
+    actualWeight: 200,
+    receiptNotes: '',
   });
 
   async function loadUser(addr: string) {
     setLoading(true);
     try {
       if (addr.toLowerCase() === ADMIN_ADDRESS.toLowerCase()) {
-        setUserData({ role: 'ADMIN', status: 'APPROVED', organizationName: 'Hệ thống Quản trị PTIT' });
+        setUserData({ role: 'ADMIN', status: 'APPROVED', organizationName: 'Ban Quản Trị' });
         loadBatches();
         return;
       }
@@ -98,7 +87,6 @@ export default function SupplyChainPortalPage() {
       }
       loadBatches();
     } catch (err) {
-      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -111,9 +99,7 @@ export default function SupplyChainPortalPage() {
         const data = await res.json();
         setActiveBatches(data);
       }
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (err) {}
   }
 
   async function handleFileUpload(file: File, target: 'product' | 'cert') {
@@ -126,13 +112,13 @@ export default function SupplyChainPortalPage() {
       });
       const data = await res.json();
       if (res.ok && data.url) {
-        const fullUrl = `http://localhost:4000${data.url}`;
+        const fullUrl = `${API_BASE_URL.replace('/api', '')}${data.url}`;
         if (target === 'product') {
           setProducerForm((prev) => ({ ...prev, productImageUrl: fullUrl }));
         } else {
           setInspectorForm((prev) => ({ ...prev, certImageUrl: fullUrl }));
         }
-        alert('Tải ảnh lên Server thành công!');
+        alert('Tải ảnh lên thành công!');
       } else {
         alert(data.message || 'Lỗi tải ảnh');
       }
@@ -187,30 +173,22 @@ export default function SupplyChainPortalPage() {
     setStatusAlert(null);
 
     try {
-      // B1: Gửi lên Backend để lưu DB và nhận dataHash chuẩn
       const res = await fetch(`${API_BASE_URL}/batches/producer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...producerForm,
-          producerWallet: account,
-        }),
+        body: JSON.stringify({ ...producerForm, producerWallet: account }),
       });
       const result = await res.json();
-      if (!res.ok) throw new Error(result.message || 'Lỗi lưu dữ liệu Backend');
+      if (!res.ok) throw new Error(result.message || 'Lỗi lưu dữ liệu');
 
-      const dataHash = result.dataHash;
-
-      // B2: Kích hoạt MetaMask gọi Smart Contract
       const contract = await getContract(true);
       const tx = await contract.recordProduction(
         producerForm.batchId,
         producerForm.productName,
-        dataHash
+        result.dataHash
       );
       const receipt = await tx.wait();
 
-      // B3: Cập nhật txHash lên Backend
       await fetch(`${API_BASE_URL}/batches/${producerForm.batchId}/tx`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -219,7 +197,7 @@ export default function SupplyChainPortalPage() {
 
       setStatusAlert({
         type: 'success',
-        message: `Khởi tạo lô hàng '${producerForm.batchId}' và ghi nhận lên Blockchain thành công!`,
+        message: `Đã tạo lô hàng '${producerForm.batchId}' và ghi nhận trên Blockchain!`,
         txHash: receipt.hash,
       });
       loadBatches();
@@ -235,7 +213,7 @@ export default function SupplyChainPortalPage() {
     e.preventDefault();
     if (!account) return;
     if (!inspectorForm.batchId) {
-      alert('Vui lòng chọn hoặc nhập mã lô hàng cần kiểm định!');
+      alert('Vui lòng chọn mã lô cần kiểm định!');
       return;
     }
     setSubmitting(true);
@@ -245,19 +223,13 @@ export default function SupplyChainPortalPage() {
       const res = await fetch(`${API_BASE_URL}/batches/inspector`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...inspectorForm,
-          inspectorWallet: account,
-        }),
+        body: JSON.stringify({ ...inspectorForm, inspectorWallet: account }),
       });
       const result = await res.json();
-      if (!res.ok) throw new Error(result.message || 'Lỗi lưu dữ liệu kiểm định');
+      if (!res.ok) throw new Error(result.message || 'Lỗi lưu dữ liệu');
 
-      const dataHash = result.dataHash;
-
-      // Smart Contract call
       const contract = await getContract(true);
-      const tx = await contract.recordInspection(inspectorForm.batchId, dataHash);
+      const tx = await contract.recordInspection(inspectorForm.batchId, result.dataHash);
       const receipt = await tx.wait();
 
       await fetch(`${API_BASE_URL}/batches/${inspectorForm.batchId}/tx`, {
@@ -268,7 +240,7 @@ export default function SupplyChainPortalPage() {
 
       setStatusAlert({
         type: 'success',
-        message: `Kiểm định lô hàng '${inspectorForm.batchId}' đã được ghi nhận trên Blockchain!`,
+        message: `Kiểm định lô hàng '${inspectorForm.batchId}' thành công!`,
         txHash: receipt.hash,
       });
       loadBatches();
@@ -284,7 +256,7 @@ export default function SupplyChainPortalPage() {
     e.preventDefault();
     if (!account) return;
     if (!logisticsForm.batchId) {
-      alert('Vui lòng chọn mã lô hàng cần vận chuyển!');
+      alert('Vui lòng chọn mã lô cần vận chuyển!');
       return;
     }
     setSubmitting(true);
@@ -294,19 +266,13 @@ export default function SupplyChainPortalPage() {
       const res = await fetch(`${API_BASE_URL}/batches/logistics`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...logisticsForm,
-          logisticsWallet: account,
-        }),
+        body: JSON.stringify({ ...logisticsForm, logisticsWallet: account }),
       });
       const result = await res.json();
-      if (!res.ok) throw new Error(result.message || 'Lỗi lưu dữ liệu vận chuyển');
+      if (!res.ok) throw new Error(result.message || 'Lỗi lưu dữ liệu');
 
-      const dataHash = result.dataHash;
-
-      // Smart Contract call
       const contract = await getContract(true);
-      const tx = await contract.recordLogistics(logisticsForm.batchId, dataHash);
+      const tx = await contract.recordLogistics(logisticsForm.batchId, result.dataHash);
       const receipt = await tx.wait();
 
       await fetch(`${API_BASE_URL}/batches/${logisticsForm.batchId}/tx`, {
@@ -317,7 +283,7 @@ export default function SupplyChainPortalPage() {
 
       setStatusAlert({
         type: 'success',
-        message: `Hành trình vận chuyển lô hàng '${logisticsForm.batchId}' đã được ghi nhận trên Blockchain!`,
+        message: `Ghi nhận vận chuyển lô hàng '${logisticsForm.batchId}' thành công!`,
         txHash: receipt.hash,
       });
       loadBatches();
@@ -333,7 +299,7 @@ export default function SupplyChainPortalPage() {
     e.preventDefault();
     if (!account) return;
     if (!distributorForm.batchId) {
-      alert('Vui lòng chọn mã lô hàng tiếp nhận!');
+      alert('Vui lòng chọn mã lô tiếp nhận!');
       return;
     }
     setSubmitting(true);
@@ -343,19 +309,13 @@ export default function SupplyChainPortalPage() {
       const res = await fetch(`${API_BASE_URL}/batches/distributor`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...distributorForm,
-          distributorWallet: account,
-        }),
+        body: JSON.stringify({ ...distributorForm, distributorWallet: account }),
       });
       const result = await res.json();
-      if (!res.ok) throw new Error(result.message || 'Lỗi lưu dữ liệu phân phối');
+      if (!res.ok) throw new Error(result.message || 'Lỗi lưu dữ liệu');
 
-      const dataHash = result.dataHash;
-
-      // Smart Contract call
       const contract = await getContract(true);
-      const tx = await contract.recordDistribution(distributorForm.batchId, dataHash);
+      const tx = await contract.recordDistribution(distributorForm.batchId, result.dataHash);
       const receipt = await tx.wait();
 
       await fetch(`${API_BASE_URL}/batches/${distributorForm.batchId}/tx`, {
@@ -366,7 +326,7 @@ export default function SupplyChainPortalPage() {
 
       setStatusAlert({
         type: 'success',
-        message: `Tiếp nhận phân phối lô hàng '${distributorForm.batchId}' đã hoàn tất và lưu trên Blockchain!`,
+        message: `Tiếp nhận phân phối lô hàng '${distributorForm.batchId}' thành công!`,
         txHash: receipt.hash,
       });
       loadBatches();
@@ -378,28 +338,24 @@ export default function SupplyChainPortalPage() {
   }
 
   if (loading) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 py-20 text-center text-slate-500">
-        Đang tải thông tin tài khoản và phân quyền ví...
-      </div>
-    );
+    return <div className="text-center py-20 text-xs text-slate-400">Đang kiểm tra quyền hạn ví...</div>;
   }
 
   if (!account) {
     return (
-      <div className="max-w-xl mx-auto px-4 py-20 text-center">
-        <div className="w-16 h-16 rounded-3xl bg-brand-100 text-brand-700 mx-auto flex items-center justify-center mb-4">
-          <Wallet className="w-8 h-8" />
+      <div className="max-w-md mx-auto py-20 text-center px-4">
+        <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-700 mx-auto flex items-center justify-center mb-3">
+          <Wallet className="w-6 h-6" />
         </div>
-        <h1 className="text-2xl font-bold text-slate-900">Cổng Nhập Liệu Chuỗi Cung Ứng</h1>
-        <p className="text-sm text-slate-600 mt-2 mb-6">
-          Vui lòng kết nối ví MetaMask đã được đăng ký và phê duyệt để hệ thống hiển thị biểu mẫu nghiệp vụ tương ứng với vai trò của bạn.
+        <h1 className="text-lg font-bold text-slate-900">Yêu cầu kết nối Ví MetaMask</h1>
+        <p className="text-xs text-slate-500 mt-1 mb-5">
+          Vui lòng kết nối ví đã được cấp quyền để hiển thị form nhập liệu tương ứng.
         </p>
         <button
           onClick={handleConnect}
-          className="inline-flex items-center gap-2 px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl text-sm transition shadow-sm"
+          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold"
         >
-          <Wallet className="w-4 h-4" /> Kết nối MetaMask Ngay
+          Kết nối Ví ngay
         </button>
       </div>
     );
@@ -407,26 +363,21 @@ export default function SupplyChainPortalPage() {
 
   if (!userData || userData.status !== 'APPROVED') {
     return (
-      <div className="max-w-xl mx-auto px-4 py-20 text-center">
-        <div className="w-16 h-16 rounded-3xl bg-amber-100 text-amber-700 mx-auto flex items-center justify-center mb-4">
-          <Clock className="w-8 h-8" />
+      <div className="max-w-md mx-auto py-20 text-center px-4">
+        <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-700 mx-auto flex items-center justify-center mb-3">
+          <Clock className="w-6 h-6" />
         </div>
-        <h1 className="text-2xl font-bold text-slate-900">Tài khoản chưa được phê duyệt</h1>
-        <p className="text-sm text-slate-600 mt-2">
-          Địa chỉ ví <span className="font-mono text-slate-800">{truncateAddress(account)}</span>{' '}
-          {userData ? (
-            <>đang ở trạng thái <strong>{userData.status}</strong> cho vai trò <strong>{ROLE_LABELS[userData.role]}</strong>.</>
-          ) : (
-            'chưa được đăng ký trong hệ thống.'
-          )}
+        <h1 className="text-base font-bold text-slate-900">Ví chưa được duyệt</h1>
+        <p className="text-xs text-slate-500 mt-1">
+          Địa chỉ ví <span className="font-mono">{truncateAddress(account)}</span> đang chờ Admin duyệt hoặc chưa đăng ký.
         </p>
-        <div className="mt-6 flex justify-center gap-3">
-          <a
+        <div className="mt-4">
+          <Link
             href="/register"
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-600 text-white text-sm font-semibold rounded-xl hover:bg-brand-700 transition"
+            className="text-xs font-semibold text-emerald-600 hover:underline"
           >
-            Đến Trang Đăng Ký <ArrowRight className="w-4 h-4" />
-          </a>
+            Đến trang Đăng ký $\rightarrow$
+          </Link>
         </div>
       </div>
     );
@@ -435,24 +386,23 @@ export default function SupplyChainPortalPage() {
   const role = userData.role;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-10">
-      {/* Header Chào Mừng theo Role */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-8 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+      {/* Actor Bar */}
+      <div className="bg-white rounded-xl border border-slate-200 px-4 py-3 flex items-center justify-between shadow-sm">
         <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-brand-700 bg-brand-50 px-2.5 py-1 rounded-md border border-brand-200">
+          <span className="text-[11px] font-bold text-emerald-700 uppercase">
             {ROLE_LABELS[role] || role}
           </span>
-          <h1 className="text-xl font-bold text-slate-900 mt-2">{userData.organizationName}</h1>
-          <p className="text-xs text-slate-500 font-mono mt-0.5">Ví: {account}</p>
+          <p className="text-sm font-bold text-slate-900">{userData.organizationName}</p>
         </div>
-        <div className="flex items-center gap-2 text-xs text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 font-medium self-start sm:self-auto">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Đã xác minh chính chủ on-chain
-        </div>
+        <span className="text-xs font-mono text-slate-500 bg-slate-50 px-2.5 py-1 rounded border border-slate-200">
+          {truncateAddress(account)}
+        </span>
       </div>
 
       {statusAlert && (
         <div
-          className={`p-4 rounded-2xl text-sm mb-6 border ${
+          className={`p-3.5 rounded-xl text-xs border ${
             statusAlert.type === 'success'
               ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
               : 'bg-rose-50 border-rose-200 text-rose-900'
@@ -460,446 +410,403 @@ export default function SupplyChainPortalPage() {
         >
           <p className="font-semibold">{statusAlert.message}</p>
           {statusAlert.txHash && (
-            <p className="text-xs font-mono mt-1 break-all">
-              Mã giao dịch (TxHash): <strong>{statusAlert.txHash}</strong>
-            </p>
+            <p className="font-mono text-[11px] mt-0.5">TxHash: {statusAlert.txHash}</p>
           )}
         </div>
       )}
 
       {/* ========================================================================= */}
-      {/* 1. FORM PRODUCER (BẢNG 1 - TÀI LIỆU GỐC) */}
+      {/* FORM 1: PRODUCER (BẢNG 1) */}
       {/* ========================================================================= */}
       {role === 'PRODUCER' && (
-        <form onSubmit={submitProducer} className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
-          <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-            <div className="p-2.5 rounded-xl bg-emerald-100 text-emerald-700">
-              <Sprout className="w-6 h-6" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-900">Bảng 1: Thông tin cung cấp bởi Producer</h2>
-              <p className="text-xs text-slate-500">Khởi tạo thông tin định danh lô, canh tác và thu hoạch</p>
-            </div>
-          </div>
+        <form onSubmit={submitProducer} className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
+          <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide border-b pb-2">
+            Bảng 1: Thông tin cung cấp bởi Producer (Đơn vị Sản xuất)
+          </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Mã lô sản phẩm *</label>
+              <label className="block text-slate-600 font-medium mb-1">Mã lô sản phẩm *</label>
               <input
                 type="text"
                 required
                 value={producerForm.batchId}
                 onChange={(e) => setProducerForm({ ...producerForm, batchId: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm font-mono"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Tên sản phẩm *</label>
+              <label className="block text-slate-600 font-medium mb-1">Tên sản phẩm *</label>
               <input
                 type="text"
                 required
-                placeholder="Ví dụ: Xoài Cát Hòa Lộc"
                 value={producerForm.productName}
                 onChange={(e) => setProducerForm({ ...producerForm, productName: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Loại sản phẩm *</label>
+              <label className="block text-slate-600 font-medium mb-1">Loại sản phẩm *</label>
               <input
                 type="text"
                 required
-                placeholder="Ví dụ: Trái cây ăn quả"
                 value={producerForm.category}
                 onChange={(e) => setProducerForm({ ...producerForm, category: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Số lượng *</label>
+                <label className="block text-slate-600 font-medium mb-1">Số lượng *</label>
                 <input
                   type="number"
                   required
                   value={producerForm.quantity}
                   onChange={(e) => setProducerForm({ ...producerForm, quantity: Number(e.target.value) })}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                  className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Trọng lượng (kg) *</label>
+                <label className="block text-slate-600 font-medium mb-1">Trọng lượng (kg) *</label>
                 <input
                   type="number"
                   required
                   value={producerForm.weight}
                   onChange={(e) => setProducerForm({ ...producerForm, weight: Number(e.target.value) })}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                  className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Nguồn gốc giống *</label>
+              <label className="block text-slate-600 font-medium mb-1">Nguồn gốc giống *</label>
               <input
                 type="text"
                 required
-                placeholder="Ví dụ: Giống xoài ghép đầu dòng Cái Bè"
                 value={producerForm.seedOrigin}
                 onChange={(e) => setProducerForm({ ...producerForm, seedOrigin: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Địa điểm sản xuất *</label>
+              <label className="block text-slate-600 font-medium mb-1">Địa điểm sản xuất *</label>
               <input
                 type="text"
                 required
-                placeholder="Địa chỉ hoặc tọa độ khu vực sản xuất"
                 value={producerForm.productionLocation}
                 onChange={(e) => setProducerForm({ ...producerForm, productionLocation: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Ngày bắt đầu canh tác *</label>
+              <label className="block text-slate-600 font-medium mb-1">Ngày bắt đầu canh tác *</label>
               <input
                 type="date"
                 required
                 value={producerForm.cultivationStartDate}
                 onChange={(e) => setProducerForm({ ...producerForm, cultivationStartDate: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Ngày thu hoạch *</label>
+              <label className="block text-slate-600 font-medium mb-1">Ngày thu hoạch *</label>
               <input
                 type="date"
                 required
                 value={producerForm.harvestDate}
                 onChange={(e) => setProducerForm({ ...producerForm, harvestDate: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
               />
             </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Vật tư nông nghiệp đã sử dụng *</label>
-            <textarea
-              rows={2}
-              required
-              placeholder="Các loại phân bón hữu cơ, thuốc bảo vệ thực vật sinh học đã sử dụng..."
-              value={producerForm.farmingSupplies}
-              onChange={(e) => setProducerForm({ ...producerForm, farmingSupplies: e.target.value })}
-              className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Ảnh nông sản / vườn trồng (Lưu Server)</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'product')}
-              className="text-xs file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
-            />
-            {producerForm.productImageUrl && (
-              <p className="text-xs text-emerald-600 mt-1 font-mono truncate">Ảnh đã upload: {producerForm.productImageUrl}</p>
-            )}
+            <div className="sm:col-span-2">
+              <label className="block text-slate-600 font-medium mb-1">Vật tư nông nghiệp đã sử dụng *</label>
+              <textarea
+                rows={2}
+                required
+                value={producerForm.farmingSupplies}
+                onChange={(e) => setProducerForm({ ...producerForm, farmingSupplies: e.target.value })}
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-slate-600 font-medium mb-1">Ảnh nông sản / ruộng trồng</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'product')}
+                className="text-xs file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:bg-slate-100"
+              />
+            </div>
           </div>
 
           <button
             type="submit"
             disabled={submitting}
-            className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition shadow"
+            className="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition"
           >
-            {submitting ? 'Đang ký giao dịch trên MetaMask...' : 'Ký & Ghi Blockchain (Khởi tạo Lô hàng)'}
+            {submitting ? 'Đang gửi giao dịch lên Blockchain...' : 'Lưu & Ký Blockchain (Khởi tạo Lô hàng)'}
           </button>
         </form>
       )}
 
       {/* ========================================================================= */}
-      {/* 2. FORM INSPECTOR (BẢNG 2 - TÀI LIỆU GỐC) */}
+      {/* FORM 2: INSPECTOR (BẢNG 2) */}
       {/* ========================================================================= */}
       {role === 'INSPECTOR' && (
-        <form onSubmit={submitInspector} className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
-          <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-            <div className="p-2.5 rounded-xl bg-blue-100 text-blue-700">
-              <CheckCircle className="w-6 h-6" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-900">Bảng 2: Thông tin cung cấp bởi Inspector</h2>
-              <p className="text-xs text-slate-500">Đánh giá chất lượng sản phẩm và cấp chứng nhận an toàn</p>
-            </div>
-          </div>
+        <form onSubmit={submitInspector} className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
+          <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide border-b pb-2">
+            Bảng 2: Thông tin cung cấp bởi Inspector (Đơn vị Kiểm định)
+          </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Mã lô sản phẩm cần kiểm định *</label>
+              <label className="block text-slate-600 font-medium mb-1">Chọn Lô sản phẩm *</label>
               <select
                 required
                 value={inspectorForm.batchId}
                 onChange={(e) => setInspectorForm({ ...inspectorForm, batchId: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm bg-white"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white"
               >
-                <option value="">-- Chọn lô hàng cần kiểm định --</option>
-                {activeBatches
-                  .filter((b) => b.stage === 'CREATED')
-                  .map((b) => (
-                    <option key={b.batchId} value={b.batchId}>
-                      {b.batchId} - {b.productName} ({b.weight} kg)
-                    </option>
-                  ))}
+                <option value="">-- Chọn lô cần kiểm định --</option>
+                {activeBatches.filter((b) => b.stage === 'CREATED').map((b) => (
+                  <option key={b.batchId} value={b.batchId}>
+                    {b.batchId} - {b.productName}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Kết quả kiểm định *</label>
+              <label className="block text-slate-600 font-medium mb-1">Kết quả kiểm định *</label>
               <input
                 type="text"
                 required
                 value={inspectorForm.inspectionResult}
                 onChange={(e) => setInspectorForm({ ...inspectorForm, inspectionResult: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Mã chứng nhận *</label>
+              <label className="block text-slate-600 font-medium mb-1">Mã chứng nhận *</label>
               <input
                 type="text"
                 required
                 value={inspectorForm.certificateCode}
                 onChange={(e) => setInspectorForm({ ...inspectorForm, certificateCode: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm font-mono"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Loại chứng nhận *</label>
+              <label className="block text-slate-600 font-medium mb-1">Loại chứng nhận *</label>
               <input
                 type="text"
                 required
                 value={inspectorForm.certificateType}
                 onChange={(e) => setInspectorForm({ ...inspectorForm, certificateType: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Cơ quan cấp *</label>
+              <label className="block text-slate-600 font-medium mb-1">Cơ quan cấp *</label>
               <input
                 type="text"
                 required
                 value={inspectorForm.issuingAuthority}
                 onChange={(e) => setInspectorForm({ ...inspectorForm, issuingAuthority: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Ngày cấp *</label>
+                <label className="block text-slate-600 font-medium mb-1">Ngày cấp *</label>
                 <input
                   type="date"
                   required
                   value={inspectorForm.issuedDate}
                   onChange={(e) => setInspectorForm({ ...inspectorForm, issuedDate: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                  className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Ngày hết hạn *</label>
+                <label className="block text-slate-600 font-medium mb-1">Ngày hết hạn *</label>
                 <input
                   type="date"
                   required
                   value={inspectorForm.expiryDate}
                   onChange={(e) => setInspectorForm({ ...inspectorForm, expiryDate: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                  className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
                 />
               </div>
             </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Chỉ tiêu kiểm định *</label>
-            <textarea
-              rows={2}
-              required
-              value={inspectorForm.inspectionCriteria}
-              onChange={(e) => setInspectorForm({ ...inspectorForm, inspectionCriteria: e.target.value })}
-              className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Ảnh chứng nhận (Lưu Server)</label>
-            <input
-              type="file"
-              accept="image/*,application/pdf"
-              onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'cert')}
-              className="text-xs file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-            />
-            {inspectorForm.certImageUrl && (
-              <p className="text-xs text-blue-600 mt-1 font-mono truncate">File đã upload: {inspectorForm.certImageUrl}</p>
-            )}
+            <div className="sm:col-span-2">
+              <label className="block text-slate-600 font-medium mb-1">Chỉ tiêu kiểm định *</label>
+              <textarea
+                rows={2}
+                required
+                value={inspectorForm.inspectionCriteria}
+                onChange={(e) => setInspectorForm({ ...inspectorForm, inspectionCriteria: e.target.value })}
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-slate-600 font-medium mb-1">Ảnh giấy chứng nhận</label>
+              <input
+                type="file"
+                accept="image/*,application/pdf"
+                onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'cert')}
+                className="text-xs file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:bg-slate-100"
+              />
+            </div>
           </div>
 
           <button
             type="submit"
             disabled={submitting}
-            className="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition shadow"
+            className="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition"
           >
-            {submitting ? 'Đang ký giao dịch trên MetaMask...' : 'Ký & Ghi Blockchain (Xác nhận Kiểm định)'}
+            {submitting ? 'Đang gửi giao dịch...' : 'Lưu & Ký Blockchain (Xác nhận Kiểm định)'}
           </button>
         </form>
       )}
 
       {/* ========================================================================= */}
-      {/* 3. FORM LOGISTICS (BẢNG 3 - TÀI LIỆU GỐC) */}
+      {/* FORM 3: LOGISTICS (BẢNG 3) */}
       {/* ========================================================================= */}
       {role === 'LOGISTICS' && (
-        <form onSubmit={submitLogistics} className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
-          <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-            <div className="p-2.5 rounded-xl bg-amber-100 text-amber-700">
-              <Truck className="w-6 h-6" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-900">Bảng 3: Thông tin cung cấp bởi Logistics</h2>
-              <p className="text-xs text-slate-500">Ghi nhận hành trình vận chuyển và điều kiện bảo quản nhiệt độ, độ ẩm</p>
-            </div>
-          </div>
+        <form onSubmit={submitLogistics} className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
+          <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide border-b pb-2">
+            Bảng 3: Thông tin cung cấp bởi Logistics (Đơn vị Vận chuyển)
+          </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Mã lô sản phẩm vận chuyển *</label>
+              <label className="block text-slate-600 font-medium mb-1">Chọn Lô hàng đã kiểm định *</label>
               <select
                 required
                 value={logisticsForm.batchId}
                 onChange={(e) => setLogisticsForm({ ...logisticsForm, batchId: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm bg-white"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white"
               >
-                <option value="">-- Chọn lô hàng đã kiểm định --</option>
-                {activeBatches
-                  .filter((b) => b.stage === 'INSPECTED')
-                  .map((b) => (
-                    <option key={b.batchId} value={b.batchId}>
-                      {b.batchId} - {b.productName}
-                    </option>
-                  ))}
+                <option value="">-- Chọn lô cần vận chuyển --</option>
+                {activeBatches.filter((b) => b.stage === 'INSPECTED').map((b) => (
+                  <option key={b.batchId} value={b.batchId}>
+                    {b.batchId} - {b.productName}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Tên đơn vị vận chuyển *</label>
+              <label className="block text-slate-600 font-medium mb-1">Tên đơn vị vận chuyển *</label>
               <input
                 type="text"
                 required
-                placeholder="Tên cá nhân hoặc tổ chức"
                 value={logisticsForm.transporterName}
                 onChange={(e) => setLogisticsForm({ ...logisticsForm, transporterName: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Thông tin liên hệ *</label>
+              <label className="block text-slate-600 font-medium mb-1">Thông tin liên hệ *</label>
               <input
                 type="text"
                 required
-                placeholder="SĐT, Email tài xế/đơn vị"
                 value={logisticsForm.transporterContact}
                 onChange={(e) => setLogisticsForm({ ...logisticsForm, transporterContact: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Loại chủ thể *</label>
+              <label className="block text-slate-600 font-medium mb-1">Loại chủ thể *</label>
               <select
                 value={logisticsForm.transporterType}
                 onChange={(e) => setLogisticsForm({ ...logisticsForm, transporterType: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm bg-white"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white"
               >
                 <option value="Tổ chức">Tổ chức</option>
                 <option value="Cá nhân">Cá nhân</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Mã vận chuyển (nếu có)</label>
+              <label className="block text-slate-600 font-medium mb-1">Mã vận chuyển *</label>
               <input
                 type="text"
                 required
                 value={logisticsForm.shippingCode}
                 onChange={(e) => setLogisticsForm({ ...logisticsForm, shippingCode: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm font-mono"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Điểm đi *</label>
+              <label className="block text-slate-600 font-medium mb-1">Điểm đi *</label>
               <input
                 type="text"
                 required
-                placeholder="Địa điểm bắt đầu vận chuyển"
                 value={logisticsForm.originLocation}
                 onChange={(e) => setLogisticsForm({ ...logisticsForm, originLocation: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Điểm đến *</label>
+              <label className="block text-slate-600 font-medium mb-1">Điểm đến *</label>
               <input
                 type="text"
                 required
-                placeholder="Địa điểm tiếp nhận hàng hóa"
                 value={logisticsForm.destLocation}
                 onChange={(e) => setLogisticsForm({ ...logisticsForm, destLocation: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">TG khởi hành *</label>
+                <label className="block text-slate-600 font-medium mb-1">TG khởi hành *</label>
                 <input
                   type="datetime-local"
                   required
                   value={logisticsForm.departureTime}
                   onChange={(e) => setLogisticsForm({ ...logisticsForm, departureTime: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
+                  className="w-full px-2 py-1.5 rounded-lg border border-slate-300 text-xs"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">TG hoàn tất *</label>
+                <label className="block text-slate-600 font-medium mb-1">TG hoàn tất *</label>
                 <input
                   type="datetime-local"
                   required
                   value={logisticsForm.completionTime}
                   onChange={(e) => setLogisticsForm({ ...logisticsForm, completionTime: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs"
+                  className="w-full px-2 py-1.5 rounded-lg border border-slate-300 text-xs"
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Nhiệt độ (°C) *</label>
+                <label className="block text-slate-600 font-medium mb-1">Nhiệt độ (°C) *</label>
                 <input
                   type="number"
                   step="0.1"
                   required
                   value={logisticsForm.temperature}
                   onChange={(e) => setLogisticsForm({ ...logisticsForm, temperature: Number(e.target.value) })}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                  className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Độ ẩm (%) *</label>
+                <label className="block text-slate-600 font-medium mb-1">Độ ẩm (%) *</label>
                 <input
                   type="number"
                   step="0.1"
                   required
                   value={logisticsForm.humidity}
                   onChange={(e) => setLogisticsForm({ ...logisticsForm, humidity: Number(e.target.value) })}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                  className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
                 />
               </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Ghi chú bảo quản</label>
+              <label className="block text-slate-600 font-medium mb-1">Ghi chú bảo quản</label>
               <input
                 type="text"
                 value={logisticsForm.storageNotes}
                 onChange={(e) => setLogisticsForm({ ...logisticsForm, storageNotes: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
               />
             </div>
           </div>
@@ -907,129 +814,119 @@ export default function SupplyChainPortalPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full py-3 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-sm transition shadow"
+            className="w-full py-2.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs transition"
           >
-            {submitting ? 'Đang ký giao dịch trên MetaMask...' : 'Ký & Ghi Blockchain (Xác nhận Vận chuyển)'}
+            {submitting ? 'Đang gửi giao dịch...' : 'Lưu & Ký Blockchain (Xác nhận Vận chuyển)'}
           </button>
         </form>
       )}
 
       {/* ========================================================================= */}
-      {/* 4. FORM DISTRIBUTOR (BẢNG 4 - TÀI LIỆU GỐC) */}
+      {/* FORM 4: DISTRIBUTOR (BẢNG 4) */}
       {/* ========================================================================= */}
       {role === 'DISTRIBUTOR' && (
-        <form onSubmit={submitDistributor} className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6">
-          <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-            <div className="p-2.5 rounded-xl bg-purple-100 text-purple-700">
-              <Store className="w-6 h-6" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-900">Bảng 4: Thông tin cung cấp bởi Distributor</h2>
-              <p className="text-xs text-slate-500">Tiếp nhận hàng hóa, kiểm tra số lượng/trọng lượng thực nhận</p>
-            </div>
-          </div>
+        <form onSubmit={submitDistributor} className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
+          <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide border-b pb-2">
+            Bảng 4: Thông tin cung cấp bởi Distributor (Đơn vị Phân phối)
+          </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Mã lô sản phẩm tiếp nhận *</label>
+              <label className="block text-slate-600 font-medium mb-1">Chọn Lô hàng đang vận chuyển *</label>
               <select
                 required
                 value={distributorForm.batchId}
                 onChange={(e) => setDistributorForm({ ...distributorForm, batchId: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm bg-white"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white"
               >
-                <option value="">-- Chọn lô hàng đang vận chuyển --</option>
-                {activeBatches
-                  .filter((b) => b.stage === 'IN_TRANSIT')
-                  .map((b) => (
-                    <option key={b.batchId} value={b.batchId}>
-                      {b.batchId} - {b.productName}
-                    </option>
-                  ))}
+                <option value="">-- Chọn lô tiếp nhận --</option>
+                {activeBatches.filter((b) => b.stage === 'IN_TRANSIT').map((b) => (
+                  <option key={b.batchId} value={b.batchId}>
+                    {b.batchId} - {b.productName}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Tên đơn vị phân phối *</label>
+              <label className="block text-slate-600 font-medium mb-1">Tên đơn vị phân phối *</label>
               <input
                 type="text"
                 required
-                placeholder="Tên cá nhân hoặc tổ chức phân phối"
                 value={distributorForm.distributorName}
                 onChange={(e) => setDistributorForm({ ...distributorForm, distributorName: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Thông tin liên hệ *</label>
+              <label className="block text-slate-600 font-medium mb-1">Thông tin liên hệ *</label>
               <input
                 type="text"
                 required
                 value={distributorForm.distributorContact}
                 onChange={(e) => setDistributorForm({ ...distributorForm, distributorContact: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Loại chủ thể phân phối *</label>
+              <label className="block text-slate-600 font-medium mb-1">Loại chủ thể *</label>
               <select
                 value={distributorForm.distributorType}
                 onChange={(e) => setDistributorForm({ ...distributorForm, distributorType: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm bg-white"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white"
               >
                 <option value="Tổ chức">Tổ chức</option>
                 <option value="Cá nhân">Cá nhân</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Thời gian tiếp nhận *</label>
+              <label className="block text-slate-600 font-medium mb-1">Thời gian tiếp nhận *</label>
               <input
                 type="datetime-local"
                 required
                 value={distributorForm.receivedTime}
                 onChange={(e) => setDistributorForm({ ...distributorForm, receivedTime: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                className="w-full px-2 py-1.5 rounded-lg border border-slate-300 text-xs"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Số lượng thực nhận *</label>
+                <label className="block text-slate-600 font-medium mb-1">Số lượng thực nhận *</label>
                 <input
                   type="number"
                   required
                   value={distributorForm.actualQuantity}
                   onChange={(e) => setDistributorForm({ ...distributorForm, actualQuantity: Number(e.target.value) })}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                  className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Trọng lượng nhận (kg) *</label>
+                <label className="block text-slate-600 font-medium mb-1">Trọng lượng thực nhận (kg) *</label>
                 <input
                   type="number"
                   required
                   value={distributorForm.actualWeight}
                   onChange={(e) => setDistributorForm({ ...distributorForm, actualWeight: Number(e.target.value) })}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
+                  className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
                 />
               </div>
             </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">Ghi chú tiếp nhận</label>
-            <textarea
-              rows={2}
-              value={distributorForm.receiptNotes}
-              onChange={(e) => setDistributorForm({ ...distributorForm, receiptNotes: e.target.value })}
-              className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm"
-            />
+            <div className="sm:col-span-2">
+              <label className="block text-slate-600 font-medium mb-1">Ghi chú tiếp nhận</label>
+              <input
+                type="text"
+                value={distributorForm.receiptNotes}
+                onChange={(e) => setDistributorForm({ ...distributorForm, receiptNotes: e.target.value })}
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
+              />
+            </div>
           </div>
 
           <button
             type="submit"
             disabled={submitting}
-            className="w-full py-3 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold text-sm transition shadow"
+            className="w-full py-2.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs transition"
           >
-            {submitting ? 'Đang ký giao dịch trên MetaMask...' : 'Ký & Ghi Blockchain (Tiếp nhận & Mở bán)'}
+            {submitting ? 'Đang gửi giao dịch...' : 'Lưu & Ký Blockchain (Tiếp nhận Phân phối)'}
           </button>
         </form>
       )}

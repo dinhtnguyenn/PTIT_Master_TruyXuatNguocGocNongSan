@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ShieldCheck, Wallet, ChevronRight, UserCheck, AlertCircle } from 'lucide-react';
+import { ShieldCheck, Wallet } from 'lucide-react';
 import { connectWallet, truncateAddress, getContract } from '../lib/web3';
-import { API_BASE_URL, ROLE_LABELS, ADMIN_ADDRESS } from '../lib/constants';
+import { API_BASE_URL, ADMIN_ADDRESS } from '../lib/constants';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -16,14 +16,11 @@ export default function Navbar() {
 
   async function checkUser(walletAddr: string) {
     try {
-      // 1. Kiểm tra nếu là Root Admin
       if (walletAddr.toLowerCase() === ADMIN_ADDRESS.toLowerCase()) {
         setRole('ADMIN');
         setStatus('APPROVED');
         return;
       }
-
-      // 2. Kiểm tra API Backend
       const res = await fetch(`${API_BASE_URL}/accounts/me/${walletAddr}`);
       if (res.ok) {
         const data = await res.json();
@@ -33,8 +30,6 @@ export default function Navbar() {
           return;
         }
       }
-
-      // 3. Kiểm tra trực tiếp trên Smart Contract
       try {
         const contract = await getContract(false);
         const onChainRole = await contract.getUserRole(walletAddr);
@@ -43,15 +38,10 @@ export default function Navbar() {
           setStatus('APPROVED');
           return;
         }
-      } catch (err) {
-        console.warn('Smart contract role read error:', err);
-      }
-
+      } catch (err) {}
       setRole(null);
       setStatus(null);
-    } catch (e) {
-      console.error(e);
-    }
+    } catch (e) {}
   }
 
   async function handleConnect() {
@@ -77,7 +67,7 @@ export default function Navbar() {
             checkUser(accounts[0]);
           }
         })
-        .catch(console.error);
+        .catch(() => {});
 
       window.ethereum.on('accountsChanged', (accounts: string[]) => {
         if (accounts.length > 0) {
@@ -93,33 +83,25 @@ export default function Navbar() {
   }, []);
 
   const navLinks = [
-    { href: '/', label: 'Trang chủ' },
-    { href: '/trace', label: 'Tra cứu QR' },
-    { href: '/portal', label: 'Cổng Chuỗi Cung Ứng' },
+    { href: '/trace', label: 'Tra cứu Nguồn gốc' },
+    { href: '/portal', label: 'Nhập liệu Chuỗi cung ứng' },
     { href: '/register', label: 'Đăng ký Ví' },
-    { href: '/admin', label: 'Quản trị (Admin)' },
+    { href: '/admin', label: 'Quản trị' },
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-slate-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo & Brand */}
-          <Link href="/" className="flex items-center gap-2.5">
-            <div className="bg-brand-600 text-white p-2 rounded-xl shadow-sm">
-              <ShieldCheck className="w-6 h-6" />
+    <header className="sticky top-0 z-50 bg-white border-b border-slate-200">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        <div className="flex justify-between items-center h-14">
+          <Link href="/" className="flex items-center gap-2">
+            <div className="bg-emerald-600 text-white p-1.5 rounded-lg">
+              <ShieldCheck className="w-5 h-5" />
             </div>
-            <div>
-              <span className="font-bold text-lg text-slate-900 tracking-tight block leading-tight">
-                PTIT <span className="text-brand-600">AgriTrace</span>
-              </span>
-              <span className="text-[10px] text-slate-600 font-medium tracking-wide uppercase block">
-                Truy xuất Nguồn gốc Blockchain
-              </span>
-            </div>
+            <span className="font-bold text-base text-slate-900 tracking-tight">
+              Agri<span className="text-emerald-600">Trace</span>
+            </span>
           </Link>
 
-          {/* Navigation Links */}
           <nav className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => {
               const active = pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href));
@@ -127,9 +109,9 @@ export default function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
                     active
-                      ? 'bg-brand-50 text-brand-700 font-semibold'
+                      ? 'bg-emerald-50 text-emerald-700'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                   }`}
                 >
@@ -139,27 +121,21 @@ export default function Navbar() {
             })}
           </nav>
 
-          {/* Wallet Connection */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {account ? (
               <div className="flex items-center gap-2">
-                {role ? (
+                {role && (
                   <span
-                    className={`text-xs px-2.5 py-1 rounded-full font-semibold border ${
+                    className={`text-[11px] px-2 py-0.5 rounded-md font-semibold ${
                       status === 'APPROVED'
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                        : 'bg-amber-50 text-amber-700 border-amber-200'
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        : 'bg-amber-50 text-amber-700 border border-amber-200'
                     }`}
                   >
                     {role} {status === 'PENDING' ? '(Chờ duyệt)' : ''}
                   </span>
-                ) : (
-                  <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-slate-100 text-slate-600">
-                    Chưa đăng ký
-                  </span>
                 )}
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-800 text-xs font-mono font-medium">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <div className="text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md font-mono">
                   {truncateAddress(account)}
                 </div>
               </div>
@@ -167,10 +143,10 @@ export default function Navbar() {
               <button
                 onClick={handleConnect}
                 disabled={isConnecting}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-95 text-white text-sm font-medium transition shadow-sm"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium transition"
               >
-                <Wallet className="w-4 h-4" />
-                {isConnecting ? 'Đang kết nối...' : 'Kết nối ví MetaMask'}
+                <Wallet className="w-3.5 h-3.5" />
+                {isConnecting ? 'Đang kết nối...' : 'Kết nối Ví'}
               </button>
             )}
           </div>
