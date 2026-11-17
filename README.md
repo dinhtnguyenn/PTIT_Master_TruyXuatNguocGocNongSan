@@ -23,10 +23,10 @@ Hệ thống được xây dựng theo **Kiến trúc Lưu trữ Lai (Hybrid On-
 | **Smart Contract** | Polygon Amoy Testnet | `0x68Af0988167fddD7Eb5CE70485EA41f3A4a582a6` |
 | **Blockchain Explorer** | Amoy PolygonScan | [Xem Hợp Đồng Trên PolygonScan](https://amoy.polygonscan.com/address/0x68Af0988167fddD7Eb5CE70485EA41f3A4a582a6) |
 | **RPC Network** | Polygon Amoy | `https://polygon-amoy.drpc.org` (Chain ID: `80002`) |
-| **Backend API** | Render.com (NestJS) | `https://<ten-app>.onrender.com/api` |
-| **Keep-alive Ping** | cron-job.com | `https://<ten-app>.onrender.com/ping` |
+| **Backend API** | Render.com (NestJS) | `https://ptit-agritrace-api.onrender.com/api` |
+| **Keep-alive Ping** | cron-job.com | `https://ptit-agritrace-api.onrender.com/ping` |
 | **Database** | Supabase Cloud | PostgreSQL (Connection Pooler IPv4) |
-| **Frontend Web** | Vercel (Next.js 14) | `https://<ten-app>.vercel.app` |
+| **Frontend Web** | Vercel (Next.js 14) | [https://ptit-master-truy-xuat-nguoc-goc-non.vercel.app/](https://ptit-master-truy-xuat-nguoc-goc-non.vercel.app/) |
 
 ---
 
