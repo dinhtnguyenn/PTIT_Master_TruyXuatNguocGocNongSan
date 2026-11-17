@@ -2,13 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, QrCode, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Search, QrCode, ArrowRight } from 'lucide-react';
 import { API_BASE_URL, STAGE_LABELS } from '../lib/constants';
+import QrScannerModal from '../components/QrScannerModal';
 
 export default function HomePage() {
   const [batches, setBatches] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   useEffect(() => {
     async function loadBatches() {
@@ -40,7 +42,7 @@ export default function HomePage() {
           Tra Cứu Nguồn Gốc Nông Sản
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto">
-          Nhập mã lô sản phẩm hoặc quét mã QR trên bao bì để kiểm tra thông tin xuất xứ và xác thực trên Blockchain.
+          Nhập mã lô sản phẩm hoặc bấm quét tem QR trên bao bì để kiểm tra xuất xứ và xác thực trên Blockchain.
         </p>
 
         <div className="max-w-xl mx-auto flex gap-2 pt-2">
@@ -54,6 +56,16 @@ export default function HomePage() {
               className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm"
             />
           </div>
+
+          {/* Nút Quét mã QR */}
+          <button
+            type="button"
+            onClick={() => setIsScannerOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-emerald-600 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-semibold transition shadow-sm"
+          >
+            <QrCode className="w-4 h-4 text-emerald-600" /> Quét QR
+          </button>
+
           {searchTerm && (
             <Link
               href={`/trace/${searchTerm.trim()}`}
@@ -140,6 +152,12 @@ export default function HomePage() {
           </div>
         )}
       </div>
+
+      {/* QR Scanner Modal */}
+      <QrScannerModal
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+      />
     </div>
   );
 }
