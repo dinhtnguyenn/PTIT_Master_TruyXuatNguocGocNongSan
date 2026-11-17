@@ -1,4 +1,4 @@
-import deploymentData from '../../../shared/contract-deployment.json';
+import deploymentData from './contract-deployment.json';
 import { ethers } from 'ethers';
 
 const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ptit-agritrace-api.onrender.com/api';
