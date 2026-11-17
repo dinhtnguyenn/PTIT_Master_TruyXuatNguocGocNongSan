@@ -23,6 +23,20 @@ async function bootstrap() {
   );
 
   // Tiền tố API chung (loại trừ ping để có thể gọi trực tiếp /ping)
+  // Tự động điều hướng các request thiếu /api (e.g. /accounts, /batches, /upload) về /api/...
+  app.use((req: any, res: any, next: any) => {
+    const path = (req.originalUrl || req.url || '').split('?')[0];
+    if (
+      path.startsWith('/accounts') ||
+      path.startsWith('/batches') ||
+      path === '/upload' ||
+      path.startsWith('/upload/')
+    ) {
+      req.url = '/api' + req.url;
+    }
+    next();
+  });
+
   app.setGlobalPrefix('api', {
     exclude: ['ping'],
   });

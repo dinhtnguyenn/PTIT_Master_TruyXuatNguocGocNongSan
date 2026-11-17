@@ -1,7 +1,9 @@
 import deploymentData from '../../../shared/contract-deployment.json';
 import { ethers } from 'ethers';
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://ptit-agritrace-api.onrender.com/api';
+const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://ptit-agritrace-api.onrender.com/api';
+const cleanUrl = rawApiUrl.replace(/\/+$/, '');
+export const API_BASE_URL = cleanUrl.endsWith('/api') ? cleanUrl : `${cleanUrl}/api`;
 export const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || deploymentData.contractAddress;
 export const CONTRACT_ABI = deploymentData.abi;
 export const ADMIN_ADDRESS = deploymentData.adminAddress;

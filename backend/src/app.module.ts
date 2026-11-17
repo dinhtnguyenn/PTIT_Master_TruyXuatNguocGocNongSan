@@ -14,6 +14,10 @@ import { AppController } from './app.controller';
       rootPath: join(__dirname, '..', 'uploads'),
       serveRoot: '/uploads',
     }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'),
+      serveRoot: '/api/uploads',
+    }),
     AccountsModule,
     BatchesModule,
   ],
