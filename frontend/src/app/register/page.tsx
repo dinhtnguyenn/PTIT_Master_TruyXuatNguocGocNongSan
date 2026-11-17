@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Wallet, CheckCircle2, Clock, AlertTriangle, ArrowRight } from 'lucide-react';
-import { connectWallet, truncateAddress } from '../../lib/web3';
+import { connectWallet, truncateAddress, isWalletDisconnected } from '../../lib/web3';
 import { API_BASE_URL, ROLE_LABELS } from '../../lib/constants';
 
 export default function RegisterPage() {
@@ -40,11 +40,15 @@ export default function RegisterPage() {
   }
 
   useEffect(() => {
+    if (isWalletDisconnected()) {
+      return;
+    }
+
     if (typeof window !== 'undefined' && window.ethereum) {
       window.ethereum
         .request({ method: 'eth_accounts' })
         .then((accounts: string[]) => {
-          if (accounts.length > 0) {
+          if (accounts.length > 0 && !isWalletDisconnected()) {
             setAccount(accounts[0]);
             checkExisting(accounts[0]);
           }
@@ -52,6 +56,7 @@ export default function RegisterPage() {
         .catch(() => {});
 
       window.ethereum.on('accountsChanged', (accounts: string[]) => {
+        if (isWalletDisconnected()) return;
         if (accounts.length > 0) {
           setAccount(accounts[0]);
           checkExisting(accounts[0]);
@@ -61,6 +66,25 @@ export default function RegisterPage() {
         }
       });
     }
+
+    function onDisconnected() {
+      setAccount(null);
+      setExistingAccount(null);
+    }
+
+    function onConnected(e: any) {
+      if (e.detail) {
+        setAccount(e.detail);
+        checkExisting(e.detail);
+      }
+    }
+
+    window.addEventListener('wallet_disconnected', onDisconnected);
+    window.addEventListener('wallet_connected', onConnected);
+    return () => {
+      window.removeEventListener('wallet_disconnected', onDisconnected);
+      window.removeEventListener('wallet_connected', onConnected);
+    };
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {

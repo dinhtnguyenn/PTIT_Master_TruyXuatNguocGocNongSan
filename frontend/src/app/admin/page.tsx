@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Users, BarChart3, Wallet, RefreshCw } from 'lucide-react';
-import { connectWallet, getContract, truncateAddress } from '../../lib/web3';
+import { connectWallet, getContract, truncateAddress, isWalletDisconnected } from '../../lib/web3';
 import { API_BASE_URL, ROLE_HASHES, ROLE_LABELS, ADMIN_ADDRESS } from '../../lib/constants';
 
 export default function AdminPage() {
@@ -38,22 +38,40 @@ export default function AdminPage() {
   }
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.ethereum) {
+    if (isWalletDisconnected()) {
+      setLoading(false);
+    } else if (typeof window !== 'undefined' && window.ethereum) {
       window.ethereum
         .request({ method: 'eth_accounts' })
         .then((accs: string[]) => {
-          if (accs.length > 0) checkAdmin(accs[0]);
+          if (accs.length > 0 && !isWalletDisconnected()) checkAdmin(accs[0]);
           else setLoading(false);
         })
         .catch(() => setLoading(false));
 
       window.ethereum.on('accountsChanged', (accs: string[]) => {
+        if (isWalletDisconnected()) return;
         if (accs.length > 0) checkAdmin(accs[0]);
         else setAccount(null);
       });
     } else {
       setLoading(false);
     }
+
+    function onDisconnected() {
+      setAccount(null);
+    }
+
+    function onConnected(e: any) {
+      if (e.detail) checkAdmin(e.detail);
+    }
+
+    window.addEventListener('wallet_disconnected', onDisconnected);
+    window.addEventListener('wallet_connected', onConnected);
+    return () => {
+      window.removeEventListener('wallet_disconnected', onDisconnected);
+      window.removeEventListener('wallet_connected', onConnected);
+    };
   }, [filterStatus]);
 
   async function handleConnect() {

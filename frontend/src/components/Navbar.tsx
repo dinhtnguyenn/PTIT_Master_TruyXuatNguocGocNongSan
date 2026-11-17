@@ -2,13 +2,20 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { ShieldCheck, Wallet } from 'lucide-react';
-import { connectWallet, truncateAddress, getContract } from '../lib/web3';
+import { usePathname, useRouter } from 'next/navigation';
+import { ShieldCheck, Wallet, LogOut } from 'lucide-react';
+import {
+  connectWallet,
+  disconnectWallet,
+  isWalletDisconnected,
+  truncateAddress,
+  getContract,
+} from '../lib/web3';
 import { API_BASE_URL, ADMIN_ADDRESS } from '../lib/constants';
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [account, setAccount] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -57,12 +64,25 @@ export default function Navbar() {
     }
   }
 
+  function handleLogout() {
+    disconnectWallet();
+    setAccount(null);
+    setRole(null);
+    setStatus(null);
+    router.push('/');
+  }
+
   useEffect(() => {
+    // Nếu người dùng đã bấm Đăng xuất trước đó, không tự động nhận diện lại
+    if (isWalletDisconnected()) {
+      return;
+    }
+
     if (typeof window !== 'undefined' && window.ethereum) {
       window.ethereum
         .request({ method: 'eth_accounts' })
         .then((accounts: string[]) => {
-          if (accounts.length > 0) {
+          if (accounts.length > 0 && !isWalletDisconnected()) {
             setAccount(accounts[0]);
             checkUser(accounts[0]);
           }
@@ -70,6 +90,7 @@ export default function Navbar() {
         .catch(() => {});
 
       window.ethereum.on('accountsChanged', (accounts: string[]) => {
+        if (isWalletDisconnected()) return;
         if (accounts.length > 0) {
           setAccount(accounts[0]);
           checkUser(accounts[0]);
@@ -80,6 +101,17 @@ export default function Navbar() {
         }
       });
     }
+
+    function onDisconnected() {
+      setAccount(null);
+      setRole(null);
+      setStatus(null);
+    }
+
+    window.addEventListener('wallet_disconnected', onDisconnected);
+    return () => {
+      window.removeEventListener('wallet_disconnected', onDisconnected);
+    };
   }, []);
 
   const navLinks = [
@@ -138,6 +170,14 @@ export default function Navbar() {
                 <div className="text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md font-mono">
                   {truncateAddress(account)}
                 </div>
+                <button
+                  onClick={handleLogout}
+                  title="Đăng xuất khỏi phiên làm việc"
+                  className="flex items-center gap-1 text-[11px] px-2.5 py-1 text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-md transition font-medium border border-slate-200"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Đăng xuất</span>
+                </button>
               </div>
             ) : (
               <button

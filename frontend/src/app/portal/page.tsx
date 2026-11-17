@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Wallet, CheckCircle2, Clock, ArrowRight } from 'lucide-react';
-import { connectWallet, getContract, truncateAddress } from '../../lib/web3';
+import { connectWallet, getContract, truncateAddress, isWalletDisconnected } from '../../lib/web3';
 import { API_BASE_URL, ROLE_LABELS, ADMIN_ADDRESS } from '../../lib/constants';
 
 export default function SupplyChainPortalPage() {
@@ -138,11 +138,13 @@ export default function SupplyChainPortalPage() {
   }
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.ethereum) {
+    if (isWalletDisconnected()) {
+      setLoading(false);
+    } else if (typeof window !== 'undefined' && window.ethereum) {
       window.ethereum
         .request({ method: 'eth_accounts' })
         .then((accounts: string[]) => {
-          if (accounts.length > 0) {
+          if (accounts.length > 0 && !isWalletDisconnected()) {
             setAccount(accounts[0]);
             loadUser(accounts[0]);
           } else {
@@ -152,6 +154,7 @@ export default function SupplyChainPortalPage() {
         .catch(() => setLoading(false));
 
       window.ethereum.on('accountsChanged', (accounts: string[]) => {
+        if (isWalletDisconnected()) return;
         if (accounts.length > 0) {
           setAccount(accounts[0]);
           loadUser(accounts[0]);
@@ -163,6 +166,25 @@ export default function SupplyChainPortalPage() {
     } else {
       setLoading(false);
     }
+
+    function onDisconnected() {
+      setAccount(null);
+      setUserData(null);
+    }
+
+    function onConnected(e: any) {
+      if (e.detail) {
+        setAccount(e.detail);
+        loadUser(e.detail);
+      }
+    }
+
+    window.addEventListener('wallet_disconnected', onDisconnected);
+    window.addEventListener('wallet_connected', onConnected);
+    return () => {
+      window.removeEventListener('wallet_disconnected', onDisconnected);
+      window.removeEventListener('wallet_connected', onConnected);
+    };
   }, []);
 
   // 1. Submit Producer Form

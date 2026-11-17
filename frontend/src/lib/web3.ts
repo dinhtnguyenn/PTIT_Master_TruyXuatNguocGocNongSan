@@ -7,10 +7,6 @@ declare global {
   }
 }
 
-/**
- * Chuẩn hóa đối tượng thành chuỗi JSON sắp xếp theo thứ tự key,
- * đảm bảo giá trị hash khớp 100% giữa Frontend và Backend.
- */
 export function canonicalizeJson(obj: any): string {
   if (obj === null || typeof obj !== 'object') {
     return JSON.stringify(obj);
@@ -25,9 +21,6 @@ export function canonicalizeJson(obj: any): string {
   return '{' + pairs.join(',') + '}';
 }
 
-/**
- * Tính toán mã băm SHA-256 từ payload dữ liệu
- */
 export function computeSha256(data: any): string {
   const canonicalString = canonicalizeJson(data);
   return ethers.sha256(ethers.toUtf8Bytes(canonicalString));
@@ -37,7 +30,6 @@ export async function getProvider() {
   if (typeof window !== 'undefined' && window.ethereum) {
     return new ethers.BrowserProvider(window.ethereum);
   }
-  // Fallback đọc dữ liệu qua RPC công khai nếu người dùng không cài ví
   return new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_RPC_URL || 'https://polygon-amoy.drpc.org');
 }
 
@@ -59,9 +51,29 @@ export async function getContract(withSigner = false) {
   return new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
 }
 
+// Kiểm tra cờ ngắt kết nối trong localStorage
+export function isWalletDisconnected(): boolean {
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem('wallet_disconnected') === 'true';
+}
+
 export async function connectWallet(): Promise<string> {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('wallet_disconnected');
+  }
   const signer = await getSigner();
-  return signer.getAddress();
+  const addr = await signer.getAddress();
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('wallet_connected', { detail: addr }));
+  }
+  return addr;
+}
+
+export function disconnectWallet() {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('wallet_disconnected', 'true');
+    window.dispatchEvent(new Event('wallet_disconnected'));
+  }
 }
 
 export function truncateAddress(address: string): string {
