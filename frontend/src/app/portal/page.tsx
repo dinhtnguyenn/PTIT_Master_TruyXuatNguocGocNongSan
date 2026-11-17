@@ -81,7 +81,11 @@ export default function SupplyChainPortalPage() {
       const res = await fetch(`${API_BASE_URL}/accounts/me/${addr}`);
       if (res.ok) {
         const data = await res.json();
-        setUserData(data);
+        if (data && data.status) {
+          setUserData(data);
+        } else {
+          setUserData(null);
+        }
       } else {
         setUserData(null);
       }

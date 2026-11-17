@@ -27,16 +27,42 @@ export function computeSha256(data: any): string {
 }
 
 export async function getProvider() {
-  if (typeof window !== 'undefined' && window.ethereum) {
-    return new ethers.BrowserProvider(window.ethereum);
+  const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || 'https://polygon-amoy.drpc.org';
+  return new ethers.JsonRpcProvider(rpcUrl);
+}
+
+export async function ensurePolygonAmoyNetwork() {
+  if (typeof window === 'undefined' || !window.ethereum) return;
+  try {
+    await window.ethereum.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: '0x13882' }],
+    });
+  } catch (switchError: any) {
+    if (switchError.code === 4902 || switchError?.data?.originalError?.code === 4902) {
+      try {
+        await window.ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [
+            {
+              chainId: '0x13882',
+              chainName: 'Polygon Amoy Testnet',
+              nativeCurrency: { name: 'POL', symbol: 'POL', decimals: 18 },
+              rpcUrls: ['https://polygon-amoy.drpc.org'],
+              blockExplorerUrls: ['https://amoy.polygonscan.com/'],
+            },
+          ],
+        });
+      } catch (addError) {}
+    }
   }
-  return new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_RPC_URL || 'https://polygon-amoy.drpc.org');
 }
 
 export async function getSigner() {
   if (typeof window === 'undefined' || !window.ethereum) {
     throw new Error('Vui lòng cài đặt tiện ích ví MetaMask trên trình duyệt!');
   }
+  await ensurePolygonAmoyNetwork();
   const provider = new ethers.BrowserProvider(window.ethereum);
   await provider.send('eth_requestAccounts', []);
   return provider.getSigner();
@@ -47,6 +73,7 @@ export async function getContract(withSigner = false) {
     const signer = await getSigner();
     return new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
   }
+  // Cho thao tác đọc (read-only): luôn dùng RPC chính thức của Polygon Amoy để xác thực toàn vẹn
   const provider = await getProvider();
   return new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
 }

@@ -13,6 +13,25 @@ import QRCode from 'qrcode';
 import { API_BASE_URL, STAGE_LABELS, CONTRACT_ADDRESS } from '../../../lib/constants';
 import { getContract, truncateAddress } from '../../../lib/web3';
 
+function formatImageUrl(url?: string | null): string {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  const host = API_BASE_URL.replace(/\/api\/?$/, '');
+  return `${host}${url.startsWith('/') ? '' : '/'}${url}`;
+}
+
+function formatDate(dateValue?: any): string {
+  if (!dateValue) return 'Chưa cập nhật';
+  const d = new Date(dateValue);
+  return isNaN(d.getTime()) ? 'Chưa cập nhật' : d.toLocaleDateString('vi-VN');
+}
+
+function formatDateTime(dateValue?: any): string {
+  if (!dateValue) return 'Chưa cập nhật';
+  const d = new Date(dateValue);
+  return isNaN(d.getTime()) ? 'Chưa cập nhật' : d.toLocaleString('vi-VN');
+}
+
 export default function TraceDetailPage() {
   const params = useParams();
   const batchId = params?.batchId as string;
@@ -41,16 +60,36 @@ export default function TraceDetailPage() {
         const qrUrl = await QRCode.toDataURL(currentUrl, { width: 200, margin: 1 });
         setQrDataUrl(qrUrl);
 
-        // Đối chiếu với Smart Contract
+        // Đối chiếu với Smart Contract trên Polygon Amoy
         try {
           const contract = await getContract(false);
           const proof = await contract.getBatchProof(batchId);
+          let isValid = false;
           if (
             data.producerDataHash &&
             proof.production.dataHash.toLowerCase() === data.producerDataHash.toLowerCase()
           ) {
-            setVerified(true);
+            isValid = true;
           }
+          if (
+            data.inspectorDataHash &&
+            proof.inspection.dataHash.toLowerCase() !== data.inspectorDataHash.toLowerCase()
+          ) {
+            isValid = false;
+          }
+          if (
+            data.logisticsDataHash &&
+            proof.logistics.dataHash.toLowerCase() !== data.logisticsDataHash.toLowerCase()
+          ) {
+            isValid = false;
+          }
+          if (
+            data.distributorDataHash &&
+            proof.distribution.dataHash.toLowerCase() !== data.distributorDataHash.toLowerCase()
+          ) {
+            isValid = false;
+          }
+          setVerified(isValid);
         } catch (err) {}
       } catch (err) {
       } finally {
@@ -151,10 +190,20 @@ export default function TraceDetailPage() {
       <div className="space-y-5">
         {/* BẢNG 1: THÔNG TIN SẢN XUẤT (PRODUCER) */}
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-          <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200">
+          <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200 flex justify-between items-center">
             <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
               Bảng 1: Thông tin cung cấp bởi Producer (Đơn vị Sản xuất)
             </h2>
+            {batch.producerTxHash && (
+              <a
+                href={`https://amoy.polygonscan.com/tx/${batch.producerTxHash}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-[11px] font-mono text-emerald-700 hover:underline flex items-center gap-1"
+              >
+                <ExternalLink className="w-3 h-3" /> Tx On-chain
+              </a>
+            )}
           </div>
           <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-700">
             <p><span className="text-slate-400 font-medium">Mã lô sản phẩm:</span> <strong className="font-mono">{batch.batchId}</strong></p>
@@ -164,8 +213,8 @@ export default function TraceDetailPage() {
             <p><span className="text-slate-400 font-medium">Trọng lượng:</span> {batch.weight} kg</p>
             <p><span className="text-slate-400 font-medium">Nguồn gốc giống:</span> {batch.seedOrigin}</p>
             <p><span className="text-slate-400 font-medium">Địa điểm sản xuất:</span> {batch.productionLocation}</p>
-            <p><span className="text-slate-400 font-medium">Ngày bắt đầu canh tác:</span> {new Date(batch.cultivationStartDate).toLocaleDateString('vi-VN')}</p>
-            <p><span className="text-slate-400 font-medium">Ngày thu hoạch:</span> {new Date(batch.harvestDate).toLocaleDateString('vi-VN')}</p>
+            <p><span className="text-slate-400 font-medium">Ngày bắt đầu canh tác:</span> {formatDate(batch.cultivationStartDate)}</p>
+            <p><span className="text-slate-400 font-medium">Ngày thu hoạch:</span> {formatDate(batch.harvestDate)}</p>
             <p><span className="text-slate-400 font-medium">Ví Producer:</span> <span className="font-mono">{truncateAddress(batch.producerWallet)}</span></p>
             <div className="sm:col-span-2 pt-1 border-t border-slate-100">
               <span className="text-slate-400 font-medium">Vật tư nông nghiệp:</span> {batch.farmingSupplies}
@@ -173,7 +222,7 @@ export default function TraceDetailPage() {
             {batch.productImageUrl && (
               <div className="sm:col-span-2 pt-2">
                 <span className="text-slate-400 font-medium block mb-1">Ảnh nông sản / ruộng trồng:</span>
-                <img src={batch.productImageUrl} alt="Ảnh sản phẩm" className="h-32 object-cover rounded-lg border border-slate-200" />
+                <img src={formatImageUrl(batch.productImageUrl)} alt="Ảnh sản phẩm" className="h-32 object-cover rounded-lg border border-slate-200" />
               </div>
             )}
           </div>
@@ -181,10 +230,20 @@ export default function TraceDetailPage() {
 
         {/* BẢNG 2: THÔNG TIN KIỂM ĐỊNH (INSPECTOR) */}
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-          <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200">
+          <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200 flex justify-between items-center">
             <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
               Bảng 2: Thông tin cung cấp bởi Inspector (Đơn vị Kiểm định)
             </h2>
+            {batch.inspectorTxHash && (
+              <a
+                href={`https://amoy.polygonscan.com/tx/${batch.inspectorTxHash}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-[11px] font-mono text-emerald-700 hover:underline flex items-center gap-1"
+              >
+                <ExternalLink className="w-3 h-3" /> Tx On-chain
+              </a>
+            )}
           </div>
           {batch.inspectionResult ? (
             <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-700">
@@ -193,13 +252,13 @@ export default function TraceDetailPage() {
               <p><span className="text-slate-400 font-medium">Mã chứng nhận:</span> <strong className="font-mono">{batch.certificateCode}</strong></p>
               <p><span className="text-slate-400 font-medium">Loại chứng nhận:</span> {batch.certificateType}</p>
               <p><span className="text-slate-400 font-medium">Cơ quan cấp:</span> {batch.issuingAuthority}</p>
-              <p><span className="text-slate-400 font-medium">Ngày cấp:</span> {new Date(batch.issuedDate).toLocaleDateString('vi-VN')}</p>
-              <p><span className="text-slate-400 font-medium">Ngày hết hạn:</span> {new Date(batch.expiryDate).toLocaleDateString('vi-VN')}</p>
+              <p><span className="text-slate-400 font-medium">Ngày cấp:</span> {formatDate(batch.issuedDate)}</p>
+              <p><span className="text-slate-400 font-medium">Ngày hết hạn:</span> {formatDate(batch.expiryDate)}</p>
               <p><span className="text-slate-400 font-medium">Ví Inspector:</span> <span className="font-mono">{truncateAddress(batch.inspectorWallet)}</span></p>
               {batch.certImageUrl && (
                 <div className="sm:col-span-2 pt-2 border-t border-slate-100">
                   <span className="text-slate-400 font-medium block mb-1">Ảnh giấy chứng nhận:</span>
-                  <img src={batch.certImageUrl} alt="Chứng nhận" className="h-32 object-cover rounded-lg border border-slate-200" />
+                  <img src={formatImageUrl(batch.certImageUrl)} alt="Chứng nhận" className="h-32 object-cover rounded-lg border border-slate-200" />
                 </div>
               )}
             </div>
@@ -210,10 +269,20 @@ export default function TraceDetailPage() {
 
         {/* BẢNG 3: THÔNG TIN VẬN CHUYỂN (LOGISTICS) */}
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-          <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200">
+          <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200 flex justify-between items-center">
             <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
               Bảng 3: Thông tin cung cấp bởi Logistics (Đơn vị Vận chuyển)
             </h2>
+            {batch.logisticsTxHash && (
+              <a
+                href={`https://amoy.polygonscan.com/tx/${batch.logisticsTxHash}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-[11px] font-mono text-emerald-700 hover:underline flex items-center gap-1"
+              >
+                <ExternalLink className="w-3 h-3" /> Tx On-chain
+              </a>
+            )}
           </div>
           {batch.transporterName ? (
             <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-700">
@@ -223,8 +292,8 @@ export default function TraceDetailPage() {
               <p><span className="text-slate-400 font-medium">Mã vận chuyển:</span> <strong className="font-mono">{batch.shippingCode}</strong></p>
               <p><span className="text-slate-400 font-medium">Điểm đi:</span> {batch.originLocation}</p>
               <p><span className="text-slate-400 font-medium">Điểm đến:</span> {batch.destLocation}</p>
-              <p><span className="text-slate-400 font-medium">Thời gian khởi hành:</span> {new Date(batch.departureTime).toLocaleString('vi-VN')}</p>
-              <p><span className="text-slate-400 font-medium">Thời gian hoàn tất:</span> {new Date(batch.completionTime).toLocaleString('vi-VN')}</p>
+              <p><span className="text-slate-400 font-medium">Thời gian khởi hành:</span> {formatDateTime(batch.departureTime)}</p>
+              <p><span className="text-slate-400 font-medium">Thời gian hoàn tất:</span> {formatDateTime(batch.completionTime)}</p>
               <p><span className="text-slate-400 font-medium">Nhiệt độ:</span> {batch.temperature}°C</p>
               <p><span className="text-slate-400 font-medium">Độ ẩm:</span> {batch.humidity}%</p>
               <p className="sm:col-span-2"><span className="text-slate-400 font-medium">Ghi chú bảo quản:</span> {batch.storageNotes || 'Không'}</p>
@@ -236,17 +305,27 @@ export default function TraceDetailPage() {
 
         {/* BẢNG 4: THÔNG TIN PHÂN PHỐI (DISTRIBUTOR) */}
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-          <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200">
+          <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200 flex justify-between items-center">
             <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
               Bảng 4: Thông tin cung cấp bởi Distributor (Đơn vị Phân phối)
             </h2>
+            {batch.distributorTxHash && (
+              <a
+                href={`https://amoy.polygonscan.com/tx/${batch.distributorTxHash}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-[11px] font-mono text-emerald-700 hover:underline flex items-center gap-1"
+              >
+                <ExternalLink className="w-3 h-3" /> Tx On-chain
+              </a>
+            )}
           </div>
           {batch.distributorName ? (
             <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-700">
               <p><span className="text-slate-400 font-medium">Tên đơn vị phân phối:</span> {batch.distributorName}</p>
               <p><span className="text-slate-400 font-medium">Thông tin liên hệ:</span> {batch.distributorContact}</p>
               <p><span className="text-slate-400 font-medium">Loại chủ thể:</span> {batch.distributorType}</p>
-              <p><span className="text-slate-400 font-medium">Thời gian tiếp nhận:</span> {new Date(batch.receivedTime).toLocaleString('vi-VN')}</p>
+              <p><span className="text-slate-400 font-medium">Thời gian tiếp nhận:</span> {formatDateTime(batch.receivedTime)}</p>
               <p><span className="text-slate-400 font-medium">Số lượng thực nhận:</span> {batch.actualQuantity}</p>
               <p><span className="text-slate-400 font-medium">Trọng lượng thực nhận:</span> {batch.actualWeight} kg</p>
               <p className="sm:col-span-2"><span className="text-slate-400 font-medium">Ghi chú tiếp nhận:</span> {batch.receiptNotes}</p>

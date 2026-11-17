@@ -31,7 +31,7 @@ export default function Navbar() {
       const res = await fetch(`${API_BASE_URL}/accounts/me/${walletAddr}`);
       if (res.ok) {
         const data = await res.json();
-        if (data) {
+        if (data && data.status) {
           setRole(data.role);
           setStatus(data.status);
           return;

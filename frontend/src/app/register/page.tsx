@@ -22,7 +22,11 @@ export default function RegisterPage() {
       const res = await fetch(`${API_BASE_URL}/accounts/me/${addr}`);
       if (res.ok) {
         const data = await res.json();
-        setExistingAccount(data);
+        if (data && data.status) {
+          setExistingAccount(data);
+        } else {
+          setExistingAccount(null);
+        }
       } else {
         setExistingAccount(null);
       }

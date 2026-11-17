@@ -177,6 +177,12 @@ export default function AdminPage() {
         </div>
       </div>
 
+      {account && account.toLowerCase() !== ADMIN_ADDRESS.toLowerCase() && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
+          <strong>Lưu ý:</strong> Ví đang kết nối (<span className="font-mono">{truncateAddress(account)}</span>) khác với địa chỉ Root Admin triển khai Smart Contract (<span className="font-mono">{truncateAddress(ADMIN_ADDRESS)}</span>). Vui lòng chuyển sang ví Root Admin trên MetaMask để thực hiện cấp quyền On-chain.
+        </div>
+      )}
+
       {/* TAB 1: DUYỆT TÀI KHOẢN */}
       {activeTab === 'APPROVAL' && (
         <div className="space-y-4">

@@ -13,8 +13,9 @@ export class AccountsController {
   }
 
   @Get('me/:walletAddress')
-  getMe(@Param('walletAddress') walletAddress: string) {
-    return this.accountsService.getByWallet(walletAddress);
+  async getMe(@Param('walletAddress') walletAddress: string) {
+    const account = await this.accountsService.getByWallet(walletAddress);
+    return account || { exists: false, role: null };
   }
 
   @Get('stats')
