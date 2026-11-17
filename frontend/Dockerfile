@@ -6,6 +6,7 @@ COPY package*.json ./
 RUN npm install
 
 COPY . .
+RUN mkdir -p public
 
 ARG NEXT_PUBLIC_API_URL=http://180.93.136.201/api
 ARG NEXT_PUBLIC_CONTRACT_ADDRESS=0x68Af0988167fddD7Eb5CE70485EA41f3A4a582a6
