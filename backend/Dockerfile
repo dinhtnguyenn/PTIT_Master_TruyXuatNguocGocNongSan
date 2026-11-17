@@ -36,4 +36,4 @@ RUN mkdir -p uploads
 
 EXPOSE 4000
 
-CMD ["sh", "-c", "npx prisma db push && node dist/main.js"]
+CMD ["sh", "-c", "until npx prisma db push; do echo 'Waiting for database...'; sleep 2; done; node dist/main.js"]
