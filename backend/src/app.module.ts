@@ -6,6 +6,8 @@ import { AccountsModule } from './accounts/accounts.module';
 import { BatchesModule } from './batches/batches.module';
 import { UploadController } from './upload/upload.controller';
 
+import { AppController } from './app.controller';
+
 @Module({
   imports: [
     ServeStaticModule.forRoot({
@@ -15,7 +17,7 @@ import { UploadController } from './upload/upload.controller';
     AccountsModule,
     BatchesModule,
   ],
-  controllers: [UploadController],
+  controllers: [AppController, UploadController],
   providers: [PrismaService],
 })
 export class AppModule {}

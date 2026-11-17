@@ -22,8 +22,10 @@ async function bootstrap() {
     }),
   );
 
-  // Tiền tố API chung
-  app.setGlobalPrefix('api');
+  // Tiền tố API chung (loại trừ ping để có thể gọi trực tiếp /ping)
+  app.setGlobalPrefix('api', {
+    exclude: ['ping'],
+  });
 
   // Cấu hình tài liệu Swagger UI
   const config = new DocumentBuilder()
