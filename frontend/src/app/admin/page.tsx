@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, BarChart3, Wallet, RefreshCw } from 'lucide-react';
 import { connectWallet, getContract, truncateAddress, isWalletDisconnected, getGasOverrides } from '../../lib/web3';
-import { API_BASE_URL, ROLE_HASHES, ROLE_LABELS, ADMIN_ADDRESS } from '../../lib/constants';
+import { API_BASE_URL, ROLE_HASHES, ROLE_LABELS, ADMIN_ADDRESS, isAdminAddress } from '../../lib/constants';
 
 export default function AdminPage() {
   const [account, setAccount] = useState<string | null>(null);
@@ -178,9 +178,9 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {account && account.toLowerCase() !== ADMIN_ADDRESS.toLowerCase() && (
+      {account && !isAdminAddress(account) && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
-          <strong>Lưu ý:</strong> Ví đang kết nối (<span className="font-mono">{truncateAddress(account)}</span>) khác với địa chỉ Root Admin triển khai Smart Contract (<span className="font-mono">{truncateAddress(ADMIN_ADDRESS)}</span>). Vui lòng chuyển sang ví Root Admin trên MetaMask để thực hiện cấp quyền On-chain.
+          <strong>Lưu ý:</strong> Ví đang kết nối (<span className="font-mono">{truncateAddress(account)}</span>) chưa được cấp quyền Root Admin trên Smart Contract. Vui lòng chuyển sang ví Admin trên MetaMask để thực hiện cấp quyền On-chain.
         </div>
       )}
 

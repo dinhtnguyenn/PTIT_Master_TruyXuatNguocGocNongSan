@@ -11,7 +11,7 @@ import {
   truncateAddress,
   getContract,
 } from '../lib/web3';
-import { API_BASE_URL, ADMIN_ADDRESS } from '../lib/constants';
+import { API_BASE_URL, ADMIN_ADDRESS, isAdminAddress } from '../lib/constants';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -23,7 +23,7 @@ export default function Navbar() {
 
   async function checkUser(walletAddr: string) {
     try {
-      if (walletAddr.toLowerCase() === ADMIN_ADDRESS.toLowerCase()) {
+      if (isAdminAddress(walletAddr)) {
         setRole('ADMIN');
         setStatus('APPROVED');
         return;
