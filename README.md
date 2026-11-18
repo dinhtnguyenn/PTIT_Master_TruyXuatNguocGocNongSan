@@ -35,7 +35,7 @@ Hệ thống **AgriTrace** được xây dựng theo **Kiến trúc Lưu trữ L
 
 ## 🏗️ 3. Kiến Trúc Hạ Tầng & CI/CD Tự Động
 
-Toàn bộ hệ thống được container hóa bằng **Docker Compose** và vận hành trên VPS độc lập, loại bỏ hoàn toàn phụ thuộc vào các dịch vụ giới hạn như Render:
+Toàn bộ hệ thống được container hóa bằng **Docker Compose** và vận hành trên VPS độc lập, đảm bảo hiệu năng cao, ổn định lâu dài và không bị giới hạn:
 
 ```
 [Internet User / Browser]
