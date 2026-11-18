@@ -10,6 +10,7 @@ export default function RegisterPage() {
   const [account, setAccount] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     role: 'PRODUCER',
+    roles: ['PRODUCER'] as string[],
     organizationName: '',
     contactInfo: '',
   });
@@ -106,7 +107,8 @@ export default function RegisterPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           walletAddress: account,
-          role: formData.role,
+          roles: formData.roles,
+          role: formData.roles[0] || 'PRODUCER',
           organizationName: formData.organizationName,
           contactInfo: formData.contactInfo,
         }),
@@ -205,17 +207,41 @@ export default function RegisterPage() {
           )}
 
           <div>
-            <label className="block text-slate-600 font-medium mb-1">Vai trò đăng ký *</label>
-            <select
-              value={formData.role}
-              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-              className="w-full px-3 py-1.5 rounded-lg border border-slate-300 bg-white"
-            >
-              <option value="PRODUCER">Đơn vị Sản xuất (Producer)</option>
-              <option value="INSPECTOR">Đơn vị Kiểm định (Inspector)</option>
-              <option value="LOGISTICS">Đơn vị Vận chuyển (Logistics)</option>
-              <option value="DISTRIBUTOR">Đơn vị Phân phối (Distributor)</option>
-            </select>
+            <label className="block text-slate-600 font-medium mb-1.5">
+              Vai trò đăng ký tham gia (Có thể chọn một hoặc nhiều vai trò) *
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
+              {[
+                { id: 'PRODUCER', label: 'Đơn vị Sản xuất (Producer)' },
+                { id: 'INSPECTOR', label: 'Đơn vị Kiểm định (Inspector)' },
+                { id: 'LOGISTICS', label: 'Đơn vị Vận chuyển (Logistics)' },
+                { id: 'DISTRIBUTOR', label: 'Đơn vị Phân phối (Distributor)' },
+              ].map((r) => {
+                const isChecked = formData.roles.includes(r.id);
+                return (
+                  <label key={r.id} className="flex items-center gap-2 cursor-pointer select-none text-xs">
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={(e) => {
+                        let newRoles: string[];
+                        if (e.target.checked) {
+                          newRoles = [...formData.roles, r.id];
+                        } else {
+                          newRoles = formData.roles.filter((x) => x !== r.id);
+                        }
+                        if (newRoles.length === 0) newRoles = [r.id];
+                        setFormData({ ...formData, roles: newRoles, role: newRoles[0] });
+                      }}
+                      className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                    />
+                    <span className={isChecked ? 'font-bold text-slate-900' : 'text-slate-600'}>
+                      {r.label}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
           </div>
 
           <div>

@@ -87,21 +87,30 @@ export default function AdminPage() {
     if (!account) return;
     setActionLoadingId(userAcc.id);
     try {
-      const roleKey = userAcc.role as keyof typeof ROLE_HASHES;
-      const roleHash = ROLE_HASHES[roleKey];
-      if (!roleHash) throw new Error('Vai trò không hợp lệ');
+      const targetRoles: string[] = (Array.isArray(userAcc.roles) && userAcc.roles.length > 0)
+        ? userAcc.roles
+        : [userAcc.role];
 
       const contract = await getContract(true);
       const gasOverrides = await getGasOverrides();
-      const tx = await contract.grantRole(roleHash, userAcc.walletAddress, gasOverrides);
-      const receipt = await tx.wait();
+      let lastTxHash = '';
+
+      for (const r of targetRoles) {
+        const roleKey = r as keyof typeof ROLE_HASHES;
+        const roleHash = ROLE_HASHES[roleKey];
+        if (roleHash) {
+          const tx = await contract.grantRole(roleHash, userAcc.walletAddress, gasOverrides);
+          const receipt = await tx.wait();
+          lastTxHash = receipt.hash;
+        }
+      }
 
       const res = await fetch(`${API_BASE_URL}/accounts/${userAcc.id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           status: 'APPROVED',
-          txHashGrantRole: receipt.hash,
+          txHashGrantRole: lastTxHash || null,
         }),
       });
 
@@ -236,9 +245,13 @@ export default function AdminPage() {
                       <tr key={acc.id} className="hover:bg-slate-50">
                         <td className="py-2.5 px-3 font-semibold text-slate-900">{acc.organizationName}</td>
                         <td className="py-2.5 px-3">
-                          <span className="font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px]">
-                            {ROLE_LABELS[acc.role] || acc.role}
-                          </span>
+                          <div className="flex flex-wrap gap-1">
+                            {((Array.isArray(acc.roles) && acc.roles.length > 0) ? acc.roles : [acc.role]).map((r: string) => (
+                              <span key={r} className="font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px]">
+                                {ROLE_LABELS[r] || r}
+                              </span>
+                            ))}
+                          </div>
                         </td>
                         <td className="py-2.5 px-3 font-mono text-slate-800">
                           {truncateAddress(acc.walletAddress)}

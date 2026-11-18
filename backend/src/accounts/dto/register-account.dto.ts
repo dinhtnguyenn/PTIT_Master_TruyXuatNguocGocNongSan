@@ -1,15 +1,17 @@
-import { IsNotEmpty, IsString, IsIn } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional, IsArray } from 'class-validator';
 
 export class RegisterAccountDto {
   @IsNotEmpty({ message: 'Địa chỉ ví không được để trống' })
   @IsString()
   walletAddress: string;
 
-  @IsNotEmpty({ message: 'Vai trò không được để trống' })
-  @IsIn(['PRODUCER', 'INSPECTOR', 'LOGISTICS', 'DISTRIBUTOR'], {
-    message: 'Vai trò phải là PRODUCER, INSPECTOR, LOGISTICS, hoặc DISTRIBUTOR',
-  })
-  role: string;
+  @IsOptional()
+  @IsString()
+  role?: string;
+
+  @IsOptional()
+  @IsArray()
+  roles?: string[];
 
   @IsNotEmpty({ message: 'Tên tổ chức/cá nhân không được để trống' })
   @IsString()

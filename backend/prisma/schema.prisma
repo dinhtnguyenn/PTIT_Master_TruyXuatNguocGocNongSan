@@ -11,7 +11,8 @@ generator client {
 model UserAccount {
   id               String   @id @default(uuid())
   walletAddress    String   @unique
-  role             String   // PRODUCER, INSPECTOR, LOGISTICS, DISTRIBUTOR, ADMIN
+  role             String   @default("PRODUCER") // Vai trò chính: PRODUCER, INSPECTOR, LOGISTICS, DISTRIBUTOR, ADMIN
+  roles            String[] @default([])         // Danh sách các vai trò: [PRODUCER, INSPECTOR, ...]
   organizationName String
   contactInfo      String
   status           String   @default("PENDING") // PENDING, APPROVED, REJECTED
@@ -84,7 +85,15 @@ model Batch {
   distributorWallet    String?
 
   createdByAddress     String
-  creator              UserAccount @relation(fields: [createdByAddress], references: [walletAddress])
+  creator              UserAccount @relation(fields: [createdByAddress], references: [walletAddress], onDelete: Cascade)
   createdAt            DateTime    @default(now())
   updatedAt            DateTime    @updatedAt
+}
+
+model SystemConfig {
+  key         String   @id
+  value       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

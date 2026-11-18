@@ -2,8 +2,10 @@ import { Module } from '@nestjs/common';
 import { AccountsService } from './accounts.service';
 import { AccountsController } from './accounts.controller';
 import { PrismaService } from '../prisma.service';
+import { ConfigModule } from '../config/config.module';
 
 @Module({
+  imports: [ConfigModule],
   controllers: [AccountsController],
   providers: [AccountsService, PrismaService],
   exports: [AccountsService],

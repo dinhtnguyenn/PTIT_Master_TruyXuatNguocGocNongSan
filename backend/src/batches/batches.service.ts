@@ -10,13 +10,22 @@ import { DistributeBatchDto } from './dto/distribute-batch.dto';
 export class BatchesService {
   constructor(private prisma: PrismaService) {}
 
+  private checkPermission(user: any, requiredRole: string): boolean {
+    if (!user || user.status !== 'APPROVED') return false;
+    if (user.role === requiredRole || user.role === 'ADMIN') return true;
+    if (Array.isArray(user.roles)) {
+      if (user.roles.includes(requiredRole) || user.roles.includes('ADMIN')) return true;
+    }
+    return false;
+  }
+
   // 1. PRODUCER: Khởi tạo lô sản phẩm
   async recordProducer(dto: CreateProducerBatchDto) {
     const wallet = dto.producerWallet.toLowerCase();
     const user = await this.prisma.userAccount.findUnique({
       where: { walletAddress: wallet },
     });
-    if (!user || user.role !== 'PRODUCER' || user.status !== 'APPROVED') {
+    if (!this.checkPermission(user, 'PRODUCER')) {
       throw new BadRequestException('Ví chưa được phê duyệt với vai trò Nhà sản xuất (PRODUCER)!');
     }
 
@@ -78,7 +87,7 @@ export class BatchesService {
     const user = await this.prisma.userAccount.findUnique({
       where: { walletAddress: wallet },
     });
-    if (!user || user.role !== 'INSPECTOR' || user.status !== 'APPROVED') {
+    if (!this.checkPermission(user, 'INSPECTOR')) {
       throw new BadRequestException('Ví chưa được phê duyệt với vai trò Đơn vị kiểm định (INSPECTOR)!');
     }
 
@@ -138,7 +147,7 @@ export class BatchesService {
     const user = await this.prisma.userAccount.findUnique({
       where: { walletAddress: wallet },
     });
-    if (!user || user.role !== 'LOGISTICS' || user.status !== 'APPROVED') {
+    if (!this.checkPermission(user, 'LOGISTICS')) {
       throw new BadRequestException('Ví chưa được phê duyệt với vai trò Đơn vị vận chuyển (LOGISTICS)!');
     }
 
@@ -204,7 +213,7 @@ export class BatchesService {
     const user = await this.prisma.userAccount.findUnique({
       where: { walletAddress: wallet },
     });
-    if (!user || user.role !== 'DISTRIBUTOR' || user.status !== 'APPROVED') {
+    if (!this.checkPermission(user, 'DISTRIBUTOR')) {
       throw new BadRequestException('Ví chưa được phê duyệt với vai trò Đơn vị phân phối (DISTRIBUTOR)!');
     }
 

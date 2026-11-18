@@ -13,6 +13,7 @@ export default function SupplyChainPortalPage() {
   const [submitting, setSubmitting] = useState(false);
   const [activeBatches, setActiveBatches] = useState<any[]>([]);
   const [statusAlert, setStatusAlert] = useState<{ type: 'success' | 'error'; message: string; txHash?: string } | null>(null);
+  const [selectedRole, setSelectedRole] = useState<string>('');
 
   // Form Producer (Bảng 1)
   const [producerForm, setProducerForm] = useState({
@@ -414,7 +415,17 @@ export default function SupplyChainPortalPage() {
     );
   }
 
-  const role = userData.role;
+  const userRoles: string[] = (userData.roles && userData.roles.length > 0)
+    ? userData.roles
+    : (userData.role ? [userData.role] : []);
+  const isAdmin = userData.isAdmin || userRoles.includes('ADMIN') || userData.role === 'ADMIN';
+  const availableRoles = isAdmin
+    ? ['PRODUCER', 'INSPECTOR', 'LOGISTICS', 'DISTRIBUTOR']
+    : userRoles;
+
+  const role = (selectedRole && availableRoles.includes(selectedRole))
+    ? selectedRole
+    : (availableRoles[0] || 'PRODUCER');
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
@@ -422,7 +433,7 @@ export default function SupplyChainPortalPage() {
       <div className="bg-white rounded-xl border border-slate-200 px-4 py-3 flex items-center justify-between shadow-sm">
         <div>
           <span className="text-[11px] font-bold text-emerald-700 uppercase">
-            {ROLE_LABELS[role] || role}
+            {ROLE_LABELS[role] || role} {isAdmin ? '(Quyền Admin)' : ''}
           </span>
           <p className="text-sm font-bold text-slate-900">{userData.organizationName}</p>
         </div>
@@ -430,6 +441,29 @@ export default function SupplyChainPortalPage() {
           {truncateAddress(account)}
         </span>
       </div>
+
+      {/* Role Switcher if multi-role */}
+      {availableRoles.length > 1 && (
+        <div className="bg-white rounded-xl border border-slate-200 p-2 flex items-center gap-2 overflow-x-auto shadow-sm">
+          <span className="text-[11px] font-bold text-slate-500 uppercase px-2 whitespace-nowrap">
+            Chọn vai trò thao tác:
+          </span>
+          {availableRoles.map((r) => (
+            <button
+              key={r}
+              type="button"
+              onClick={() => setSelectedRole(r)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${
+                role === r
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+              }`}
+            >
+              {ROLE_LABELS[r] || r}
+            </button>
+          ))}
+        </div>
+      )}
 
       {statusAlert && (
         <div

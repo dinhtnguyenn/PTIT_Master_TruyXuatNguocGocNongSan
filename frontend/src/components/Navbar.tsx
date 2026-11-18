@@ -23,19 +23,25 @@ export default function Navbar() {
 
   async function checkUser(walletAddr: string) {
     try {
-      if (isAdminAddress(walletAddr)) {
-        setRole('ADMIN');
-        setStatus('APPROVED');
-        return;
-      }
       const res = await fetch(`${API_BASE_URL}/accounts/me/${walletAddr}`);
       if (res.ok) {
         const data = await res.json();
         if (data && data.status) {
-          setRole(data.role);
+          if (data.isAdmin || data.roles?.includes('ADMIN') || data.role === 'ADMIN') {
+            setRole('ADMIN');
+          } else if (Array.isArray(data.roles) && data.roles.length > 1) {
+            setRole(data.roles.join(', '));
+          } else {
+            setRole(data.role || (data.roles && data.roles[0]) || null);
+          }
           setStatus(data.status);
           return;
         }
+      }
+      if (isAdminAddress(walletAddr)) {
+        setRole('ADMIN');
+        setStatus('APPROVED');
+        return;
       }
       try {
         const contract = await getContract(false);
