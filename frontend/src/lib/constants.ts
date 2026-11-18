@@ -69,10 +69,17 @@ export const ROLE_HASHES = {
 };
 
 export const ROLE_LABELS: Record<string, string> = {
-  PRODUCER: 'Đơn vị Sản xuất (Producer)',
-  INSPECTOR: 'Đơn vị Kiểm định (Inspector)',
-  LOGISTICS: 'Đơn vị Vận chuyển (Logistics)',
-  DISTRIBUTOR: 'Đơn vị Phân phối (Distributor)',
+  PRODUCER: 'Đơn vị Sản xuất',
+  INSPECTOR: 'Đơn vị Kiểm định',
+  LOGISTICS: 'Đơn vị Vận chuyển',
+  DISTRIBUTOR: 'Đơn vị Phân phối',
+  ADMIN: 'Quản trị viên',
+};
+
+export const STATUS_LABELS: Record<string, string> = {
+  PENDING: 'Chờ duyệt',
+  APPROVED: 'Đã duyệt',
+  REJECTED: 'Từ chối',
 };
 
 export const STAGE_LABELS: Record<string, { label: string; color: string }> = {

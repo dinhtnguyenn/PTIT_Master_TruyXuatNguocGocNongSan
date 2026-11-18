@@ -439,7 +439,7 @@ export default function SupplyChainPortalPage() {
       <div className="bg-white rounded-xl border border-slate-200 px-4 py-3 flex items-center justify-between shadow-sm">
         <div>
           <span className="text-[11px] font-bold text-emerald-700 uppercase">
-            {ROLE_LABELS[role] || role} {isAdm ? '(Ví Admin)' : ''}
+            {ROLE_LABELS[role] || role} {isAdm ? '(Ví Quản trị viên)' : ''}
           </span>
           <p className="text-sm font-bold text-slate-900">{userData.organizationName}</p>
         </div>
@@ -481,7 +481,7 @@ export default function SupplyChainPortalPage() {
         >
           <p className="font-semibold">{statusAlert.message}</p>
           {statusAlert.txHash && (
-            <p className="font-mono text-[11px] mt-0.5">TxHash: {statusAlert.txHash}</p>
+            <p className="font-mono text-[11px] mt-0.5">Mã giao dịch Blockchain: {statusAlert.txHash}</p>
           )}
         </div>
       )}
@@ -492,7 +492,7 @@ export default function SupplyChainPortalPage() {
       {role === 'PRODUCER' && (
         <form onSubmit={submitProducer} className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
           <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide border-b pb-2">
-            Bảng 1: Thông tin cung cấp bởi Producer (Đơn vị Sản xuất)
+            Bảng 1: Thông tin cung cấp bởi Đơn vị Sản xuất
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
@@ -625,7 +625,7 @@ export default function SupplyChainPortalPage() {
       {role === 'INSPECTOR' && (
         <form onSubmit={submitInspector} className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
           <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide border-b pb-2">
-            Bảng 2: Thông tin cung cấp bởi Inspector (Đơn vị Kiểm định)
+            Bảng 2: Thông tin cung cấp bởi Đơn vị Kiểm định
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
@@ -744,7 +744,7 @@ export default function SupplyChainPortalPage() {
       {role === 'LOGISTICS' && (
         <form onSubmit={submitLogistics} className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
           <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide border-b pb-2">
-            Bảng 3: Thông tin cung cấp bởi Logistics (Đơn vị Vận chuyển)
+            Bảng 3: Thông tin cung cấp bởi Đơn vị Vận chuyển
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
@@ -898,7 +898,7 @@ export default function SupplyChainPortalPage() {
       {role === 'DISTRIBUTOR' && (
         <form onSubmit={submitDistributor} className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
           <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide border-b pb-2">
-            Bảng 4: Thông tin cung cấp bởi Distributor (Đơn vị Phân phối)
+            Bảng 4: Thông tin cung cấp bởi Đơn vị Phân phối
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">

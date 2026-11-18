@@ -17,7 +17,19 @@ export class RegisterAccountDto {
   @IsString()
   organizationName: string;
 
-  @IsNotEmpty({ message: 'Thông tin liên hệ không được để trống' })
+  @IsOptional()
   @IsString()
-  contactInfo: string;
+  phoneNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  email?: string;
+
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @IsOptional()
+  @IsString()
+  contactInfo?: string;
 }

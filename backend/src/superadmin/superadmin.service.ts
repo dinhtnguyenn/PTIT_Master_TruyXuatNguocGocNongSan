@@ -72,6 +72,9 @@ export class SuperadminService {
         { walletAddress: { contains: query.search.toLowerCase() } },
         { organizationName: { contains: query.search, mode: 'insensitive' } },
         { contactInfo: { contains: query.search, mode: 'insensitive' } },
+        { phoneNumber: { contains: query.search, mode: 'insensitive' } },
+        { email: { contains: query.search, mode: 'insensitive' } },
+        { address: { contains: query.search, mode: 'insensitive' } },
       ];
     }
 
@@ -97,7 +100,10 @@ export class SuperadminService {
     roles?: string[];
     role?: string;
     organizationName: string;
-    contactInfo: string;
+    phoneNumber?: string;
+    email?: string;
+    address?: string;
+    contactInfo?: string;
     status?: string;
     txHashGrantRole?: string;
   }) {
@@ -111,13 +117,21 @@ export class SuperadminService {
     if (roles.length === 0 && data.role) roles = [data.role];
     if (roles.length === 0) roles = ['PRODUCER'];
 
+    const phone = (data.phoneNumber || '').trim();
+    const mail = (data.email || '').trim();
+    const addr = (data.address || '').trim();
+    const contact = data.contactInfo?.trim() || [phone, mail, addr].filter(Boolean).join(' - ');
+
     return this.prisma.userAccount.create({
       data: {
         walletAddress: normalizedWallet,
         role: roles[0] || 'PRODUCER',
         roles: roles,
         organizationName: data.organizationName,
-        contactInfo: data.contactInfo,
+        phoneNumber: phone,
+        email: mail,
+        address: addr,
+        contactInfo: contact,
         status: data.status || 'APPROVED',
         txHashGrantRole: data.txHashGrantRole || null,
       },
@@ -129,6 +143,9 @@ export class SuperadminService {
     roles?: string[];
     role?: string;
     organizationName?: string;
+    phoneNumber?: string;
+    email?: string;
+    address?: string;
     contactInfo?: string;
     status?: string;
     txHashGrantRole?: string;
@@ -151,7 +168,17 @@ export class SuperadminService {
       updateData.roles = [data.role];
     }
     if (data.organizationName !== undefined) updateData.organizationName = data.organizationName;
-    if (data.contactInfo !== undefined) updateData.contactInfo = data.contactInfo;
+    if (data.phoneNumber !== undefined) updateData.phoneNumber = data.phoneNumber;
+    if (data.email !== undefined) updateData.email = data.email;
+    if (data.address !== undefined) updateData.address = data.address;
+    if (data.contactInfo !== undefined) {
+      updateData.contactInfo = data.contactInfo;
+    } else if (data.phoneNumber !== undefined || data.email !== undefined || data.address !== undefined) {
+      const p = data.phoneNumber !== undefined ? data.phoneNumber : user.phoneNumber;
+      const m = data.email !== undefined ? data.email : user.email;
+      const a = data.address !== undefined ? data.address : user.address;
+      updateData.contactInfo = [p, m, a].filter(Boolean).join(' - ');
+    }
     if (data.status !== undefined) updateData.status = data.status;
     if (data.txHashGrantRole !== undefined) updateData.txHashGrantRole = data.txHashGrantRole;
 

@@ -13,7 +13,9 @@ export default function RegisterPage() {
     role: 'PRODUCER',
     roles: ['PRODUCER'] as string[],
     organizationName: '',
-    contactInfo: '',
+    phoneNumber: '',
+    email: '',
+    address: '',
   });
   const [existingAccount, setExistingAccount] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -118,7 +120,9 @@ export default function RegisterPage() {
           roles: formData.roles,
           role: formData.roles[0] || 'PRODUCER',
           organizationName: formData.organizationName,
-          contactInfo: formData.contactInfo,
+          phoneNumber: formData.phoneNumber,
+          email: formData.email,
+          address: formData.address,
         }),
       });
 
@@ -191,8 +195,15 @@ export default function RegisterPage() {
             </span>
           </div>
           <p className="mt-1">
-            Vai trò: <strong>{ROLE_LABELS[existingAccount.role]}</strong> • Đơn vị: {existingAccount.organizationName}
+            Vai trò: <strong>{ROLE_LABELS[existingAccount.role] || existingAccount.role}</strong> • Đơn vị: {existingAccount.organizationName}
           </p>
+          {(existingAccount.phoneNumber || existingAccount.email || existingAccount.address) && (
+            <p className="text-[11px] text-slate-600 mt-1">
+              {existingAccount.phoneNumber && <span>SĐT: {existingAccount.phoneNumber} </span>}
+              {existingAccount.email && <span>• Email: {existingAccount.email} </span>}
+              {existingAccount.address && <span>• Địa chỉ: {existingAccount.address}</span>}
+            </p>
+          )}
           <div className="mt-3 flex flex-wrap items-center gap-3">
             {existingAccount.status === 'APPROVED' && (
               <Link
@@ -211,7 +222,7 @@ export default function RegisterPage() {
               className="inline-flex items-center gap-1 px-3 py-1 bg-white hover:bg-slate-50 text-slate-700 rounded-lg font-medium text-xs border border-slate-300 shadow-sm transition"
             >
               <PlusCircle className="w-3.5 h-3.5 text-emerald-600" />
-              Đăng ký thêm ví đối tác khác (Hoặc tạo ví test)
+              Đăng ký thêm ví đối tác khác (Hoặc tạo ví thử nghiệm)
             </button>
           </div>
         </div>
@@ -247,7 +258,7 @@ export default function RegisterPage() {
                   }}
                   className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 hover:underline"
                 >
-                  <Sparkles className="w-3 h-3" /> Tạo ngẫu nhiên ví test (1-Click)
+                  <Sparkles className="w-3 h-3" /> Tạo ngẫu nhiên ví thử nghiệm
                 </button>
               </div>
               <input
@@ -282,10 +293,10 @@ export default function RegisterPage() {
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
               {[
-                { id: 'PRODUCER', label: 'Đơn vị Sản xuất (Producer)' },
-                { id: 'INSPECTOR', label: 'Đơn vị Kiểm định (Inspector)' },
-                { id: 'LOGISTICS', label: 'Đơn vị Vận chuyển (Logistics)' },
-                { id: 'DISTRIBUTOR', label: 'Đơn vị Phân phối (Distributor)' },
+                { id: 'PRODUCER', label: 'Đơn vị Sản xuất' },
+                { id: 'INSPECTOR', label: 'Đơn vị Kiểm định' },
+                { id: 'LOGISTICS', label: 'Đơn vị Vận chuyển' },
+                { id: 'DISTRIBUTOR', label: 'Đơn vị Phân phối' },
               ].map((r) => {
                 const isChecked = formData.roles.includes(r.id);
                 return (
@@ -326,14 +337,39 @@ export default function RegisterPage() {
             />
           </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-slate-600 font-medium mb-1">Số điện thoại liên hệ *</label>
+              <input
+                type="tel"
+                required
+                placeholder="VD: 0912345678"
+                value={formData.phoneNumber}
+                onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300"
+              />
+            </div>
+            <div>
+              <label className="block text-slate-600 font-medium mb-1">Địa chỉ Email liên hệ *</label>
+              <input
+                type="email"
+                required
+                placeholder="VD: contact@nongsan.vn"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300"
+              />
+            </div>
+          </div>
+
           <div>
-            <label className="block text-slate-600 font-medium mb-1">Thông tin liên hệ (SĐT, Email, Địa chỉ) *</label>
-            <textarea
-              rows={2}
+            <label className="block text-slate-600 font-medium mb-1">Địa chỉ cơ sở sản xuất / Trụ sở *</label>
+            <input
+              type="text"
               required
-              placeholder="VD: 0912345678 - contact@domain.vn - Tiền Giang"
-              value={formData.contactInfo}
-              onChange={(e) => setFormData({ ...formData, contactInfo: e.target.value })}
+              placeholder="VD: Ấp Hòa, Xã Hòa Hưng, Huyện Cái Bè, Tiền Giang"
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               className="w-full px-3 py-1.5 rounded-lg border border-slate-300"
             />
           </div>

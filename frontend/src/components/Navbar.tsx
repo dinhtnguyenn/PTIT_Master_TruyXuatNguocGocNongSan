@@ -11,7 +11,7 @@ import {
   truncateAddress,
   getContract,
 } from '../lib/web3';
-import { API_BASE_URL, isHardcodedAdmin } from '../lib/constants';
+import { API_BASE_URL, isHardcodedAdmin, ROLE_LABELS, STATUS_LABELS } from '../lib/constants';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -28,11 +28,12 @@ export default function Navbar() {
       if (res.ok) {
         const data = await res.json();
         if (data && data.status) {
-          const supplyChainRoles = Array.isArray(data.roles) && data.roles.length > 0
-            ? data.roles.join(', ')
-            : (data.role || '');
+          const rawRoles: string[] = Array.isArray(data.roles) && data.roles.length > 0
+            ? data.roles
+            : (data.role ? [data.role] : []);
+          const supplyChainRoles = rawRoles.map((r) => ROLE_LABELS[r] || r).join(', ');
           const displayRole = isAdm
-            ? (supplyChainRoles ? `Admin • ${supplyChainRoles}` : 'Admin')
+            ? (supplyChainRoles ? `Quản trị viên • ${supplyChainRoles}` : 'Quản trị viên')
             : supplyChainRoles;
           setRole(displayRole);
           setStatus(data.status);
@@ -40,7 +41,7 @@ export default function Navbar() {
         }
       }
       if (isAdm) {
-        setRole('Admin');
+        setRole('Quản trị viên');
         setStatus('APPROVED');
         return;
       }

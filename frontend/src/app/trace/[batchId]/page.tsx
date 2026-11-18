@@ -188,18 +188,18 @@ export default function TraceDetailPage() {
             rel="noreferrer"
             className="text-[11px] font-mono text-emerald-700 hover:underline flex items-center gap-1"
           >
-            Tx: {truncateAddress(batch.producerTxHash)} <ExternalLink className="w-3 h-3" />
+            Giao dịch: {truncateAddress(batch.producerTxHash)} <ExternalLink className="w-3 h-3" />
           </a>
         )}
       </div>
 
       {/* 4 DATA TABLES ACCORDING TO SPECIFICATION */}
       <div className="space-y-5">
-        {/* BẢNG 1: THÔNG TIN SẢN XUẤT (PRODUCER) */}
+        {/* BẢNG 1: THÔNG TIN SẢN XUẤT */}
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
           <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200 flex justify-between items-center">
             <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
-              Bảng 1: Thông tin cung cấp bởi Producer (Đơn vị Sản xuất)
+              Bảng 1: Thông tin cung cấp bởi Đơn vị Sản xuất
             </h2>
             {batch.producerTxHash && (
               <a
@@ -208,7 +208,7 @@ export default function TraceDetailPage() {
                 rel="noreferrer"
                 className="text-[11px] font-mono text-emerald-700 hover:underline flex items-center gap-1"
               >
-                <ExternalLink className="w-3 h-3" /> Tx On-chain
+                <ExternalLink className="w-3 h-3" /> Giao dịch Blockchain
               </a>
             )}
           </div>
@@ -222,7 +222,7 @@ export default function TraceDetailPage() {
             <p><span className="text-slate-400 font-medium">Địa điểm sản xuất:</span> {batch.productionLocation}</p>
             <p><span className="text-slate-400 font-medium">Ngày bắt đầu canh tác:</span> {formatDate(batch.cultivationStartDate)}</p>
             <p><span className="text-slate-400 font-medium">Ngày thu hoạch:</span> {formatDate(batch.harvestDate)}</p>
-            <p><span className="text-slate-400 font-medium">Ví Producer:</span> <span className="font-mono">{truncateAddress(batch.producerWallet)}</span></p>
+            <p><span className="text-slate-400 font-medium">Ví Nhà sản xuất:</span> <span className="font-mono">{truncateAddress(batch.producerWallet)}</span></p>
             <div className="sm:col-span-2 pt-1 border-t border-slate-100">
               <span className="text-slate-400 font-medium">Vật tư nông nghiệp:</span> {batch.farmingSupplies}
             </div>
@@ -235,11 +235,11 @@ export default function TraceDetailPage() {
           </div>
         </div>
 
-        {/* BẢNG 2: THÔNG TIN KIỂM ĐỊNH (INSPECTOR) */}
+        {/* BẢNG 2: THÔNG TIN KIỂM ĐỊNH */}
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
           <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200 flex justify-between items-center">
             <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
-              Bảng 2: Thông tin cung cấp bởi Inspector (Đơn vị Kiểm định)
+              Bảng 2: Thông tin cung cấp bởi Đơn vị Kiểm định
             </h2>
             {batch.inspectorTxHash && (
               <a
@@ -248,7 +248,7 @@ export default function TraceDetailPage() {
                 rel="noreferrer"
                 className="text-[11px] font-mono text-emerald-700 hover:underline flex items-center gap-1"
               >
-                <ExternalLink className="w-3 h-3" /> Tx On-chain
+                <ExternalLink className="w-3 h-3" /> Giao dịch Blockchain
               </a>
             )}
           </div>
@@ -261,7 +261,7 @@ export default function TraceDetailPage() {
               <p><span className="text-slate-400 font-medium">Cơ quan cấp:</span> {batch.issuingAuthority}</p>
               <p><span className="text-slate-400 font-medium">Ngày cấp:</span> {formatDate(batch.issuedDate)}</p>
               <p><span className="text-slate-400 font-medium">Ngày hết hạn:</span> {formatDate(batch.expiryDate)}</p>
-              <p><span className="text-slate-400 font-medium">Ví Inspector:</span> <span className="font-mono">{truncateAddress(batch.inspectorWallet)}</span></p>
+              <p><span className="text-slate-400 font-medium">Ví Đơn vị kiểm định:</span> <span className="font-mono">{truncateAddress(batch.inspectorWallet)}</span></p>
               {batch.certImageUrl && (
                 <div className="sm:col-span-2 pt-2 border-t border-slate-100">
                   <span className="text-slate-400 font-medium block mb-1">Ảnh giấy chứng nhận:</span>
@@ -274,11 +274,11 @@ export default function TraceDetailPage() {
           )}
         </div>
 
-        {/* BẢNG 3: THÔNG TIN VẬN CHUYỂN (LOGISTICS) */}
+        {/* BẢNG 3: THÔNG TIN VẬN CHUYỂN */}
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
           <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200 flex justify-between items-center">
             <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
-              Bảng 3: Thông tin cung cấp bởi Logistics (Đơn vị Vận chuyển)
+              Bảng 3: Thông tin cung cấp bởi Đơn vị Vận chuyển
             </h2>
             {batch.logisticsTxHash && (
               <a
@@ -287,7 +287,7 @@ export default function TraceDetailPage() {
                 rel="noreferrer"
                 className="text-[11px] font-mono text-emerald-700 hover:underline flex items-center gap-1"
               >
-                <ExternalLink className="w-3 h-3" /> Tx On-chain
+                <ExternalLink className="w-3 h-3" /> Giao dịch Blockchain
               </a>
             )}
           </div>
@@ -310,11 +310,11 @@ export default function TraceDetailPage() {
           )}
         </div>
 
-        {/* BẢNG 4: THÔNG TIN PHÂN PHỐI (DISTRIBUTOR) */}
+        {/* BẢNG 4: THÔNG TIN PHÂN PHỐI */}
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
           <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200 flex justify-between items-center">
             <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
-              Bảng 4: Thông tin cung cấp bởi Distributor (Đơn vị Phân phối)
+              Bảng 4: Thông tin cung cấp bởi Đơn vị Phân phối
             </h2>
             {batch.distributorTxHash && (
               <a
@@ -323,7 +323,7 @@ export default function TraceDetailPage() {
                 rel="noreferrer"
                 className="text-[11px] font-mono text-emerald-700 hover:underline flex items-center gap-1"
               >
-                <ExternalLink className="w-3 h-3" /> Tx On-chain
+                <ExternalLink className="w-3 h-3" /> Giao dịch Blockchain
               </a>
             )}
           </div>

@@ -11,10 +11,13 @@ generator client {
 model UserAccount {
   id               String   @id @default(uuid())
   walletAddress    String   @unique
-  role             String   @default("PRODUCER") // Vai trò chính: PRODUCER, INSPECTOR, LOGISTICS, DISTRIBUTOR, ADMIN
+  role             String   @default("PRODUCER") // Vai trò chính: PRODUCER, INSPECTOR, LOGISTICS, DISTRIBUTOR
   roles            String[] @default([])         // Danh sách các vai trò: [PRODUCER, INSPECTOR, ...]
   organizationName String
-  contactInfo      String
+  phoneNumber      String?  @default("")         // Số điện thoại liên hệ
+  email            String?  @default("")         // Email liên hệ
+  address          String?  @default("")         // Địa chỉ cơ sở / trụ sở
+  contactInfo      String?  @default("")         // Tổng hợp liên hệ để tương thích ngược
   status           String   @default("PENDING") // PENDING, APPROVED, REJECTED
   txHashGrantRole  String?
   createdAt        DateTime @default(now())

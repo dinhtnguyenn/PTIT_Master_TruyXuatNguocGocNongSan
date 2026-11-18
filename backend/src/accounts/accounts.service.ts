@@ -25,7 +25,26 @@ export class AccountsService implements OnModuleInit {
           ],
         },
       });
-      console.log('✅ Đã đồng bộ CSDL: chỉ lưu 4 vai trò chuỗi cung ứng (PRODUCER, INSPECTOR, LOGISTICS, DISTRIBUTOR), không lưu role ADMIN');
+
+      // Tự động phân tách SĐT, Email, Địa chỉ từ contactInfo cho các tài khoản cũ
+      const existingAccounts = await this.prisma.userAccount.findMany();
+      for (const acc of existingAccounts) {
+        if ((!acc.phoneNumber || !acc.email || !acc.address) && acc.contactInfo) {
+          const parts = acc.contactInfo.split(' - ').map((s) => s.trim());
+          const phone = parts[0] || '';
+          const mail = parts.length > 2 ? parts[1] : (parts[1]?.includes('@') ? parts[1] : '');
+          const addr = parts.length > 2 ? parts.slice(2).join(' - ') : (parts[1]?.includes('@') ? '' : (parts[1] || ''));
+          await this.prisma.userAccount.update({
+            where: { id: acc.id },
+            data: {
+              phoneNumber: acc.phoneNumber || phone,
+              email: acc.email || mail,
+              address: acc.address || addr,
+            },
+          });
+        }
+      }
+      console.log('✅ Đã đồng bộ CSDL: chỉ lưu 4 vai trò chuỗi cung ứng, đã tách riêng SĐT, Email, Địa chỉ');
     } catch (e) {
       console.warn('Lưu ý dọn dẹp role ADMIN:', e);
     }
@@ -53,6 +72,11 @@ export class AccountsService implements OnModuleInit {
     }
     const primaryRole = roles[0];
 
+    const phoneNumber = (dto.phoneNumber || '').trim();
+    const email = (dto.email || '').trim();
+    const address = (dto.address || '').trim();
+    const contactInfo = dto.contactInfo?.trim() || [phoneNumber, email, address].filter(Boolean).join(' - ');
+
     if (existing) {
       if (existing.status === 'APPROVED') {
         throw new BadRequestException('Địa chỉ ví này đã được phê duyệt trong hệ thống!');
@@ -67,7 +91,10 @@ export class AccountsService implements OnModuleInit {
           role: primaryRole,
           roles: roles,
           organizationName: dto.organizationName,
-          contactInfo: dto.contactInfo,
+          phoneNumber,
+          email,
+          address,
+          contactInfo,
           status: 'PENDING',
           txHashGrantRole: null,
         },
@@ -80,7 +107,10 @@ export class AccountsService implements OnModuleInit {
         role: primaryRole,
         roles: roles,
         organizationName: dto.organizationName,
-        contactInfo: dto.contactInfo,
+        phoneNumber,
+        email,
+        address,
+        contactInfo,
         status: 'PENDING',
       },
     });

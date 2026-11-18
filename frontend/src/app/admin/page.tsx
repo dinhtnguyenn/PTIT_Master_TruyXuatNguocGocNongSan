@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, BarChart3, Wallet, RefreshCw, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { connectWallet, getContract, truncateAddress, isWalletDisconnected, getGasOverrides } from '../../lib/web3';
-import { API_BASE_URL, ROLE_HASHES, ROLE_LABELS, isHardcodedAdmin } from '../../lib/constants';
+import { API_BASE_URL, ROLE_HASHES, ROLE_LABELS, STATUS_LABELS, isHardcodedAdmin } from '../../lib/constants';
 
 export default function AdminPage() {
   const [account, setAccount] = useState<string | null>(null);
@@ -263,7 +263,7 @@ export default function AdminPage() {
                       <th className="py-2.5 px-3">Tên Đơn vị</th>
                       <th className="py-2.5 px-3">Vai trò</th>
                       <th className="py-2.5 px-3">Địa chỉ ví</th>
-                      <th className="py-2.5 px-3">Liên hệ</th>
+                      <th className="py-2.5 px-3">Thông tin liên hệ</th>
                       <th className="py-2.5 px-3 text-right">Thao tác</th>
                     </tr>
                   </thead>
@@ -283,7 +283,12 @@ export default function AdminPage() {
                         <td className="py-2.5 px-3 font-mono text-slate-800">
                           {truncateAddress(acc.walletAddress)}
                         </td>
-                        <td className="py-2.5 px-3 max-w-xs truncate">{acc.contactInfo}</td>
+                        <td className="py-2.5 px-3 text-[11px] text-slate-600 max-w-xs">
+                          {acc.phoneNumber && <div><span className="text-slate-400 font-medium">SĐT:</span> {acc.phoneNumber}</div>}
+                          {acc.email && <div><span className="text-slate-400 font-medium">Email:</span> {acc.email}</div>}
+                          {acc.address && <div><span className="text-slate-400 font-medium">Địa chỉ:</span> {acc.address}</div>}
+                          {!acc.phoneNumber && !acc.email && !acc.address && <div>{acc.contactInfo || '—'}</div>}
+                        </td>
                         <td className="py-2.5 px-3 text-right">
                           {acc.status === 'PENDING' ? (
                             <div className="flex items-center justify-end gap-1.5">
@@ -303,7 +308,9 @@ export default function AdminPage() {
                               </button>
                             </div>
                           ) : (
-                            <span className="text-[11px] font-semibold text-slate-500">{acc.status}</span>
+                            <span className="text-[11px] font-semibold text-slate-500">
+                              {STATUS_LABELS[acc.status] || acc.status}
+                            </span>
                           )}
                         </td>
                       </tr>
@@ -343,19 +350,19 @@ export default function AdminPage() {
               <h3 className="font-bold text-slate-800 mb-2 pb-1 border-b">Tài khoản theo Vai trò</h3>
               <div className="space-y-1.5">
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Sản xuất (Producer)</span>
+                  <span className="text-slate-500">Đơn vị Sản xuất</span>
                   <span className="font-bold">{accountStats?.byRole?.producers || 0}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Kiểm định (Inspector)</span>
+                  <span className="text-slate-500">Đơn vị Kiểm định</span>
                   <span className="font-bold">{accountStats?.byRole?.inspectors || 0}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Vận chuyển (Logistics)</span>
+                  <span className="text-slate-500">Đơn vị Vận chuyển</span>
                   <span className="font-bold">{accountStats?.byRole?.logistics || 0}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Phân phối (Distributor)</span>
+                  <span className="text-slate-500">Đơn vị Phân phối</span>
                   <span className="font-bold">{accountStats?.byRole?.distributors || 0}</span>
                 </div>
               </div>

@@ -54,6 +54,9 @@ export default function SuperadminPage() {
   const [userForm, setUserForm] = useState({
     walletAddress: '',
     organizationName: '',
+    phoneNumber: '',
+    email: '',
+    address: '',
     contactInfo: '',
     status: 'APPROVED',
     roles: ['PRODUCER'] as string[],
@@ -315,6 +318,9 @@ export default function SuperadminPage() {
     setUserForm({
       walletAddress: '',
       organizationName: '',
+      phoneNumber: '',
+      email: '',
+      address: '',
       contactInfo: '',
       status: 'APPROVED',
       roles: ['PRODUCER'],
@@ -329,7 +335,10 @@ export default function SuperadminPage() {
     setUserForm({
       walletAddress: user.walletAddress,
       organizationName: user.organizationName,
-      contactInfo: user.contactInfo,
+      phoneNumber: user.phoneNumber || '',
+      email: user.email || '',
+      address: user.address || '',
+      contactInfo: user.contactInfo || '',
       status: user.status,
       roles: roles,
       txHashGrantRole: user.txHashGrantRole || '',
@@ -517,8 +526,11 @@ export default function SuperadminPage() {
       const s = userSearch.toLowerCase();
       const matchWallet = u.walletAddress?.toLowerCase().includes(s);
       const matchOrg = u.organizationName?.toLowerCase().includes(s);
+      const matchPhone = u.phoneNumber?.toLowerCase().includes(s);
+      const matchEmail = u.email?.toLowerCase().includes(s);
+      const matchAddr = u.address?.toLowerCase().includes(s);
       const matchContact = u.contactInfo?.toLowerCase().includes(s);
-      if (!matchWallet && !matchOrg && !matchContact) return false;
+      if (!matchWallet && !matchOrg && !matchContact && !matchPhone && !matchEmail && !matchAddr) return false;
     }
     return true;
   });
@@ -831,7 +843,12 @@ export default function SuperadminPage() {
                           </td>
                           <td className="px-4 py-3">
                             <div className="font-bold text-slate-900">{u.organizationName}</div>
-                            <div className="text-[11px] text-slate-400">{u.contactInfo}</div>
+                            <div className="text-[11px] text-slate-500 space-y-0.5 mt-0.5">
+                              {u.phoneNumber && <div><span className="text-slate-400">SĐT:</span> {u.phoneNumber}</div>}
+                              {u.email && <div><span className="text-slate-400">Email:</span> {u.email}</div>}
+                              {u.address && <div><span className="text-slate-400">Đ/c:</span> {u.address}</div>}
+                              {!u.phoneNumber && !u.email && !u.address && <div>{u.contactInfo}</div>}
+                            </div>
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex flex-wrap gap-1">
@@ -1172,13 +1189,36 @@ export default function SuperadminPage() {
                 </div>
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Số điện thoại liên hệ *</label>
+                  <input
+                    type="tel"
+                    required
+                    value={userForm.phoneNumber}
+                    onChange={(e) => setUserForm({ ...userForm, phoneNumber: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Email liên hệ *</label>
+                  <input
+                    type="email"
+                    required
+                    value={userForm.email}
+                    onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300"
+                  />
+                </div>
+              </div>
+
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Thông tin liên hệ (SĐT, Email, ĐC) *</label>
-                <textarea
-                  rows={2}
+                <label className="block font-semibold text-slate-700 mb-1">Địa chỉ cơ sở / Trụ sở *</label>
+                <input
+                  type="text"
                   required
-                  value={userForm.contactInfo}
-                  onChange={(e) => setUserForm({ ...userForm, contactInfo: e.target.value })}
+                  value={userForm.address}
+                  onChange={(e) => setUserForm({ ...userForm, address: e.target.value })}
                   className="w-full px-3 py-2 rounded-xl border border-slate-300"
                 />
               </div>
