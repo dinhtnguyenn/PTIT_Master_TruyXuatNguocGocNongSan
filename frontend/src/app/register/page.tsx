@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Wallet, CheckCircle2, Clock, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Wallet, CheckCircle2, Clock, AlertTriangle, ArrowRight, PlusCircle, Sparkles, X } from 'lucide-react';
+import { ethers } from 'ethers';
 import { connectWallet, truncateAddress, isWalletDisconnected } from '../../lib/web3';
 import { API_BASE_URL, ROLE_LABELS } from '../../lib/constants';
 
@@ -17,6 +18,8 @@ export default function RegisterPage() {
   const [existingAccount, setExistingAccount] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isRegisteringAnother, setIsRegisteringAnother] = useState(false);
+  const [manualWallet, setManualWallet] = useState('');
 
   async function checkExisting(addr: string) {
     try {
@@ -94,8 +97,13 @@ export default function RegisterPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!account) {
-      setStatusMessage({ type: 'error', text: 'Vui lòng kết nối ví MetaMask trước!' });
+    const targetWallet = isRegisteringAnother && manualWallet.trim() ? manualWallet.trim() : account;
+    if (!targetWallet) {
+      setStatusMessage({ type: 'error', text: 'Vui lòng kết nối ví MetaMask hoặc nhập địa chỉ ví đăng ký!' });
+      return;
+    }
+    if (!ethers.isAddress(targetWallet)) {
+      setStatusMessage({ type: 'error', text: 'Địa chỉ ví không hợp lệ (Phải là định dạng Ethereum 0x...)!' });
       return;
     }
     setLoading(true);
@@ -106,7 +114,7 @@ export default function RegisterPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          walletAddress: account,
+          walletAddress: targetWallet.toLowerCase(),
           roles: formData.roles,
           role: formData.roles[0] || 'PRODUCER',
           organizationName: formData.organizationName,
@@ -119,9 +127,14 @@ export default function RegisterPage() {
 
       setStatusMessage({
         type: 'success',
-        text: 'Gửi hồ sơ thành công! Vui lòng chờ Admin phê duyệt.',
+        text: `Gửi hồ sơ thành công cho ví ${truncateAddress(targetWallet)}! Trạng thái: Chờ duyệt. Hãy vào trang Quản Trị (/admin) để phê duyệt.`,
       });
-      await checkExisting(account);
+
+      if (!isRegisteringAnother && account) {
+        await checkExisting(account);
+      } else {
+        setManualWallet('');
+      }
     } catch (err: any) {
       setStatusMessage({ type: 'error', text: err.message });
     } finally {
@@ -180,20 +193,77 @@ export default function RegisterPage() {
           <p className="mt-1">
             Vai trò: <strong>{ROLE_LABELS[existingAccount.role]}</strong> • Đơn vị: {existingAccount.organizationName}
           </p>
-          {existingAccount.status === 'APPROVED' && (
-            <Link
-              href="/portal"
-              className="mt-3 inline-flex items-center gap-1 font-semibold text-emerald-700 hover:underline"
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            {existingAccount.status === 'APPROVED' && (
+              <Link
+                href="/portal"
+                className="inline-flex items-center gap-1 font-semibold text-emerald-700 hover:underline"
+              >
+                Vào cổng nhập liệu <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setIsRegisteringAnother(true);
+                setManualWallet('');
+              }}
+              className="inline-flex items-center gap-1 px-3 py-1 bg-white hover:bg-slate-50 text-slate-700 rounded-lg font-medium text-xs border border-slate-300 shadow-sm transition"
             >
-              Vào cổng nhập liệu <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          )}
+              <PlusCircle className="w-3.5 h-3.5 text-emerald-600" />
+              Đăng ký thêm ví đối tác khác (Hoặc tạo ví test)
+            </button>
+          </div>
         </div>
       )}
 
       {/* Registration Form */}
-      {(!existingAccount || existingAccount.status === 'REJECTED') && (
+      {(!existingAccount || existingAccount.status === 'REJECTED' || isRegisteringAnother) && (
         <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4 text-xs">
+          {isRegisteringAnother && (
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <span className="font-semibold text-slate-800">
+                Chế độ: Đăng ký ví đối tác mới / Tạo ví thử nghiệm
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsRegisteringAnother(false)}
+                className="text-slate-400 hover:text-slate-600 flex items-center gap-1"
+              >
+                <X className="w-3.5 h-3.5" /> Đóng
+              </button>
+            </div>
+          )}
+
+          {isRegisteringAnother && (
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-slate-600 font-medium">Địa chỉ ví đối tác cần đăng ký *</label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const randomWallet = ethers.Wallet.createRandom().address;
+                    setManualWallet(randomWallet);
+                  }}
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 hover:text-emerald-700 hover:underline"
+                >
+                  <Sparkles className="w-3 h-3" /> Tạo ngẫu nhiên ví test (1-Click)
+                </button>
+              </div>
+              <input
+                type="text"
+                required
+                placeholder="0x..."
+                value={manualWallet}
+                onChange={(e) => setManualWallet(e.target.value)}
+                className="w-full px-3 py-1.5 font-mono rounded-lg border border-slate-300"
+              />
+              <p className="text-[11px] text-slate-400 mt-1">
+                Ví này sau khi gửi sẽ xuất hiện ở mục <strong>Chờ duyệt</strong> trong trang Admin để bạn dùng ví Admin phê duyệt on-chain.
+              </p>
+            </div>
+          )}
+
           {statusMessage && (
             <div
               className={`p-3 rounded-lg ${
@@ -270,7 +340,7 @@ export default function RegisterPage() {
 
           <button
             type="submit"
-            disabled={loading || !account}
+            disabled={loading || (!account && !manualWallet.trim())}
             className="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-semibold transition"
           >
             {loading ? 'Đang gửi...' : 'Gửi Hồ Sơ Đăng Ký'}

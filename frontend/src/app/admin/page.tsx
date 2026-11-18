@@ -137,7 +137,15 @@ export default function AdminPage() {
       alert(`Đã cấp quyền On-chain cho ví ${truncateAddress(userAcc.walletAddress)}!`);
       loadAll();
     } catch (err: any) {
-      alert('Lỗi phê duyệt: ' + err.message);
+      console.error('Lỗi phê duyệt:', err);
+      const errStr = (err?.data || '') + (err?.message || '') + (err?.shortMessage || '');
+      if (errStr.includes('0xe2517d3f') || errStr.includes('e2517d3f') || errStr.includes('AccessControlUnauthorizedAccount')) {
+        alert('Lỗi quyền hạn: Ví đang kết nối chưa nắm giữ quyền Root Admin (DEFAULT_ADMIN_ROLE) trên Smart Contract. Vui lòng kiểm tra lại ví MetaMask.');
+      } else if (errStr.includes('user rejected') || errStr.includes('ACTION_REJECTED')) {
+        alert('Giao dịch cấp quyền đã bị hủy trên MetaMask.');
+      } else {
+        alert('Lỗi phê duyệt: ' + (err?.reason || err?.shortMessage || err?.message || 'Giao dịch không thành công'));
+      }
     } finally {
       setActionLoadingId(null);
     }
