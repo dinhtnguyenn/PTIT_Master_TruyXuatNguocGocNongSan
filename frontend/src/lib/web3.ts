@@ -1,5 +1,10 @@
 import { ethers } from 'ethers';
-import { CONTRACT_ADDRESS, CONTRACT_ABI } from './constants';
+import {
+  CONTRACT_ABI,
+  getDynamicContractAddress,
+  getDynamicRpcUrl,
+  getDynamicExplorerUrl,
+} from './constants';
 
 declare global {
   interface Window {
@@ -27,12 +32,14 @@ export function computeSha256(data: any): string {
 }
 
 export async function getProvider() {
-  const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || 'https://polygon-amoy.drpc.org';
+  const rpcUrl = await getDynamicRpcUrl();
   return new ethers.JsonRpcProvider(rpcUrl);
 }
 
 export async function ensurePolygonAmoyNetwork() {
   if (typeof window === 'undefined' || !window.ethereum) return;
+  const rpcUrl = await getDynamicRpcUrl();
+  const explorerUrl = await getDynamicExplorerUrl();
   try {
     await window.ethereum.request({
       method: 'wallet_switchEthereumChain',
@@ -48,12 +55,8 @@ export async function ensurePolygonAmoyNetwork() {
               chainId: '0x13882',
               chainName: 'Polygon Amoy Testnet',
               nativeCurrency: { name: 'POL', symbol: 'POL', decimals: 18 },
-              rpcUrls: [
-                'https://polygon-amoy-bor-rpc.publicnode.com',
-                'https://rpc-amoy.polygon.technology',
-                'https://polygon-amoy.drpc.org'
-              ],
-              blockExplorerUrls: ['https://amoy.polygonscan.com/'],
+              rpcUrls: [rpcUrl, 'https://polygon-amoy-bor-rpc.publicnode.com'],
+              blockExplorerUrls: [explorerUrl.endsWith('/') ? explorerUrl : `${explorerUrl}/`],
             },
           ],
         });
@@ -105,13 +108,14 @@ export async function getSigner() {
 }
 
 export async function getContract(withSigner = false) {
+  const contractAddress = await getDynamicContractAddress();
   if (withSigner) {
     const signer = await getSigner();
-    return new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+    return new ethers.Contract(contractAddress, CONTRACT_ABI, signer);
   }
   // Cho thao tác đọc (read-only): luôn dùng RPC chính thức của Polygon Amoy để xác thực toàn vẹn
   const provider = await getProvider();
-  return new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+  return new ethers.Contract(contractAddress, CONTRACT_ABI, provider);
 }
 
 // Kiểm tra cờ ngắt kết nối trong localStorage

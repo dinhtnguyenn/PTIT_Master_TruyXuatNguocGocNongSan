@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Wallet, CheckCircle2, Clock, ArrowRight } from 'lucide-react';
 import { connectWallet, getContract, truncateAddress, isWalletDisconnected, getGasOverrides } from '../../lib/web3';
-import { API_BASE_URL, ROLE_LABELS, ADMIN_ADDRESS, isAdminAddress } from '../../lib/constants';
+import { API_BASE_URL, ROLE_LABELS } from '../../lib/constants';
 
 export default function SupplyChainPortalPage() {
   const [account, setAccount] = useState<string | null>(null);
@@ -74,11 +74,6 @@ export default function SupplyChainPortalPage() {
   async function loadUser(addr: string) {
     setLoading(true);
     try {
-      if (isAdminAddress(addr)) {
-        setUserData({ role: 'ADMIN', status: 'APPROVED', organizationName: 'Ban Quản Trị Hệ Thống AgriTrace' });
-        loadBatches();
-        return;
-      }
       const res = await fetch(`${API_BASE_URL}/accounts/me/${addr}`);
       if (res.ok) {
         const data = await res.json();

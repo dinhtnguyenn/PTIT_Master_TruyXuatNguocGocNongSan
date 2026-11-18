@@ -10,7 +10,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import QRCode from 'qrcode';
-import { API_BASE_URL, STAGE_LABELS, CONTRACT_ADDRESS } from '../../../lib/constants';
+import { API_BASE_URL, STAGE_LABELS, getDynamicExplorerUrl } from '../../../lib/constants';
 import { getContract, truncateAddress } from '../../../lib/web3';
 
 function formatImageUrl(url?: string | null): string {
@@ -40,6 +40,13 @@ export default function TraceDetailPage() {
   const [loading, setLoading] = useState(true);
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [verified, setVerified] = useState(false);
+  const [explorerUrl, setExplorerUrl] = useState<string>('https://amoy.polygonscan.com');
+
+  useEffect(() => {
+    getDynamicExplorerUrl().then((url) => {
+      if (url) setExplorerUrl(url.replace(/\/+$/, ''));
+    });
+  }, []);
 
   useEffect(() => {
     if (!batchId) return;
@@ -56,7 +63,7 @@ export default function TraceDetailPage() {
         const currentUrl =
           typeof window !== 'undefined' && window.location.href
             ? window.location.href
-            : `https://voting.io.vn/trace/${batchId}`;
+            : `/trace/${batchId}`;
         const qrUrl = await QRCode.toDataURL(currentUrl, { width: 200, margin: 1 });
         setQrDataUrl(qrUrl);
 
@@ -176,7 +183,7 @@ export default function TraceDetailPage() {
         </div>
         {batch.producerTxHash && (
           <a
-            href={`https://amoy.polygonscan.com/tx/${batch.producerTxHash}`}
+            href={`${explorerUrl}/tx/${batch.producerTxHash}`}
             target="_blank"
             rel="noreferrer"
             className="text-[11px] font-mono text-emerald-700 hover:underline flex items-center gap-1"
@@ -196,7 +203,7 @@ export default function TraceDetailPage() {
             </h2>
             {batch.producerTxHash && (
               <a
-                href={`https://amoy.polygonscan.com/tx/${batch.producerTxHash}`}
+                href={`${explorerUrl}/tx/${batch.producerTxHash}`}
                 target="_blank"
                 rel="noreferrer"
                 className="text-[11px] font-mono text-emerald-700 hover:underline flex items-center gap-1"
@@ -236,7 +243,7 @@ export default function TraceDetailPage() {
             </h2>
             {batch.inspectorTxHash && (
               <a
-                href={`https://amoy.polygonscan.com/tx/${batch.inspectorTxHash}`}
+                href={`${explorerUrl}/tx/${batch.inspectorTxHash}`}
                 target="_blank"
                 rel="noreferrer"
                 className="text-[11px] font-mono text-emerald-700 hover:underline flex items-center gap-1"
@@ -275,7 +282,7 @@ export default function TraceDetailPage() {
             </h2>
             {batch.logisticsTxHash && (
               <a
-                href={`https://amoy.polygonscan.com/tx/${batch.logisticsTxHash}`}
+                href={`${explorerUrl}/tx/${batch.logisticsTxHash}`}
                 target="_blank"
                 rel="noreferrer"
                 className="text-[11px] font-mono text-emerald-700 hover:underline flex items-center gap-1"
@@ -311,7 +318,7 @@ export default function TraceDetailPage() {
             </h2>
             {batch.distributorTxHash && (
               <a
-                href={`https://amoy.polygonscan.com/tx/${batch.distributorTxHash}`}
+                href={`${explorerUrl}/tx/${batch.distributorTxHash}`}
                 target="_blank"
                 rel="noreferrer"
                 className="text-[11px] font-mono text-emerald-700 hover:underline flex items-center gap-1"

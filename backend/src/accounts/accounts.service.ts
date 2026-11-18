@@ -72,13 +72,14 @@ export class AccountsService {
     if (!account) {
       if (isConfigAdmin) {
         // Tự động trả về quyền Admin nếu ví nằm trong danh sách Admin cấu hình trên DB
+        const sysName = (await this.configService.get('SYSTEM_NAME')) || 'AgriTrace';
         return {
           id: 'admin-' + normalized.slice(2, 10),
           walletAddress: normalized,
           role: 'ADMIN',
           roles: ['ADMIN'],
-          organizationName: 'Ban Quản Trị Hệ Thống AgriTrace',
-          contactInfo: 'admin@voting.io.vn',
+          organizationName: `Ban Quản Trị Hệ Thống ${sysName}`,
+          contactInfo: 'Ban Quản Trị Hệ Thống',
           status: 'APPROVED',
           isAdmin: true,
           txHashGrantRole: null,

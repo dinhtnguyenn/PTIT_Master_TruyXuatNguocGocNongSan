@@ -371,7 +371,7 @@ export default function SuperadminPage() {
       productionLocation: 'Hợp tác xã nông sản',
       cultivationStartDate: new Date().toISOString().split('T')[0],
       harvestDate: new Date().toISOString().split('T')[0],
-      producerWallet: account || '0x33F34938981588Df03c8eB291C6abe75612eA49a',
+      producerWallet: account || '',
       producerTxHash: '',
       producerDataHash: '',
       inspectionResult: '',
@@ -578,7 +578,7 @@ export default function SuperadminPage() {
           </div>
 
           <div className="pt-2 text-center text-[11px] text-slate-400">
-            Khóa mặc định ban đầu: <span className="font-mono text-slate-600">agritrace_root_2026</span> (có thể đổi trong Cấu hình).
+            Khóa bí mật được quản lý và lưu trữ trực tiếp trong bảng Cấu hình (SystemConfig) trên CSDL.
           </div>
         </div>
       </div>

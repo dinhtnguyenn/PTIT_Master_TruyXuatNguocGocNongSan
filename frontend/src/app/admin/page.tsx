@@ -3,10 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { Users, BarChart3, Wallet, RefreshCw } from 'lucide-react';
 import { connectWallet, getContract, truncateAddress, isWalletDisconnected, getGasOverrides } from '../../lib/web3';
-import { API_BASE_URL, ROLE_HASHES, ROLE_LABELS, ADMIN_ADDRESS, isAdminAddress } from '../../lib/constants';
+import { API_BASE_URL, ROLE_HASHES, ROLE_LABELS } from '../../lib/constants';
 
 export default function AdminPage() {
   const [account, setAccount] = useState<string | null>(null);
+  const [isAdminUser, setIsAdminUser] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<'APPROVAL' | 'STATS'>('APPROVAL');
   const [accounts, setAccounts] = useState<any[]>([]);
   const [filterStatus, setFilterStatus] = useState<string>('PENDING');
@@ -17,6 +18,23 @@ export default function AdminPage() {
 
   async function checkAdmin(addr: string) {
     setAccount(addr);
+    try {
+      const res = await fetch(`${API_BASE_URL}/accounts/me/${addr}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && (data.isAdmin || data.roles?.includes('ADMIN') || data.role === 'ADMIN')) {
+          setIsAdminUser(true);
+        } else {
+          try {
+            const contract = await getContract(false);
+            const onChainRole = await contract.getUserRole(addr);
+            setIsAdminUser(onChainRole === 'ADMIN');
+          } catch (e) {
+            setIsAdminUser(false);
+          }
+        }
+      }
+    } catch (e) {}
     loadAll();
   }
 
@@ -187,7 +205,7 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {account && !isAdminAddress(account) && (
+      {account && !isAdminUser && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
           <strong>Lưu ý:</strong> Ví đang kết nối (<span className="font-mono">{truncateAddress(account)}</span>) chưa được cấp quyền Root Admin trên Smart Contract. Vui lòng chuyển sang ví Admin trên MetaMask để thực hiện cấp quyền On-chain.
         </div>

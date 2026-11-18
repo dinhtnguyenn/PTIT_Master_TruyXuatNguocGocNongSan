@@ -4,18 +4,55 @@ import { ethers } from 'ethers';
 const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 const cleanUrl = rawApiUrl.replace(/\/+$/, '');
 export const API_BASE_URL = cleanUrl.endsWith('/api') ? cleanUrl : `${cleanUrl}/api`;
-export const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || deploymentData.contractAddress;
 export const CONTRACT_ABI = deploymentData.abi;
-export const ADMIN_ADDRESSES = [
-  '0x33F34938981588Df03c8eB291C6abe75612eA49a'.toLowerCase(),
-  '0xd308d759F0986aADe715d8B2bf18d58c1680b9CC'.toLowerCase(),
-];
 
-export const ADMIN_ADDRESS = '0xd308d759F0986aADe715d8B2bf18d58c1680b9CC';
+// Cache cấu hình động đọc từ CSDL (SystemConfig) qua API
+let cachedConfig: Record<string, string> | null = null;
+let lastFetchTime = 0;
 
-export function isAdminAddress(addr?: string | null): boolean {
+export async function fetchSystemConfig(forceRefresh: boolean = false): Promise<Record<string, string>> {
+  const now = Date.now();
+  if (!forceRefresh && cachedConfig && now - lastFetchTime < 30000) {
+    return cachedConfig;
+  }
+  try {
+    const res = await fetch(`${API_BASE_URL}/config`);
+    if (res.ok) {
+      cachedConfig = await res.json();
+      lastFetchTime = now;
+      return cachedConfig || {};
+    }
+  } catch (e) {}
+  return cachedConfig || {};
+}
+
+export async function getDynamicContractAddress(): Promise<string> {
+  const cfg = await fetchSystemConfig();
+  return cfg.CONTRACT_ADDRESS || process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || deploymentData.contractAddress;
+}
+
+export async function getDynamicRpcUrl(): Promise<string> {
+  const cfg = await fetchSystemConfig();
+  return cfg.RPC_URL || process.env.NEXT_PUBLIC_RPC_URL || 'https://polygon-amoy-bor-rpc.publicnode.com';
+}
+
+export async function getDynamicExplorerUrl(): Promise<string> {
+  const cfg = await fetchSystemConfig();
+  return cfg.EXPLORER_URL || 'https://amoy.polygonscan.com';
+}
+
+export async function getDynamicAdminWallets(): Promise<string[]> {
+  const cfg = await fetchSystemConfig();
+  if (cfg.ADMIN_WALLETS) {
+    return cfg.ADMIN_WALLETS.split(',').map((w) => w.trim().toLowerCase());
+  }
+  return [];
+}
+
+export async function checkIsAdminWallet(addr?: string | null): Promise<boolean> {
   if (!addr) return false;
-  return ADMIN_ADDRESSES.includes(addr.toLowerCase());
+  const list = await getDynamicAdminWallets();
+  return list.includes(addr.toLowerCase());
 }
 
 export const ROLE_HASHES = {

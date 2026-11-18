@@ -11,7 +11,7 @@ import {
   truncateAddress,
   getContract,
 } from '../lib/web3';
-import { API_BASE_URL, ADMIN_ADDRESS, isAdminAddress } from '../lib/constants';
+import { API_BASE_URL } from '../lib/constants';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -37,11 +37,6 @@ export default function Navbar() {
           setStatus(data.status);
           return;
         }
-      }
-      if (isAdminAddress(walletAddr)) {
-        setRole('ADMIN');
-        setStatus('APPROVED');
-        return;
       }
       try {
         const contract = await getContract(false);
