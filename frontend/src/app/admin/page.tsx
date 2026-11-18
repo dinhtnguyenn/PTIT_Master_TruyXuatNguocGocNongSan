@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Users, BarChart3, Wallet, RefreshCw, ShieldAlert, ShieldCheck } from 'lucide-react';
-import { connectWallet, getContract, truncateAddress, isWalletDisconnected, getGasOverrides } from '../../lib/web3';
+import { connectWallet, getContract, truncateAddress, isWalletDisconnected, getGasOverrides, formatBlockchainError } from '../../lib/web3';
 import { API_BASE_URL, ROLE_HASHES, ROLE_LABELS, STATUS_LABELS, isHardcodedAdmin } from '../../lib/constants';
 
 export default function AdminPage() {
@@ -123,14 +123,7 @@ export default function AdminPage() {
       loadAll();
     } catch (err: any) {
       console.error('Lỗi phê duyệt:', err);
-      const errStr = (err?.data || '') + (err?.message || '') + (err?.shortMessage || '');
-      if (errStr.includes('0xe2517d3f') || errStr.includes('e2517d3f') || errStr.includes('AccessControlUnauthorizedAccount')) {
-        alert('Lỗi quyền hạn: Ví đang kết nối chưa nắm giữ quyền Quản trị viên gốc trên Hợp đồng thông minh. Vui lòng kiểm tra lại ví MetaMask.');
-      } else if (errStr.includes('user rejected') || errStr.includes('ACTION_REJECTED')) {
-        alert('Giao dịch cấp quyền đã bị hủy trên MetaMask.');
-      } else {
-        alert('Lỗi phê duyệt: ' + (err?.reason || err?.shortMessage || err?.message || 'Giao dịch không thành công'));
-      }
+      alert('Lỗi phê duyệt: ' + formatBlockchainError(err));
     } finally {
       setActionLoadingId(null);
     }

@@ -9,6 +9,26 @@ import { DistributeBatchDto } from './dto/distribute-batch.dto';
 export class BatchesController {
   constructor(private readonly batchesService: BatchesService) {}
 
+  @Post('prepare/producer')
+  prepareProducer(@Body() dto: CreateProducerBatchDto) {
+    return this.batchesService.prepareProducer(dto);
+  }
+
+  @Post('prepare/inspector')
+  prepareInspector(@Body() dto: InspectBatchDto) {
+    return this.batchesService.prepareInspector(dto);
+  }
+
+  @Post('prepare/logistics')
+  prepareLogistics(@Body() dto: TransportBatchDto) {
+    return this.batchesService.prepareLogistics(dto);
+  }
+
+  @Post('prepare/distributor')
+  prepareDistributor(@Body() dto: DistributeBatchDto) {
+    return this.batchesService.prepareDistributor(dto);
+  }
+
   @Post('producer')
   recordProducer(@Body() dto: CreateProducerBatchDto) {
     return this.batchesService.recordProducer(dto);

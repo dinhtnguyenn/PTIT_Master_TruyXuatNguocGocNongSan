@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { computeSha256 } from '../hash.util';
 import { CreateProducerBatchDto } from './dto/create-producer-batch.dto';
@@ -7,8 +7,20 @@ import { TransportBatchDto } from './dto/transport-batch.dto';
 import { DistributeBatchDto } from './dto/distribute-batch.dto';
 
 @Injectable()
-export class BatchesService {
+export class BatchesService implements OnModuleInit {
   constructor(private prisma: PrismaService) {}
+
+  async onModuleInit() {
+    // Dọn dẹp các lô hàng TEST bị lưu dở trước đó khi giao dịch Blockchain thất bại (producerTxHash = null)
+    try {
+      await this.prisma.batch.deleteMany({
+        where: {
+          batchId: { in: ['BATCH-2026-4503', 'BATCH-2026-7103', 'BATCH-2026-5366'] },
+          producerTxHash: null,
+        },
+      });
+    } catch (e) {}
+  }
 
   private checkPermission(user: any, requiredRole: string): boolean {
     if (!user || user.status !== 'APPROVED') return false;
@@ -19,14 +31,14 @@ export class BatchesService {
     return false;
   }
 
-  // 1. PRODUCER: Khởi tạo lô sản phẩm
-  async recordProducer(dto: CreateProducerBatchDto) {
+  // 1. PRODUCER: Kiểm tra hợp lệ & tính mã băm (KHÔNG ghi CSDL)
+  async prepareProducer(dto: CreateProducerBatchDto) {
     const wallet = dto.producerWallet.toLowerCase();
     const user = await this.prisma.userAccount.findUnique({
       where: { walletAddress: wallet },
     });
     if (!this.checkPermission(user, 'PRODUCER')) {
-      throw new BadRequestException('Ví chưa được phê duyệt với vai trò Nhà sản xuất (PRODUCER)!');
+      throw new BadRequestException('Ví chưa được phê duyệt với vai trò Đơn vị Sản xuất!');
     }
 
     const existing = await this.prisma.batch.findUnique({
@@ -36,7 +48,6 @@ export class BatchesService {
       throw new BadRequestException(`Mã lô hàng '${dto.batchId}' đã tồn tại!`);
     }
 
-    // Payload chuẩn đối chiếu của Bảng 1
     const payload = {
       batchId: dto.batchId,
       productName: dto.productName,
@@ -53,6 +64,12 @@ export class BatchesService {
     };
 
     const dataHash = computeSha256(payload);
+    return { dataHash, wallet };
+  }
+
+  // 1. PRODUCER: Lưu lô sản phẩm sau khi đã xác thực (và ký Blockchain thành công)
+  async recordProducer(dto: CreateProducerBatchDto) {
+    const { dataHash, wallet } = await this.prepareProducer(dto);
 
     const batch = await this.prisma.batch.create({
       data: {
@@ -81,14 +98,14 @@ export class BatchesService {
     };
   }
 
-  // 2. INSPECTOR: Ghi nhận kiểm định
-  async recordInspector(dto: InspectBatchDto) {
+  // 2. INSPECTOR: Kiểm tra hợp lệ & tính mã băm (KHÔNG ghi CSDL)
+  async prepareInspector(dto: InspectBatchDto) {
     const wallet = dto.inspectorWallet.toLowerCase();
     const user = await this.prisma.userAccount.findUnique({
       where: { walletAddress: wallet },
     });
     if (!this.checkPermission(user, 'INSPECTOR')) {
-      throw new BadRequestException('Ví chưa được phê duyệt với vai trò Đơn vị kiểm định (INSPECTOR)!');
+      throw new BadRequestException('Ví chưa được phê duyệt với vai trò Đơn vị Kiểm định!');
     }
 
     const batch = await this.prisma.batch.findUnique({
@@ -98,10 +115,9 @@ export class BatchesService {
       throw new NotFoundException(`Không tìm thấy mã lô hàng '${dto.batchId}'!`);
     }
     if (batch.stage !== 'CREATED') {
-      throw new BadRequestException(`Lô hàng không ở trạng thái hợp lệ để kiểm định (Hiện tại: ${batch.stage})!`);
+      throw new BadRequestException(`Lô hàng không ở trạng thái hợp lệ để kiểm định!`);
     }
 
-    // Payload chuẩn đối chiếu của Bảng 2
     const payload = {
       batchId: dto.batchId,
       inspectionResult: dto.inspectionResult,
@@ -116,6 +132,12 @@ export class BatchesService {
     };
 
     const dataHash = computeSha256(payload);
+    return { dataHash, wallet };
+  }
+
+  // 2. INSPECTOR: Ghi nhận kiểm định
+  async recordInspector(dto: InspectBatchDto) {
+    const { dataHash, wallet } = await this.prepareInspector(dto);
 
     const updated = await this.prisma.batch.update({
       where: { batchId: dto.batchId },
@@ -141,14 +163,14 @@ export class BatchesService {
     };
   }
 
-  // 3. LOGISTICS: Ghi nhận vận chuyển
-  async recordLogistics(dto: TransportBatchDto) {
+  // 3. LOGISTICS: Kiểm tra hợp lệ & tính mã băm (KHÔNG ghi CSDL)
+  async prepareLogistics(dto: TransportBatchDto) {
     const wallet = dto.logisticsWallet.toLowerCase();
     const user = await this.prisma.userAccount.findUnique({
       where: { walletAddress: wallet },
     });
     if (!this.checkPermission(user, 'LOGISTICS')) {
-      throw new BadRequestException('Ví chưa được phê duyệt với vai trò Đơn vị vận chuyển (LOGISTICS)!');
+      throw new BadRequestException('Ví chưa được phê duyệt với vai trò Đơn vị Vận chuyển!');
     }
 
     const batch = await this.prisma.batch.findUnique({
@@ -158,10 +180,9 @@ export class BatchesService {
       throw new NotFoundException(`Không tìm thấy mã lô hàng '${dto.batchId}'!`);
     }
     if (batch.stage !== 'INSPECTED') {
-      throw new BadRequestException(`Lô hàng chưa hoàn tất kiểm định (Hiện tại: ${batch.stage})!`);
+      throw new BadRequestException(`Lô hàng chưa hoàn tất kiểm định!`);
     }
 
-    // Payload chuẩn đối chiếu của Bảng 3
     const payload = {
       batchId: dto.batchId,
       transporterName: dto.transporterName,
@@ -179,6 +200,12 @@ export class BatchesService {
     };
 
     const dataHash = computeSha256(payload);
+    return { dataHash, wallet };
+  }
+
+  // 3. LOGISTICS: Ghi nhận vận chuyển
+  async recordLogistics(dto: TransportBatchDto) {
+    const { dataHash, wallet } = await this.prepareLogistics(dto);
 
     const updated = await this.prisma.batch.update({
       where: { batchId: dto.batchId },
@@ -207,14 +234,14 @@ export class BatchesService {
     };
   }
 
-  // 4. DISTRIBUTOR: Ghi nhận phân phối
-  async recordDistributor(dto: DistributeBatchDto) {
+  // 4. DISTRIBUTOR: Kiểm tra hợp lệ & tính mã băm (KHÔNG ghi CSDL)
+  async prepareDistributor(dto: DistributeBatchDto) {
     const wallet = dto.distributorWallet.toLowerCase();
     const user = await this.prisma.userAccount.findUnique({
       where: { walletAddress: wallet },
     });
     if (!this.checkPermission(user, 'DISTRIBUTOR')) {
-      throw new BadRequestException('Ví chưa được phê duyệt với vai trò Đơn vị phân phối (DISTRIBUTOR)!');
+      throw new BadRequestException('Ví chưa được phê duyệt với vai trò Đơn vị Phân phối!');
     }
 
     const batch = await this.prisma.batch.findUnique({
@@ -224,10 +251,9 @@ export class BatchesService {
       throw new NotFoundException(`Không tìm thấy mã lô hàng '${dto.batchId}'!`);
     }
     if (batch.stage !== 'IN_TRANSIT') {
-      throw new BadRequestException(`Lô hàng chưa được vận chuyển (Hiện tại: ${batch.stage})!`);
+      throw new BadRequestException(`Lô hàng chưa được vận chuyển!`);
     }
 
-    // Payload chuẩn đối chiếu của Bảng 4
     const payload = {
       batchId: dto.batchId,
       distributorName: dto.distributorName,
@@ -241,6 +267,12 @@ export class BatchesService {
     };
 
     const dataHash = computeSha256(payload);
+    return { dataHash, wallet };
+  }
+
+  // 4. DISTRIBUTOR: Ghi nhận phân phối
+  async recordDistributor(dto: DistributeBatchDto) {
+    const { dataHash, wallet } = await this.prepareDistributor(dto);
 
     const updated = await this.prisma.batch.update({
       where: { batchId: dto.batchId },

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Wallet, CheckCircle2, Clock, ArrowRight } from 'lucide-react';
-import { connectWallet, getContract, truncateAddress, isWalletDisconnected, getGasOverrides } from '../../lib/web3';
+import { connectWallet, getContract, truncateAddress, isWalletDisconnected, getGasOverrides, formatBlockchainError } from '../../lib/web3';
 import { API_BASE_URL, ROLE_LABELS, isHardcodedAdmin } from '../../lib/constants';
 
 export default function SupplyChainPortalPage() {
@@ -187,7 +187,7 @@ export default function SupplyChainPortalPage() {
     };
   }, []);
 
-  // 1. Submit Producer Form
+  // 1. Submit Producer Form (Blockchain-First: Chỉ lưu CSDL sau khi Blockchain xác nhận thành công)
   async function submitProducer(e: React.FormEvent) {
     e.preventDefault();
     if (!account) return;
@@ -195,44 +195,64 @@ export default function SupplyChainPortalPage() {
     setStatusAlert(null);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/batches/producer`, {
+      // Bước 1: Kiểm tra dữ liệu & lấy mã băm SHA-256 (KHÔNG ghi CSDL)
+      const prepRes = await fetch(`${API_BASE_URL}/batches/prepare/producer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...producerForm, producerWallet: account }),
       });
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.message || 'Lỗi lưu dữ liệu');
+      const prepData = await prepRes.json();
+      if (!prepRes.ok) {
+        const msg = Array.isArray(prepData.message) ? prepData.message.join(', ') : prepData.message;
+        throw new Error(msg || 'Dữ liệu sản xuất chưa hợp lệ');
+      }
 
+      // Bước 2: Ký & gửi giao dịch lên Blockchain TRƯỚC
       const contract = await getContract(true);
       const gasOverrides = await getGasOverrides();
       const tx = await contract.recordProduction(
         producerForm.batchId,
         producerForm.productName,
-        result.dataHash,
+        prepData.dataHash,
         gasOverrides
       );
       const receipt = await tx.wait();
 
-      await fetch(`${API_BASE_URL}/batches/${producerForm.batchId}/tx`, {
-        method: 'PATCH',
+      // Bước 3: Giao dịch Blockchain đã thành công -> Lưu chính thức vào CSDL kèm txHash
+      const saveRes = await fetch(`${API_BASE_URL}/batches/producer`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stage: 'CREATED', txHash: receipt.hash }),
+        body: JSON.stringify({
+          ...producerForm,
+          producerWallet: account,
+          producerTxHash: receipt.hash,
+        }),
       });
+      const saveResult = await saveRes.json();
+      if (!saveRes.ok) {
+        const msg = Array.isArray(saveResult.message) ? saveResult.message.join(', ') : saveResult.message;
+        throw new Error(msg || 'Giao dịch Blockchain đã hoàn tất nhưng lưu CSDL gặp sự cố');
+      }
 
+      const createdBatchId = producerForm.batchId;
       setStatusAlert({
         type: 'success',
-        message: `Đã tạo lô hàng '${producerForm.batchId}' và ghi nhận trên Blockchain!`,
+        message: `Đã tạo lô hàng '${createdBatchId}' và ghi nhận thành công trên Blockchain!`,
         txHash: receipt.hash,
       });
+      setProducerForm((prev) => ({
+        ...prev,
+        batchId: `BATCH-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+      }));
       loadBatches();
     } catch (err: any) {
-      setStatusAlert({ type: 'error', message: err.message });
+      setStatusAlert({ type: 'error', message: formatBlockchainError(err) });
     } finally {
       setSubmitting(false);
     }
   }
 
-  // 2. Submit Inspector Form
+  // 2. Submit Inspector Form (Blockchain-First)
   async function submitInspector(e: React.FormEvent) {
     e.preventDefault();
     if (!account) return;
@@ -244,39 +264,51 @@ export default function SupplyChainPortalPage() {
     setStatusAlert(null);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/batches/inspector`, {
+      const prepRes = await fetch(`${API_BASE_URL}/batches/prepare/inspector`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...inspectorForm, inspectorWallet: account }),
       });
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.message || 'Lỗi lưu dữ liệu');
+      const prepData = await prepRes.json();
+      if (!prepRes.ok) {
+        const msg = Array.isArray(prepData.message) ? prepData.message.join(', ') : prepData.message;
+        throw new Error(msg || 'Dữ liệu kiểm định chưa hợp lệ');
+      }
 
       const contract = await getContract(true);
       const gasOverrides = await getGasOverrides();
-      const tx = await contract.recordInspection(inspectorForm.batchId, result.dataHash, gasOverrides);
+      const tx = await contract.recordInspection(inspectorForm.batchId, prepData.dataHash, gasOverrides);
       const receipt = await tx.wait();
 
-      await fetch(`${API_BASE_URL}/batches/${inspectorForm.batchId}/tx`, {
-        method: 'PATCH',
+      const saveRes = await fetch(`${API_BASE_URL}/batches/inspector`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stage: 'INSPECTED', txHash: receipt.hash }),
+        body: JSON.stringify({
+          ...inspectorForm,
+          inspectorWallet: account,
+          inspectorTxHash: receipt.hash,
+        }),
       });
+      const saveResult = await saveRes.json();
+      if (!saveRes.ok) {
+        const msg = Array.isArray(saveResult.message) ? saveResult.message.join(', ') : saveResult.message;
+        throw new Error(msg || 'Giao dịch Blockchain đã hoàn tất nhưng lưu CSDL gặp sự cố');
+      }
 
       setStatusAlert({
         type: 'success',
-        message: `Kiểm định lô hàng '${inspectorForm.batchId}' thành công!`,
+        message: `Kiểm định lô hàng '${inspectorForm.batchId}' thành công và đã ghi nhận trên Blockchain!`,
         txHash: receipt.hash,
       });
       loadBatches();
     } catch (err: any) {
-      setStatusAlert({ type: 'error', message: err.message });
+      setStatusAlert({ type: 'error', message: formatBlockchainError(err) });
     } finally {
       setSubmitting(false);
     }
   }
 
-  // 3. Submit Logistics Form
+  // 3. Submit Logistics Form (Blockchain-First)
   async function submitLogistics(e: React.FormEvent) {
     e.preventDefault();
     if (!account) return;
@@ -288,39 +320,51 @@ export default function SupplyChainPortalPage() {
     setStatusAlert(null);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/batches/logistics`, {
+      const prepRes = await fetch(`${API_BASE_URL}/batches/prepare/logistics`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...logisticsForm, logisticsWallet: account }),
       });
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.message || 'Lỗi lưu dữ liệu');
+      const prepData = await prepRes.json();
+      if (!prepRes.ok) {
+        const msg = Array.isArray(prepData.message) ? prepData.message.join(', ') : prepData.message;
+        throw new Error(msg || 'Dữ liệu vận chuyển chưa hợp lệ');
+      }
 
       const contract = await getContract(true);
       const gasOverrides = await getGasOverrides();
-      const tx = await contract.recordLogistics(logisticsForm.batchId, result.dataHash, gasOverrides);
+      const tx = await contract.recordLogistics(logisticsForm.batchId, prepData.dataHash, gasOverrides);
       const receipt = await tx.wait();
 
-      await fetch(`${API_BASE_URL}/batches/${logisticsForm.batchId}/tx`, {
-        method: 'PATCH',
+      const saveRes = await fetch(`${API_BASE_URL}/batches/logistics`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stage: 'IN_TRANSIT', txHash: receipt.hash }),
+        body: JSON.stringify({
+          ...logisticsForm,
+          logisticsWallet: account,
+          logisticsTxHash: receipt.hash,
+        }),
       });
+      const saveResult = await saveRes.json();
+      if (!saveRes.ok) {
+        const msg = Array.isArray(saveResult.message) ? saveResult.message.join(', ') : saveResult.message;
+        throw new Error(msg || 'Giao dịch Blockchain đã hoàn tất nhưng lưu CSDL gặp sự cố');
+      }
 
       setStatusAlert({
         type: 'success',
-        message: `Ghi nhận vận chuyển lô hàng '${logisticsForm.batchId}' thành công!`,
+        message: `Ghi nhận vận chuyển lô hàng '${logisticsForm.batchId}' thành công trên Blockchain!`,
         txHash: receipt.hash,
       });
       loadBatches();
     } catch (err: any) {
-      setStatusAlert({ type: 'error', message: err.message });
+      setStatusAlert({ type: 'error', message: formatBlockchainError(err) });
     } finally {
       setSubmitting(false);
     }
   }
 
-  // 4. Submit Distributor Form
+  // 4. Submit Distributor Form (Blockchain-First)
   async function submitDistributor(e: React.FormEvent) {
     e.preventDefault();
     if (!account) return;
@@ -332,33 +376,45 @@ export default function SupplyChainPortalPage() {
     setStatusAlert(null);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/batches/distributor`, {
+      const prepRes = await fetch(`${API_BASE_URL}/batches/prepare/distributor`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...distributorForm, distributorWallet: account }),
       });
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.message || 'Lỗi lưu dữ liệu');
+      const prepData = await prepRes.json();
+      if (!prepRes.ok) {
+        const msg = Array.isArray(prepData.message) ? prepData.message.join(', ') : prepData.message;
+        throw new Error(msg || 'Dữ liệu phân phối chưa hợp lệ');
+      }
 
       const contract = await getContract(true);
       const gasOverrides = await getGasOverrides();
-      const tx = await contract.recordDistribution(distributorForm.batchId, result.dataHash, gasOverrides);
+      const tx = await contract.recordDistribution(distributorForm.batchId, prepData.dataHash, gasOverrides);
       const receipt = await tx.wait();
 
-      await fetch(`${API_BASE_URL}/batches/${distributorForm.batchId}/tx`, {
-        method: 'PATCH',
+      const saveRes = await fetch(`${API_BASE_URL}/batches/distributor`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stage: 'DELIVERED', txHash: receipt.hash }),
+        body: JSON.stringify({
+          ...distributorForm,
+          distributorWallet: account,
+          distributorTxHash: receipt.hash,
+        }),
       });
+      const saveResult = await saveRes.json();
+      if (!saveRes.ok) {
+        const msg = Array.isArray(saveResult.message) ? saveResult.message.join(', ') : saveResult.message;
+        throw new Error(msg || 'Giao dịch Blockchain đã hoàn tất nhưng lưu CSDL gặp sự cố');
+      }
 
       setStatusAlert({
         type: 'success',
-        message: `Tiếp nhận phân phối lô hàng '${distributorForm.batchId}' thành công!`,
+        message: `Tiếp nhận phân phối lô hàng '${distributorForm.batchId}' thành công trên Blockchain!`,
         txHash: receipt.hash,
       });
       loadBatches();
     } catch (err: any) {
-      setStatusAlert({ type: 'error', message: err.message });
+      setStatusAlert({ type: 'error', message: formatBlockchainError(err) });
     } finally {
       setSubmitting(false);
     }
@@ -473,15 +529,15 @@ export default function SupplyChainPortalPage() {
 
       {statusAlert && (
         <div
-          className={`p-3.5 rounded-xl text-xs border ${
+          className={`p-3.5 rounded-xl text-xs border overflow-hidden break-words ${
             statusAlert.type === 'success'
               ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
               : 'bg-rose-50 border-rose-200 text-rose-900'
           }`}
         >
-          <p className="font-semibold">{statusAlert.message}</p>
+          <p className="font-semibold break-words leading-relaxed">{statusAlert.message}</p>
           {statusAlert.txHash && (
-            <p className="font-mono text-[11px] mt-0.5">Mã giao dịch Blockchain: {statusAlert.txHash}</p>
+            <p className="font-mono text-[11px] mt-1 break-all">Mã giao dịch Blockchain: {statusAlert.txHash}</p>
           )}
         </div>
       )}
