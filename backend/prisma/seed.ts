@@ -6,26 +6,11 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('--- SEEDING SAMPLE DATA ---');
 
-  // 1. Tạo các tài khoản ví mẫu theo từng vai trò
+  // 1. Tạo các tài khoản ví mẫu cho 4 vai trò chuỗi cung ứng (CSDL không lưu role admin)
   const producerWallet = '0x70997970c51812dc3a010c7d01b50e0d17dc79c8';
   const inspectorWallet = '0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc';
   const logisticsWallet = '0x90f79bf6eb2c4f870365e785982e1f101e93b906';
   const distributorWallet = '0x15d34aaf54267db7d7c367839aaf71a00a2c6a65';
-  const adminWallet = '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266';
-
-  // Seed Admin
-  await prisma.userAccount.upsert({
-    where: { walletAddress: adminWallet },
-    update: {},
-    create: {
-      walletAddress: adminWallet,
-      role: 'ADMIN',
-      organizationName: 'Ban Quản Trị Hệ Thống AgriTrace',
-      contactInfo: 'admin@voting.io.vn - 024.3754.7890',
-      status: 'APPROVED',
-      txHashGrantRole: '0xadmin-genesis-hash',
-    },
-  });
 
   // Seed Producer
   await prisma.userAccount.upsert({

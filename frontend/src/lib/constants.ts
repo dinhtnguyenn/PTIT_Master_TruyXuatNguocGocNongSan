@@ -41,18 +41,23 @@ export async function getDynamicExplorerUrl(): Promise<string> {
   return cfg.EXPLORER_URL || 'https://amoy.polygonscan.com';
 }
 
+// 2 địa chỉ ví Admin cố định của hệ thống
+export const HARDCODED_ADMIN_WALLETS = [
+  '0xd308d759F0986aADe715d8B2bf18d58c1680b9CC'.toLowerCase(),
+  '0x33F34938981588Df03c8eB291C6abe75612eA49a'.toLowerCase(),
+];
+
+export function isHardcodedAdmin(addr?: string | null): boolean {
+  if (!addr) return false;
+  return HARDCODED_ADMIN_WALLETS.includes(addr.toLowerCase());
+}
+
 export async function getDynamicAdminWallets(): Promise<string[]> {
-  const cfg = await fetchSystemConfig();
-  if (cfg.ADMIN_WALLETS) {
-    return cfg.ADMIN_WALLETS.split(',').map((w) => w.trim().toLowerCase());
-  }
-  return [];
+  return HARDCODED_ADMIN_WALLETS;
 }
 
 export async function checkIsAdminWallet(addr?: string | null): Promise<boolean> {
-  if (!addr) return false;
-  const list = await getDynamicAdminWallets();
-  return list.includes(addr.toLowerCase());
+  return isHardcodedAdmin(addr);
 }
 
 export const ROLE_HASHES = {
@@ -68,7 +73,6 @@ export const ROLE_LABELS: Record<string, string> = {
   INSPECTOR: 'Đơn vị Kiểm định (Inspector)',
   LOGISTICS: 'Đơn vị Vận chuyển (Logistics)',
   DISTRIBUTOR: 'Đơn vị Phân phối (Distributor)',
-  ADMIN: 'Quản trị viên (Admin)',
 };
 
 export const STAGE_LABELS: Record<string, { label: string; color: string }> = {

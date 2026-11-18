@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Wallet, CheckCircle2, Clock, ArrowRight } from 'lucide-react';
 import { connectWallet, getContract, truncateAddress, isWalletDisconnected, getGasOverrides } from '../../lib/web3';
-import { API_BASE_URL, ROLE_LABELS } from '../../lib/constants';
+import { API_BASE_URL, ROLE_LABELS, isHardcodedAdmin } from '../../lib/constants';
 
 export default function SupplyChainPortalPage() {
   const [account, setAccount] = useState<string | null>(null);
@@ -389,22 +389,33 @@ export default function SupplyChainPortalPage() {
   }
 
   if (!userData || userData.status !== 'APPROVED') {
+    const isAdm = isHardcodedAdmin(account);
     return (
       <div className="max-w-md mx-auto py-20 text-center px-4">
         <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-700 mx-auto flex items-center justify-center mb-3">
           <Clock className="w-6 h-6" />
         </div>
-        <h1 className="text-base font-bold text-slate-900">Ví chưa được duyệt</h1>
+        <h1 className="text-base font-bold text-slate-900">
+          {userData?.status === 'PENDING' ? 'Hồ sơ đang chờ duyệt' : 'Chưa đăng ký tham gia chuỗi cung ứng'}
+        </h1>
         <p className="text-xs text-slate-500 mt-1">
-          Địa chỉ ví <span className="font-mono">{truncateAddress(account)}</span> đang chờ Admin duyệt hoặc chưa đăng ký.
+          Địa chỉ ví <span className="font-mono">{truncateAddress(account)}</span> {userData?.status === 'PENDING' ? 'đang trong danh sách chờ Admin phê duyệt.' : 'chưa đăng ký vai trò nhập liệu trong chuỗi cung ứng.'}
         </p>
-        <div className="mt-4">
+        <div className="mt-4 flex items-center justify-center gap-4">
           <Link
             href="/register"
             className="text-xs font-semibold text-emerald-600 hover:underline"
           >
-            Đến trang Đăng ký $\rightarrow$
+            Đến trang Đăng ký vai trò $\rightarrow$
           </Link>
+          {isAdm && (
+            <Link
+              href="/admin"
+              className="text-xs font-semibold text-purple-700 hover:underline"
+            >
+              Vào trang Quản trị $\rightarrow$
+            </Link>
+          )}
         </div>
       </div>
     );
@@ -413,10 +424,10 @@ export default function SupplyChainPortalPage() {
   const userRoles: string[] = (userData.roles && userData.roles.length > 0)
     ? userData.roles
     : (userData.role ? [userData.role] : []);
-  const isAdmin = userData.isAdmin || userRoles.includes('ADMIN') || userData.role === 'ADMIN';
-  const availableRoles = isAdmin
-    ? ['PRODUCER', 'INSPECTOR', 'LOGISTICS', 'DISTRIBUTOR']
-    : userRoles;
+  const isAdm = isHardcodedAdmin(account) || userData.isAdmin;
+  const availableRoles = userRoles.length > 0
+    ? userRoles
+    : ['PRODUCER'];
 
   const role = (selectedRole && availableRoles.includes(selectedRole))
     ? selectedRole
@@ -428,7 +439,7 @@ export default function SupplyChainPortalPage() {
       <div className="bg-white rounded-xl border border-slate-200 px-4 py-3 flex items-center justify-between shadow-sm">
         <div>
           <span className="text-[11px] font-bold text-emerald-700 uppercase">
-            {ROLE_LABELS[role] || role} {isAdmin ? '(Quyền Admin)' : ''}
+            {ROLE_LABELS[role] || role} {isAdm ? '(Ví Admin)' : ''}
           </span>
           <p className="text-sm font-bold text-slate-900">{userData.organizationName}</p>
         </div>

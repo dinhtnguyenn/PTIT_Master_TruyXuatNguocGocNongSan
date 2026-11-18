@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Users, BarChart3, Wallet, RefreshCw } from 'lucide-react';
+import { Users, BarChart3, Wallet, RefreshCw, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { connectWallet, getContract, truncateAddress, isWalletDisconnected, getGasOverrides } from '../../lib/web3';
-import { API_BASE_URL, ROLE_HASHES, ROLE_LABELS } from '../../lib/constants';
+import { API_BASE_URL, ROLE_HASHES, ROLE_LABELS, isHardcodedAdmin } from '../../lib/constants';
 
 export default function AdminPage() {
   const [account, setAccount] = useState<string | null>(null);
-  const [isAdminUser, setIsAdminUser] = useState<boolean>(true);
+  const [isAdminUser, setIsAdminUser] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'APPROVAL' | 'STATS'>('APPROVAL');
   const [accounts, setAccounts] = useState<any[]>([]);
   const [filterStatus, setFilterStatus] = useState<string>('PENDING');
@@ -16,25 +16,10 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
-  async function checkAdmin(addr: string) {
+  function checkAdmin(addr: string) {
     setAccount(addr);
-    try {
-      const res = await fetch(`${API_BASE_URL}/accounts/me/${addr}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data && (data.isAdmin || data.roles?.includes('ADMIN') || data.role === 'ADMIN')) {
-          setIsAdminUser(true);
-        } else {
-          try {
-            const contract = await getContract(false);
-            const onChainRole = await contract.getUserRole(addr);
-            setIsAdminUser(onChainRole === 'ADMIN');
-          } catch (e) {
-            setIsAdminUser(false);
-          }
-        }
-      }
-    } catch (e) {}
+    const isAdm = isHardcodedAdmin(addr);
+    setIsAdminUser(isAdm);
     loadAll();
   }
 
@@ -184,13 +169,35 @@ export default function AdminPage() {
     );
   }
 
+  if (!isAdminUser) {
+    return (
+      <div className="max-w-md mx-auto py-20 text-center px-4">
+        <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-3">
+          <ShieldAlert className="w-6 h-6" />
+        </div>
+        <h1 className="text-base font-bold text-slate-900 mb-2">Quyền Truy Cập Bị Từ Chối</h1>
+        <p className="text-xs text-slate-500 mb-2">
+          Ví đang kết nối (<span className="font-mono text-slate-700">{truncateAddress(account)}</span>) không thuộc danh sách 2 ví Quản trị viên của hệ thống.
+        </p>
+        <p className="text-[11px] text-slate-400">
+          Chức năng Quản trị chỉ khả dụng khi kết nối đúng địa chỉ ví Admin trên MetaMask.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
       {/* Admin Header */}
       <div className="bg-white rounded-xl border border-slate-200 p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shadow-sm">
         <div>
-          <h1 className="text-base font-bold text-slate-900">Quản Trị Hệ Thống</h1>
-          <p className="text-xs font-mono text-slate-500">Ví Admin: {truncateAddress(account)}</p>
+          <div className="flex items-center gap-2">
+            <h1 className="text-base font-bold text-slate-900">Quản Trị Hệ Thống</h1>
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200">
+              <ShieldCheck className="w-3 h-3" /> Ví Admin
+            </span>
+          </div>
+          <p className="text-xs font-mono text-slate-500 mt-0.5">{account}</p>
         </div>
 
         <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200 text-xs font-semibold">
@@ -212,12 +219,6 @@ export default function AdminPage() {
           </button>
         </div>
       </div>
-
-      {account && !isAdminUser && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
-          <strong>Lưu ý:</strong> Ví đang kết nối (<span className="font-mono">{truncateAddress(account)}</span>) chưa được cấp quyền Root Admin trên Smart Contract. Vui lòng chuyển sang ví Admin trên MetaMask để thực hiện cấp quyền On-chain.
-        </div>
-      )}
 
       {/* TAB 1: DUYỆT TÀI KHOẢN */}
       {activeTab === 'APPROVAL' && (

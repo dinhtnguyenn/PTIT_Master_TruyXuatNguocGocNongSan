@@ -1,15 +1,35 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { RegisterAccountDto } from './dto/register-account.dto';
 import { UpdateAccountStatusDto } from './dto/approve-account.dto';
 import { ConfigService } from '../config/config.service';
+import { isHardcodedAdmin } from '../admin.constants';
+
+const ALLOWED_SUPPLY_CHAIN_ROLES = ['PRODUCER', 'INSPECTOR', 'LOGISTICS', 'DISTRIBUTOR'];
 
 @Injectable()
-export class AccountsService {
+export class AccountsService implements OnModuleInit {
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
   ) {}
+
+  async onModuleInit() {
+    try {
+      // CSDL chỉ lưu 4 vai trò của ví chuỗi cung ứng, loại bỏ vai trò ADMIN khỏi bảng UserAccount
+      await this.prisma.userAccount.deleteMany({
+        where: {
+          OR: [
+            { role: 'ADMIN' },
+            { roles: { has: 'ADMIN' } },
+          ],
+        },
+      });
+      console.log('✅ Đã đồng bộ CSDL: chỉ lưu 4 vai trò chuỗi cung ứng (PRODUCER, INSPECTOR, LOGISTICS, DISTRIBUTOR), không lưu role ADMIN');
+    } catch (e) {
+      console.warn('Lưu ý dọn dẹp role ADMIN:', e);
+    }
+  }
 
   async register(dto: RegisterAccountDto) {
     const normalizedWallet = dto.walletAddress.toLowerCase();
@@ -17,16 +37,21 @@ export class AccountsService {
       where: { walletAddress: normalizedWallet },
     });
 
-    // Xử lý roles: ưu tiên mảng roles, nếu không có thì lấy dto.role
-    let roles: string[] = [];
+    // Xử lý roles: chỉ chấp nhận 4 role chuỗi cung ứng
+    let rawRoles: string[] = [];
     if (Array.isArray(dto.roles) && dto.roles.length > 0) {
-      roles = Array.from(new Set(dto.roles));
+      rawRoles = Array.from(new Set(dto.roles));
     } else if (dto.role) {
-      roles = [dto.role];
+      rawRoles = [dto.role];
     } else {
-      roles = ['PRODUCER'];
+      rawRoles = ['PRODUCER'];
     }
-    const primaryRole = roles[0] || 'PRODUCER';
+
+    const roles = rawRoles.filter((r) => ALLOWED_SUPPLY_CHAIN_ROLES.includes(r));
+    if (roles.length === 0) {
+      roles.push('PRODUCER');
+    }
+    const primaryRole = roles[0];
 
     if (existing) {
       if (existing.status === 'APPROVED') {
@@ -63,46 +88,40 @@ export class AccountsService {
 
   async getByWallet(walletAddress: string) {
     const normalized = walletAddress.toLowerCase();
+    const isAdmin = isHardcodedAdmin(normalized);
+
     const account = await this.prisma.userAccount.findUnique({
       where: { walletAddress: normalized },
     });
 
-    const isConfigAdmin = await this.configService.isAdminWallet(normalized);
-
     if (!account) {
-      if (isConfigAdmin) {
-        // Tự động trả về quyền Admin nếu ví nằm trong danh sách Admin cấu hình trên DB
-        const sysName = (await this.configService.get('SYSTEM_NAME')) || 'AgriTrace';
+      if (isAdmin) {
         return {
-          id: 'admin-' + normalized.slice(2, 10),
           walletAddress: normalized,
-          role: 'ADMIN',
-          roles: ['ADMIN'],
-          organizationName: `Ban Quản Trị Hệ Thống ${sysName}`,
-          contactInfo: 'Ban Quản Trị Hệ Thống',
-          status: 'APPROVED',
           isAdmin: true,
-          txHashGrantRole: null,
+          isRegistered: false,
+          status: null,
+          role: null,
+          roles: [],
         };
       }
       return null;
     }
 
-    // Đảm bảo roles luôn có dữ liệu
+    // Đảm bảo roles chỉ gồm các vai trò chuỗi cung ứng hợp lệ
     let userRoles = Array.isArray(account.roles) && account.roles.length > 0
       ? [...account.roles]
       : (account.role ? [account.role] : []);
 
-    if (isConfigAdmin && !userRoles.includes('ADMIN')) {
-      userRoles.push('ADMIN');
-    }
-
-    const isAdmin = userRoles.includes('ADMIN') || account.role === 'ADMIN' || isConfigAdmin;
+    userRoles = userRoles.filter((r) => ALLOWED_SUPPLY_CHAIN_ROLES.includes(r));
+    const primaryRole = userRoles[0] || (ALLOWED_SUPPLY_CHAIN_ROLES.includes(account.role) ? account.role : 'PRODUCER');
 
     return {
       ...account,
+      role: primaryRole,
       roles: userRoles,
       isAdmin,
+      isRegistered: true,
     };
   }
 

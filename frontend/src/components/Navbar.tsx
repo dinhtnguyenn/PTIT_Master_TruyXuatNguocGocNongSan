@@ -11,7 +11,7 @@ import {
   truncateAddress,
   getContract,
 } from '../lib/web3';
-import { API_BASE_URL } from '../lib/constants';
+import { API_BASE_URL, isHardcodedAdmin } from '../lib/constants';
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -22,31 +22,28 @@ export default function Navbar() {
   const [isConnecting, setIsConnecting] = useState(false);
 
   async function checkUser(walletAddr: string) {
+    const isAdm = isHardcodedAdmin(walletAddr);
     try {
       const res = await fetch(`${API_BASE_URL}/accounts/me/${walletAddr}`);
       if (res.ok) {
         const data = await res.json();
         if (data && data.status) {
-          if (data.isAdmin || data.roles?.includes('ADMIN') || data.role === 'ADMIN') {
-            setRole('ADMIN');
-          } else if (Array.isArray(data.roles) && data.roles.length > 1) {
-            setRole(data.roles.join(', '));
-          } else {
-            setRole(data.role || (data.roles && data.roles[0]) || null);
-          }
+          const supplyChainRoles = Array.isArray(data.roles) && data.roles.length > 0
+            ? data.roles.join(', ')
+            : (data.role || '');
+          const displayRole = isAdm
+            ? (supplyChainRoles ? `Admin • ${supplyChainRoles}` : 'Admin')
+            : supplyChainRoles;
+          setRole(displayRole);
           setStatus(data.status);
           return;
         }
       }
-      try {
-        const contract = await getContract(false);
-        const onChainRole = await contract.getUserRole(walletAddr);
-        if (onChainRole && onChainRole !== 'NONE') {
-          setRole(onChainRole);
-          setStatus('APPROVED');
-          return;
-        }
-      } catch (err) {}
+      if (isAdm) {
+        setRole('Admin');
+        setStatus('APPROVED');
+        return;
+      }
       setRole(null);
       setStatus(null);
     } catch (e) {}

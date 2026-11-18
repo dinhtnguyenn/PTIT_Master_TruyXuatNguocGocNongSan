@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { ConfigService } from '../config/config.service';
+import { isHardcodedAdmin } from '../admin.constants';
 
 @Injectable()
 export class SuperadminService {
@@ -18,15 +19,9 @@ export class SuperadminService {
 
     if (walletAddress) {
       const normalized = walletAddress.toLowerCase();
+      if (isHardcodedAdmin(normalized)) return { authorized: true };
       const isConfigAdmin = await this.configService.isAdminWallet(normalized);
       if (isConfigAdmin) return { authorized: true };
-
-      const user = await this.prisma.userAccount.findUnique({
-        where: { walletAddress: normalized },
-      });
-      if (user && (user.role === 'ADMIN' || (Array.isArray(user.roles) && user.roles.includes('ADMIN')))) {
-        return { authorized: true };
-      }
     }
 
     return { authorized: false, reason: 'Yêu cầu kết nối Ví Admin hoặc nhập Mã bí mật Superadmin chính xác.' };
