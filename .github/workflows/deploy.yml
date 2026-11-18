@@ -20,8 +20,8 @@ jobs:
             set -e
             echo "🚀 Deploying AgriTrace on VPS..."
             cd /var/www/agritrace
+            git remote set-url origin git@github.com:dinhtnguyenn/PTIT_Master_TruyXuatNguocGocNongSan.git
             git pull origin main
-            docker compose down
             docker compose up --build -d
-            docker system prune -f
+            docker image prune -f
             echo "✅ Deployment completed successfully!"
