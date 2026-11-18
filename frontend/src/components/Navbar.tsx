@@ -12,10 +12,12 @@ import {
   getContract,
 } from '../lib/web3';
 import { API_BASE_URL, isHardcodedAdmin, ROLE_LABELS, STATUS_LABELS } from '../lib/constants';
+import { useToast } from './ToastProvider';
 
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { toast } = useToast();
   const [account, setAccount] = useState<string | null>(null);
   const [role, setRole] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -57,7 +59,7 @@ export default function Navbar() {
       setAccount(addr);
       await checkUser(addr);
     } catch (err: any) {
-      alert(err.message || 'Không thể kết nối ví');
+      toast.error(err.message || 'Không thể kết nối ví MetaMask', 'Lỗi kết nối ví');
     } finally {
       setIsConnecting(false);
     }

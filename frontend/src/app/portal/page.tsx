@@ -5,8 +5,10 @@ import Link from 'next/link';
 import { Wallet, CheckCircle2, Clock, ArrowRight } from 'lucide-react';
 import { connectWallet, truncateAddress, isWalletDisconnected, sendContractTx, formatBlockchainError } from '../../lib/web3';
 import { API_BASE_URL, ROLE_LABELS, isHardcodedAdmin } from '../../lib/constants';
+import { useToast } from '../../components/ToastProvider';
 
 export default function SupplyChainPortalPage() {
+  const { toast } = useToast();
   const [account, setAccount] = useState<string | null>(null);
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -118,12 +120,12 @@ export default function SupplyChainPortalPage() {
         } else {
           setInspectorForm((prev) => ({ ...prev, certImageUrl: fullUrl }));
         }
-        alert('Tải ảnh lên thành công!');
+        toast.success('Tải ảnh lên thành công!');
       } else {
-        alert(data.message || 'Lỗi tải ảnh');
+        toast.error(data.message || 'Lỗi tải ảnh lên máy chủ', 'Lỗi tải ảnh');
       }
     } catch (err: any) {
-      alert('Không thể tải ảnh: ' + err.message);
+      toast.error('Không thể tải ảnh: ' + err.message, 'Lỗi tải ảnh');
     }
   }
 
@@ -133,7 +135,7 @@ export default function SupplyChainPortalPage() {
       setAccount(addr);
       await loadUser(addr);
     } catch (err: any) {
-      alert(err.message || 'Không thể kết nối ví');
+      toast.error(err.message || 'Không thể kết nối ví MetaMask', 'Lỗi kết nối ví');
     }
   }
 
@@ -253,7 +255,7 @@ export default function SupplyChainPortalPage() {
     e.preventDefault();
     if (!account) return;
     if (!inspectorForm.batchId) {
-      alert('Vui lòng chọn mã lô cần kiểm định!');
+      toast.warning('Vui lòng chọn mã lô cần kiểm định!');
       return;
     }
     setSubmitting(true);
@@ -309,7 +311,7 @@ export default function SupplyChainPortalPage() {
     e.preventDefault();
     if (!account) return;
     if (!logisticsForm.batchId) {
-      alert('Vui lòng chọn mã lô cần vận chuyển!');
+      toast.warning('Vui lòng chọn mã lô cần vận chuyển!');
       return;
     }
     setSubmitting(true);
@@ -365,7 +367,7 @@ export default function SupplyChainPortalPage() {
     e.preventDefault();
     if (!account) return;
     if (!distributorForm.batchId) {
-      alert('Vui lòng chọn mã lô tiếp nhận!');
+      toast.warning('Vui lòng chọn mã lô tiếp nhận!');
       return;
     }
     setSubmitting(true);

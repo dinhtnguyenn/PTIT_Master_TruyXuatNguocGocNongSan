@@ -25,12 +25,14 @@ import {
 } from 'lucide-react';
 import { connectWallet, disconnectWallet, truncateAddress, isWalletDisconnected } from '../../lib/web3';
 import { API_BASE_URL, ROLE_LABELS, STAGE_LABELS } from '../../lib/constants';
+import { useToast } from '../../components/ToastProvider';
 
 const ALL_ROLES = ['PRODUCER', 'INSPECTOR', 'LOGISTICS', 'DISTRIBUTOR', 'ADMIN'];
 const ALL_STAGES = ['CREATED', 'INSPECTED', 'IN_TRANSIT', 'DELIVERED'];
 const ALL_STATUSES = ['APPROVED', 'PENDING', 'REJECTED'];
 
 export default function SuperadminPage() {
+  const { toast, confirmDialog } = useToast();
   // Auth state
   const [account, setAccount] = useState<string | null>(null);
   const [superadminKey, setSuperadminKey] = useState<string>('');
@@ -289,27 +291,34 @@ export default function SuperadminPage() {
         throw new Error(err.message || 'Lỗi lưu người dùng');
       }
 
-      setMessage({ type: 'success', text: editingUser ? 'Đã cập nhật người dùng!' : 'Đã tạo người dùng mới!' });
+      toast.success(editingUser ? 'Đã cập nhật người dùng!' : 'Đã tạo người dùng mới!');
       setUserModalOpen(false);
       setEditingUser(null);
       loadAllData();
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message || 'Lỗi lưu người dùng');
     }
   }
 
   async function deleteUser(id: string) {
-    if (!confirm('Bạn có chắc chắn muốn XÓA tài khoản người dùng này cùng toàn bộ dữ liệu liên quan?')) return;
+    const confirmed = await confirmDialog({
+      title: 'Xóa tài khoản người dùng',
+      message: 'Bạn có chắc chắn muốn XÓA tài khoản người dùng này cùng toàn bộ dữ liệu liên quan?',
+      confirmText: 'Xóa vĩnh viễn',
+      cancelText: 'Hủy',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
     try {
       const res = await fetch(`${API_BASE_URL}/superadmin/users/${id}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error('Không thể xóa người dùng');
-      setMessage({ type: 'success', text: 'Đã xóa người dùng thành công!' });
+      toast.success('Đã xóa người dùng thành công!');
       loadAllData();
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message || 'Không thể xóa người dùng');
     }
   }
 
@@ -366,27 +375,34 @@ export default function SuperadminPage() {
         throw new Error(err.message || 'Lỗi lưu lô hàng');
       }
 
-      setMessage({ type: 'success', text: editingBatch ? 'Đã cập nhật lô hàng!' : 'Đã tạo lô hàng mới!' });
+      toast.success(editingBatch ? 'Đã cập nhật lô hàng!' : 'Đã tạo lô hàng mới!');
       setBatchModalOpen(false);
       setEditingBatch(null);
       loadAllData();
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message || 'Lỗi lưu lô hàng');
     }
   }
 
   async function deleteBatch(id: string) {
-    if (!confirm('Bạn có chắc chắn muốn XÓA lô hàng này khỏi cơ sở dữ liệu?')) return;
+    const confirmed = await confirmDialog({
+      title: 'Xóa lô hàng nông sản',
+      message: 'Bạn có chắc chắn muốn XÓA lô hàng này khỏi cơ sở dữ liệu?',
+      confirmText: 'Xóa lô hàng',
+      cancelText: 'Hủy',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
     try {
       const res = await fetch(`${API_BASE_URL}/superadmin/batches/${id}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error('Không thể xóa lô hàng');
-      setMessage({ type: 'success', text: 'Đã xóa lô hàng thành công!' });
+      toast.success('Đã xóa lô hàng thành công!');
       loadAllData();
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message || 'Không thể xóa lô hàng');
     }
   }
 
@@ -475,27 +491,34 @@ export default function SuperadminPage() {
         throw new Error(err.message || 'Lỗi lưu cấu hình');
       }
 
-      setMessage({ type: 'success', text: 'Đã lưu cấu hình hệ thống thành công!' });
+      toast.success('Đã lưu cấu hình hệ thống thành công!');
       setConfigModalOpen(false);
       setEditingConfig(null);
       loadAllData();
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message || 'Lỗi lưu cấu hình');
     }
   }
 
   async function deleteConfig(key: string) {
-    if (!confirm(`Bạn có chắc chắn muốn xóa cấu hình '${key}'?`)) return;
+    const confirmed = await confirmDialog({
+      title: 'Xóa cấu hình hệ thống',
+      message: `Bạn có chắc chắn muốn xóa cấu hình '${key}'?`,
+      confirmText: 'Xóa cấu hình',
+      cancelText: 'Hủy',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
     try {
       const res = await fetch(`${API_BASE_URL}/superadmin/configs/${key}`, {
         method: 'DELETE',
         headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error('Không thể xóa cấu hình');
-      setMessage({ type: 'success', text: 'Đã xóa cấu hình!' });
+      toast.success('Đã xóa cấu hình thành công!');
       loadAllData();
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message || 'Không thể xóa cấu hình');
     }
   }
 

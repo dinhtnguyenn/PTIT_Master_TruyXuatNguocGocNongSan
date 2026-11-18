@@ -4,8 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { Users, BarChart3, Wallet, RefreshCw, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { connectWallet, truncateAddress, isWalletDisconnected, sendContractTx, formatBlockchainError } from '../../lib/web3';
 import { API_BASE_URL, ROLE_HASHES, ROLE_LABELS, STATUS_LABELS, isHardcodedAdmin } from '../../lib/constants';
+import { useToast } from '../../components/ToastProvider';
 
 export default function AdminPage() {
+  const { toast, confirmDialog } = useToast();
   const [account, setAccount] = useState<string | null>(null);
   const [isAdminUser, setIsAdminUser] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'APPROVAL' | 'STATS'>('APPROVAL');
@@ -82,7 +84,7 @@ export default function AdminPage() {
       const addr = await connectWallet();
       checkAdmin(addr);
     } catch (err: any) {
-      alert(err.message || 'Lỗi kết nối ví');
+      toast.error(err.message || 'Lỗi kết nối ví MetaMask', 'Lỗi kết nối ví');
     }
   }
 
@@ -116,18 +118,25 @@ export default function AdminPage() {
 
       if (!res.ok) throw new Error('Không thể cập nhật CSDL');
 
-      alert(`Đã cấp quyền trên Blockchain cho ví ${truncateAddress(userAcc.walletAddress)}!`);
+      toast.success(`Đã cấp quyền trên Blockchain cho ví ${truncateAddress(userAcc.walletAddress)}!`, 'Phê duyệt thành công');
       loadAll();
     } catch (err: any) {
       console.error('Lỗi phê duyệt:', err);
-      alert('Lỗi phê duyệt: ' + formatBlockchainError(err));
+      toast.error(formatBlockchainError(err), 'Lỗi phê duyệt');
     } finally {
       setActionLoadingId(null);
     }
   }
 
   async function handleReject(id: string) {
-    if (!confirm('Bạn có chắc chắn muốn từ chối hồ sơ này?')) return;
+    const confirmed = await confirmDialog({
+      title: 'Từ chối hồ sơ đối tác',
+      message: 'Bạn có chắc chắn muốn từ chối hồ sơ đăng ký này?',
+      confirmText: 'Từ chối',
+      cancelText: 'Hủy',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
     setActionLoadingId(id);
     try {
       const res = await fetch(`${API_BASE_URL}/accounts/${id}/status`, {
@@ -136,9 +145,10 @@ export default function AdminPage() {
         body: JSON.stringify({ status: 'REJECTED' }),
       });
       if (!res.ok) throw new Error('Lỗi cập nhật CSDL');
+      toast.info('Đã từ chối hồ sơ đăng ký.');
       loadAll();
     } catch (err: any) {
-      alert(err.message);
+      toast.error(err.message || 'Không thể từ chối hồ sơ', 'Lỗi thao tác');
     } finally {
       setActionLoadingId(null);
     }
