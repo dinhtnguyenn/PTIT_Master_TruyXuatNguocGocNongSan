@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Users, BarChart3, Wallet, RefreshCw, ShieldAlert, ShieldCheck } from 'lucide-react';
-import { connectWallet, getContract, truncateAddress, isWalletDisconnected, getGasOverrides, formatBlockchainError } from '../../lib/web3';
+import { connectWallet, truncateAddress, isWalletDisconnected, sendContractTx, formatBlockchainError } from '../../lib/web3';
 import { API_BASE_URL, ROLE_HASHES, ROLE_LABELS, STATUS_LABELS, isHardcodedAdmin } from '../../lib/constants';
 
 export default function AdminPage() {
@@ -94,16 +94,13 @@ export default function AdminPage() {
         ? userAcc.roles
         : [userAcc.role];
 
-      const contract = await getContract(true);
-      const gasOverrides = await getGasOverrides();
       let lastTxHash = '';
 
       for (const r of targetRoles) {
         const roleKey = r as keyof typeof ROLE_HASHES;
         const roleHash = ROLE_HASHES[roleKey];
         if (roleHash) {
-          const tx = await contract.grantRole(roleHash, userAcc.walletAddress, gasOverrides);
-          const receipt = await tx.wait();
+          const receipt = await sendContractTx('grantRole', [roleHash, userAcc.walletAddress]);
           lastTxHash = receipt.hash;
         }
       }

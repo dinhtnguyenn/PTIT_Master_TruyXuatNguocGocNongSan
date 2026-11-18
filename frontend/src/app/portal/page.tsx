@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Wallet, CheckCircle2, Clock, ArrowRight } from 'lucide-react';
-import { connectWallet, getContract, truncateAddress, isWalletDisconnected, getGasOverrides, formatBlockchainError } from '../../lib/web3';
+import { connectWallet, truncateAddress, isWalletDisconnected, sendContractTx, formatBlockchainError } from '../../lib/web3';
 import { API_BASE_URL, ROLE_LABELS, isHardcodedAdmin } from '../../lib/constants';
 
 export default function SupplyChainPortalPage() {
@@ -208,15 +208,11 @@ export default function SupplyChainPortalPage() {
       }
 
       // Bước 2: Ký & gửi giao dịch lên Blockchain TRƯỚC
-      const contract = await getContract(true);
-      const gasOverrides = await getGasOverrides();
-      const tx = await contract.recordProduction(
+      const receipt = await sendContractTx('recordProduction', [
         producerForm.batchId,
         producerForm.productName,
         prepData.dataHash,
-        gasOverrides
-      );
-      const receipt = await tx.wait();
+      ]);
 
       // Bước 3: Giao dịch Blockchain đã thành công -> Lưu chính thức vào CSDL kèm txHash
       const saveRes = await fetch(`${API_BASE_URL}/batches/producer`, {
@@ -275,10 +271,10 @@ export default function SupplyChainPortalPage() {
         throw new Error(msg || 'Dữ liệu kiểm định chưa hợp lệ');
       }
 
-      const contract = await getContract(true);
-      const gasOverrides = await getGasOverrides();
-      const tx = await contract.recordInspection(inspectorForm.batchId, prepData.dataHash, gasOverrides);
-      const receipt = await tx.wait();
+      const receipt = await sendContractTx('recordInspection', [
+        inspectorForm.batchId,
+        prepData.dataHash,
+      ]);
 
       const saveRes = await fetch(`${API_BASE_URL}/batches/inspector`, {
         method: 'POST',
@@ -331,10 +327,10 @@ export default function SupplyChainPortalPage() {
         throw new Error(msg || 'Dữ liệu vận chuyển chưa hợp lệ');
       }
 
-      const contract = await getContract(true);
-      const gasOverrides = await getGasOverrides();
-      const tx = await contract.recordLogistics(logisticsForm.batchId, prepData.dataHash, gasOverrides);
-      const receipt = await tx.wait();
+      const receipt = await sendContractTx('recordLogistics', [
+        logisticsForm.batchId,
+        prepData.dataHash,
+      ]);
 
       const saveRes = await fetch(`${API_BASE_URL}/batches/logistics`, {
         method: 'POST',
@@ -387,10 +383,10 @@ export default function SupplyChainPortalPage() {
         throw new Error(msg || 'Dữ liệu phân phối chưa hợp lệ');
       }
 
-      const contract = await getContract(true);
-      const gasOverrides = await getGasOverrides();
-      const tx = await contract.recordDistribution(distributorForm.batchId, prepData.dataHash, gasOverrides);
-      const receipt = await tx.wait();
+      const receipt = await sendContractTx('recordDistribution', [
+        distributorForm.batchId,
+        prepData.dataHash,
+      ]);
 
       const saveRes = await fetch(`${API_BASE_URL}/batches/distributor`, {
         method: 'POST',

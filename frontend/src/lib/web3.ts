@@ -38,6 +38,13 @@ export async function getProvider() {
 
 export async function ensurePolygonAmoyNetwork() {
   if (typeof window === 'undefined' || !window.ethereum) return;
+  try {
+    const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
+    if (typeof currentChainId === 'string' && currentChainId.toLowerCase() === '0x13882') {
+      return;
+    }
+  } catch (_) {}
+
   const rpcUrl = await getDynamicRpcUrl();
   const explorerUrl = await getDynamicExplorerUrl();
   try {
@@ -144,8 +151,74 @@ export async function getSigner() {
   }
   await ensurePolygonAmoyNetwork();
   const provider = new ethers.BrowserProvider(window.ethereum);
-  await provider.send('eth_requestAccounts', []);
+  const existingAccounts = await provider.send('eth_accounts', []);
+  if (!Array.isArray(existingAccounts) || existingAccounts.length === 0) {
+    await provider.send('eth_requestAccounts', []);
+  }
   return provider.getSigner();
+}
+
+/**
+ * Gửi giao dịch ghi lên Hợp đồng thông minh với cơ chế tối ưu cho Polygon Amoy + MetaMask:
+ * 1. Ước lượng gasLimit và phí gas từ RPC ổn định (publicnode) kèm +25% dự phòng.
+ * 2. Làm ấm kết nối RPC MetaMask (tránh lỗi -32603 ở lần bấm đầu tiên khi kết nối nhàn rỗi).
+ * 3. Chờ xác nhận giao dịch trực tiếp qua RPC ổn định để không bị timeout bởi MetaMask.
+ */
+export async function sendContractTx(methodName: string, args: any[]) {
+  const contractAddress = await getDynamicContractAddress();
+  const signer = await getSigner();
+  const fromAddress = await signer.getAddress();
+  const readProvider = await getProvider();
+
+  // 1. Lấy phí gas và ước lượng gasLimit bằng RPC ổn định
+  const gasOverrides = await getGasOverrides();
+  let gasLimit: bigint | undefined;
+  try {
+    const readContract = new ethers.Contract(contractAddress, CONTRACT_ABI, readProvider);
+    const data = readContract.interface.encodeFunctionData(methodName, args);
+    const estimated = await readProvider.estimateGas({
+      from: fromAddress,
+      to: contractAddress,
+      data,
+    });
+    gasLimit = (estimated * BigInt(125)) / BigInt(100);
+  } catch (estErr: any) {
+    const raw = (estErr?.data || '') + (estErr?.message || '') + (estErr?.reason || '');
+    if (
+      raw.includes('0xe2517d3f') ||
+      raw.includes('AccessControlUnauthorizedAccount') ||
+      raw.includes('Batch already exists') ||
+      raw.includes('Batch not found') ||
+      raw.includes('Invalid stage') ||
+      raw.includes('must be inspected') ||
+      raw.includes('must be in transit') ||
+      raw.includes('execution reverted')
+    ) {
+      throw estErr;
+    }
+  }
+
+  // 2. Làm ấm kết nối RPC của MetaMask trước khi gửi giao dịch (giảm tối đa lỗi -32603 lần 1)
+  if (typeof window !== 'undefined' && window.ethereum) {
+    try {
+      await window.ethereum.request({ method: 'eth_blockNumber' });
+    } catch (_) {}
+  }
+
+  // 3. Gửi giao dịch qua MetaMask
+  const writeContract = new ethers.Contract(contractAddress, CONTRACT_ABI, signer);
+  const txOverrides: any = { ...gasOverrides };
+  if (gasLimit) txOverrides.gasLimit = gasLimit;
+
+  const tx = await writeContract[methodName](...args, txOverrides);
+
+  // 4. Chờ xác nhận qua RPC ổn định (fallback về tx.wait() nếu cần)
+  try {
+    const receipt = await readProvider.waitForTransaction(tx.hash, 1, 90000);
+    if (receipt) return receipt;
+  } catch (_) {}
+
+  return await tx.wait();
 }
 
 export async function getContract(withSigner = false) {
