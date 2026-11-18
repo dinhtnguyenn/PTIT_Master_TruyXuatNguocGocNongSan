@@ -139,6 +139,9 @@ export default function RegisterPage() {
       } else {
         setManualWallet('');
       }
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('account_updated'));
+      }
     } catch (err: any) {
       setStatusMessage({ type: 'error', text: err.message });
     } finally {

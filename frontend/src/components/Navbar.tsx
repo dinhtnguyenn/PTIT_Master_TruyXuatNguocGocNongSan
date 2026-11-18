@@ -26,7 +26,7 @@ export default function Navbar() {
   async function checkUser(walletAddr: string) {
     const isAdm = isHardcodedAdmin(walletAddr);
     try {
-      const res = await fetch(`${API_BASE_URL}/accounts/me/${walletAddr}`);
+      const res = await fetch(`${API_BASE_URL}/accounts/me/${walletAddr}`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         if (data && data.status) {
@@ -74,12 +74,8 @@ export default function Navbar() {
   }
 
   useEffect(() => {
-    // Nếu người dùng đã bấm Đăng xuất trước đó, không tự động nhận diện lại
-    if (isWalletDisconnected()) {
-      return;
-    }
-
-    if (typeof window !== 'undefined' && window.ethereum) {
+    // Chỉ tự động nhận diện ví khi người dùng chưa bấm Đăng xuất
+    if (!isWalletDisconnected() && typeof window !== 'undefined' && window.ethereum) {
       window.ethereum
         .request({ method: 'eth_accounts' })
         .then((accounts: string[]) => {
@@ -89,18 +85,22 @@ export default function Navbar() {
           }
         })
         .catch(() => {});
+    }
 
-      window.ethereum.on('accountsChanged', (accounts: string[]) => {
-        if (isWalletDisconnected()) return;
-        if (accounts.length > 0) {
-          setAccount(accounts[0]);
-          checkUser(accounts[0]);
-        } else {
-          setAccount(null);
-          setRole(null);
-          setStatus(null);
-        }
-      });
+    const handleAccountsChanged = (accounts: string[]) => {
+      if (isWalletDisconnected()) return;
+      if (accounts.length > 0) {
+        setAccount(accounts[0]);
+        checkUser(accounts[0]);
+      } else {
+        setAccount(null);
+        setRole(null);
+        setStatus(null);
+      }
+    };
+
+    if (typeof window !== 'undefined' && window.ethereum?.on) {
+      window.ethereum.on('accountsChanged', handleAccountsChanged);
     }
 
     function onDisconnected() {
@@ -119,10 +119,28 @@ export default function Navbar() {
     window.addEventListener('wallet_disconnected', onDisconnected);
     window.addEventListener('wallet_connected', onConnected);
     return () => {
+      if (typeof window !== 'undefined' && window.ethereum?.removeListener) {
+        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+      }
       window.removeEventListener('wallet_disconnected', onDisconnected);
       window.removeEventListener('wallet_connected', onConnected);
     };
   }, []);
+
+  // Tự động đồng bộ lại badge vai trò & trạng thái khi chuyển trang hoặc có thay đổi duyệt/đăng ký tài khoản
+  useEffect(() => {
+    if (!account) return;
+    checkUser(account);
+
+    function onAccountUpdated() {
+      if (account) checkUser(account);
+    }
+
+    window.addEventListener('account_updated', onAccountUpdated);
+    return () => {
+      window.removeEventListener('account_updated', onAccountUpdated);
+    };
+  }, [account, pathname]);
 
   const navLinks = [
     { href: '/trace', label: 'Tra cứu Nguồn gốc' },
@@ -171,10 +189,13 @@ export default function Navbar() {
                     className={`text-[11px] px-2 py-0.5 rounded-md font-semibold ${
                       status === 'APPROVED'
                         ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        : status === 'REJECTED'
+                        ? 'bg-rose-50 text-rose-700 border border-rose-200'
                         : 'bg-amber-50 text-amber-700 border border-amber-200'
                     }`}
                   >
-                    {role} {status === 'PENDING' ? '(Chờ duyệt)' : ''}
+                    {role}
+                    {status === 'PENDING' ? ' (Chờ duyệt)' : status === 'REJECTED' ? ' (Từ chối)' : ''}
                   </span>
                 )}
                 <div className="text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md font-mono">

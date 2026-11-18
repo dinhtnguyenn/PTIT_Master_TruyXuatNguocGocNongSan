@@ -292,6 +292,9 @@ export default function SuperadminPage() {
       }
 
       toast.success(editingUser ? 'Đã cập nhật người dùng!' : 'Đã tạo người dùng mới!');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('account_updated'));
+      }
       setUserModalOpen(false);
       setEditingUser(null);
       loadAllData();
@@ -316,6 +319,9 @@ export default function SuperadminPage() {
       });
       if (!res.ok) throw new Error('Không thể xóa người dùng');
       toast.success('Đã xóa người dùng thành công!');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('account_updated'));
+      }
       loadAllData();
     } catch (err: any) {
       toast.error(err.message || 'Không thể xóa người dùng');

@@ -119,6 +119,9 @@ export default function AdminPage() {
       if (!res.ok) throw new Error('Không thể cập nhật CSDL');
 
       toast.success(`Đã cấp quyền trên Blockchain cho ví ${truncateAddress(userAcc.walletAddress)}!`, 'Phê duyệt thành công');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('account_updated'));
+      }
       loadAll();
     } catch (err: any) {
       console.error('Lỗi phê duyệt:', err);
@@ -146,6 +149,9 @@ export default function AdminPage() {
       });
       if (!res.ok) throw new Error('Lỗi cập nhật CSDL');
       toast.info('Đã từ chối hồ sơ đăng ký.');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('account_updated'));
+      }
       loadAll();
     } catch (err: any) {
       toast.error(err.message || 'Không thể từ chối hồ sơ', 'Lỗi thao tác');
