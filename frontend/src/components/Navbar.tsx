@@ -109,9 +109,18 @@ export default function Navbar() {
       setStatus(null);
     }
 
+    function onConnected(e: any) {
+      if (e.detail) {
+        setAccount(e.detail);
+        checkUser(e.detail);
+      }
+    }
+
     window.addEventListener('wallet_disconnected', onDisconnected);
+    window.addEventListener('wallet_connected', onConnected);
     return () => {
       window.removeEventListener('wallet_disconnected', onDisconnected);
+      window.removeEventListener('wallet_connected', onConnected);
     };
   }, []);
 

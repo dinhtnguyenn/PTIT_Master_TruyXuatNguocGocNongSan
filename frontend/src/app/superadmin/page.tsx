@@ -23,7 +23,7 @@ import {
   LogOut,
   Sliders,
 } from 'lucide-react';
-import { connectWallet, truncateAddress, isWalletDisconnected } from '../../lib/web3';
+import { connectWallet, disconnectWallet, truncateAddress, isWalletDisconnected } from '../../lib/web3';
 import { API_BASE_URL, ROLE_LABELS, STAGE_LABELS } from '../../lib/constants';
 
 const ALL_ROLES = ['PRODUCER', 'INSPECTOR', 'LOGISTICS', 'DISTRIBUTOR', 'ADMIN'];
@@ -157,6 +157,27 @@ export default function SuperadminPage() {
         })
         .catch(() => {});
     }
+
+    function onDisconnected() {
+      if (!sessionStorage.getItem('superadmin_key')) {
+        setIsAuthenticated(false);
+      }
+      setAccount(null);
+    }
+
+    function onConnected(e: any) {
+      if (e.detail) {
+        setAccount(e.detail);
+        verifyAuth(e.detail, '');
+      }
+    }
+
+    window.addEventListener('wallet_disconnected', onDisconnected);
+    window.addEventListener('wallet_connected', onConnected);
+    return () => {
+      window.removeEventListener('wallet_disconnected', onDisconnected);
+      window.removeEventListener('wallet_connected', onConnected);
+    };
   }, []);
 
   async function verifyAuth(walletAddr?: string, keyVal?: string) {
@@ -210,7 +231,11 @@ export default function SuperadminPage() {
   function handleLogout() {
     setIsAuthenticated(false);
     setSuperadminKey('');
-    if (typeof window !== 'undefined') sessionStorage.removeItem('superadmin_key');
+    setAccount(null);
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('superadmin_key');
+      disconnectWallet();
+    }
   }
 
   // Load all datasets
