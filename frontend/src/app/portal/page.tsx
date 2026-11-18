@@ -406,14 +406,14 @@ export default function SupplyChainPortalPage() {
             href="/register"
             className="text-xs font-semibold text-emerald-600 hover:underline"
           >
-            Đến trang Đăng ký vai trò $\rightarrow$
+            Đến trang Đăng ký vai trò →
           </Link>
           {isAdm && (
             <Link
               href="/admin"
               className="text-xs font-semibold text-purple-700 hover:underline"
             >
-              Vào trang Quản trị $\rightarrow$
+              Vào trang Quản trị →
             </Link>
           )}
         </div>
