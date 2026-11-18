@@ -1,6 +1,5 @@
 # HỆ THỐNG TRUY XUẤT NGUỒN GỐC NÔNG SẢN TRÊN BLOCKCHAIN (AGRITRACE)
-**Đề tài Thạc sĩ:** Ứng dụng Công nghệ Blockchain trong Quản lý & Truy xuất Nguồn gốc Chuỗi Cung Ứng Nông Sản  
-**Học viện Công nghệ Bưu chính Viễn thông (PTIT)**
+**Ứng dụng Công nghệ Blockchain trong Quản lý & Truy xuất Nguồn gốc Chuỗi Cung Ứng Nông Sản**
 
 ---
 

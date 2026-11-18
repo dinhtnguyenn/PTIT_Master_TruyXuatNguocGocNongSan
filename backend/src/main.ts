@@ -43,7 +43,7 @@ async function bootstrap() {
 
   // Cấu hình tài liệu Swagger UI
   const config = new DocumentBuilder()
-    .setTitle('PTIT Agri Supply Chain API')
+    .setTitle('AgriTrace Supply Chain API')
     .setDescription('REST API hệ thống truy xuất nguồn gốc nông sản tương tác Blockchain')
     .setVersion('1.0')
     .addTag('accounts', 'Quản lý đăng ký và xét duyệt tài khoản theo vai trò ví')

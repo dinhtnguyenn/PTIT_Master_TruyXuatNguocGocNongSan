@@ -1,7 +1,7 @@
 {
   "name": "contracts",
   "version": "1.0.0",
-  "description": "Smart Contracts for PTIT Agri Supply Chain",
+  "description": "Smart Contracts for AgriTrace Supply Chain",
   "main": "hardhat.config.cjs",
   "scripts": {
     "test": "hardhat test",

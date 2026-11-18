@@ -20,8 +20,8 @@ async function main() {
     create: {
       walletAddress: adminWallet,
       role: 'ADMIN',
-      organizationName: 'Ban Quản Trị Hệ Thống PTIT',
-      contactInfo: 'admin@ptit.edu.vn - 024.3754.7890',
+      organizationName: 'Ban Quản Trị Hệ Thống AgriTrace',
+      contactInfo: 'admin@voting.io.vn - 024.3754.7890',
       status: 'APPROVED',
       txHashGrantRole: '0xadmin-genesis-hash',
     },

@@ -2,7 +2,7 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "NestJS Backend API for Agri Supply Chain Blockchain",
-  "author": "PTIT Master Thesis",
+  "author": "AgriTrace Team",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {

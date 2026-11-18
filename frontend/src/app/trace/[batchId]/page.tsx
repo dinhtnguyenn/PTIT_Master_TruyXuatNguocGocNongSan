@@ -56,7 +56,7 @@ export default function TraceDetailPage() {
         const currentUrl =
           typeof window !== 'undefined' && window.location.href
             ? window.location.href
-            : `https://ptit-master-truy-xuat-nguoc-goc-non.vercel.app/trace/${batchId}`;
+            : `https://voting.io.vn/trace/${batchId}`;
         const qrUrl = await QRCode.toDataURL(currentUrl, { width: 200, margin: 1 });
         setQrDataUrl(qrUrl);
 
