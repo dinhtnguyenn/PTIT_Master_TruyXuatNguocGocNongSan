@@ -2,8 +2,15 @@ import './globals.css';
 import Navbar from '../components/Navbar';
 
 export const metadata = {
-  title: 'Hệ Thống Truy Xuất Nguồn Gốc Nông Sản',
-  description: 'Truy xuất nguồn gốc chuỗi cung ứng nông sản trên nền tảng Blockchain',
+  title: 'AgriTrace - Hệ Thống Truy Xuất Nguồn Gốc Nông Sản',
+  description: 'Truy xuất nguồn gốc chuỗi cung ứng nông sản trên nền tảng Blockchain Polygon',
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: '32x32' },
+      { url: '/icon.svg', type: 'image/svg+xml' },
+    ],
+    apple: '/icon.svg',
+  },
 };
 
 export default function RootLayout({
