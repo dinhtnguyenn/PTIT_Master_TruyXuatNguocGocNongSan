@@ -399,7 +399,7 @@ export default function SupplyChainPortalPage() {
           {userData?.status === 'PENDING' ? 'Hồ sơ đang chờ duyệt' : 'Chưa đăng ký tham gia chuỗi cung ứng'}
         </h1>
         <p className="text-xs text-slate-500 mt-1">
-          Địa chỉ ví <span className="font-mono">{truncateAddress(account)}</span> {userData?.status === 'PENDING' ? 'đang trong danh sách chờ Admin phê duyệt.' : 'chưa đăng ký vai trò nhập liệu trong chuỗi cung ứng.'}
+          Địa chỉ ví <span className="font-mono">{truncateAddress(account)}</span> {userData?.status === 'PENDING' ? 'đang trong danh sách chờ Quản trị viên phê duyệt.' : 'chưa đăng ký vai trò nhập liệu trong chuỗi cung ứng.'}
         </p>
         <div className="mt-4 flex items-center justify-center gap-4">
           <Link

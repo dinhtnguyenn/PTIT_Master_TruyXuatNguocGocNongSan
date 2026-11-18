@@ -151,7 +151,7 @@ export default function RegisterPage() {
       <div className="text-center">
         <h1 className="text-xl font-bold text-slate-900">Đăng Ký Ví Chuỗi Cung Ứng</h1>
         <p className="text-xs text-slate-500 mt-1">
-          Đăng ký địa chỉ ví để được Admin cấp quyền ký dữ liệu trên Blockchain.
+          Đăng ký địa chỉ ví để được Quản trị viên cấp quyền ký dữ liệu trên Blockchain.
         </p>
       </div>
 
@@ -190,7 +190,7 @@ export default function RegisterPage() {
             {existingAccount.status === 'REJECTED' && <AlertTriangle className="w-4 h-4 text-rose-600" />}
             <span>
               {existingAccount.status === 'APPROVED' && 'Tài khoản đã được duyệt!'}
-              {existingAccount.status === 'PENDING' && 'Hồ sơ đang chờ Admin duyệt'}
+              {existingAccount.status === 'PENDING' && 'Hồ sơ đang chờ Quản trị viên duyệt'}
               {existingAccount.status === 'REJECTED' && 'Hồ sơ bị từ chối'}
             </span>
           </div>
@@ -270,7 +270,7 @@ export default function RegisterPage() {
                 className="w-full px-3 py-1.5 font-mono rounded-lg border border-slate-300"
               />
               <p className="text-[11px] text-slate-400 mt-1">
-                Ví này sau khi gửi sẽ xuất hiện ở mục <strong>Chờ duyệt</strong> trong trang Admin để bạn dùng ví Admin phê duyệt on-chain.
+                Ví này sau khi gửi sẽ xuất hiện ở mục <strong>Chờ duyệt</strong> trong trang Quản trị để bạn dùng ví Quản trị viên phê duyệt trên Blockchain.
               </p>
             </div>
           )}

@@ -1276,9 +1276,9 @@ export default function SuperadminPage() {
             <div className="flex border-b border-slate-100 bg-slate-50 px-6 gap-2 pt-2">
               {[
                 { id: 'GENERAL', label: '1. Khởi Tạo & Thông Tin Chung' },
-                { id: 'STAGE2', label: '2. Kiểm Định (Inspector)' },
-                { id: 'STAGE3', label: '3. Vận Chuyển (Logistics)' },
-                { id: 'STAGE4', label: '4. Phân Phối (Distributor)' },
+                { id: 'STAGE2', label: '2. Kiểm Định Chất Lượng' },
+                { id: 'STAGE3', label: '3. Vận Chuyển & Bảo Quản' },
+                { id: 'STAGE4', label: '4. Phân Phối & Tiếp Nhận' },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -1414,7 +1414,7 @@ export default function SuperadminPage() {
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">Ví Producer ký</label>
+                    <label className="block font-semibold text-slate-700 mb-1">Ví Đơn vị sản xuất ký</label>
                     <input
                       type="text"
                       value={batchForm.producerWallet}
@@ -1493,7 +1493,7 @@ export default function SuperadminPage() {
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">Ví Inspector ký</label>
+                    <label className="block font-semibold text-slate-700 mb-1">Ví Đơn vị kiểm định ký</label>
                     <input
                       type="text"
                       value={batchForm.inspectorWallet || ''}
@@ -1572,7 +1572,7 @@ export default function SuperadminPage() {
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">Ví Logistics ký</label>
+                    <label className="block font-semibold text-slate-700 mb-1">Ví Đơn vị vận chuyển ký</label>
                     <input
                       type="text"
                       value={batchForm.logisticsWallet || ''}
@@ -1638,7 +1638,7 @@ export default function SuperadminPage() {
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">Ví Distributor ký</label>
+                    <label className="block font-semibold text-slate-700 mb-1">Ví Đơn vị phân phối ký</label>
                     <input
                       type="text"
                       value={batchForm.distributorWallet || ''}
@@ -1717,7 +1717,7 @@ export default function SuperadminPage() {
                 <label className="block font-semibold text-slate-700 mb-1">Mô tả công dụng</label>
                 <input
                   type="text"
-                  placeholder="VD: Địa chỉ Smart Contract chính thức..."
+                  placeholder="VD: Địa chỉ Hợp đồng thông minh chính thức..."
                   value={configForm.description}
                   onChange={(e) => setConfigForm({ ...configForm, description: e.target.value })}
                   className="w-full px-3 py-2 rounded-xl border border-slate-300"

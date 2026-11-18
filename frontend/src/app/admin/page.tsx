@@ -119,13 +119,13 @@ export default function AdminPage() {
 
       if (!res.ok) throw new Error('Không thể cập nhật CSDL');
 
-      alert(`Đã cấp quyền On-chain cho ví ${truncateAddress(userAcc.walletAddress)}!`);
+      alert(`Đã cấp quyền trên Blockchain cho ví ${truncateAddress(userAcc.walletAddress)}!`);
       loadAll();
     } catch (err: any) {
       console.error('Lỗi phê duyệt:', err);
       const errStr = (err?.data || '') + (err?.message || '') + (err?.shortMessage || '');
       if (errStr.includes('0xe2517d3f') || errStr.includes('e2517d3f') || errStr.includes('AccessControlUnauthorizedAccount')) {
-        alert('Lỗi quyền hạn: Ví đang kết nối chưa nắm giữ quyền Root Admin (DEFAULT_ADMIN_ROLE) trên Smart Contract. Vui lòng kiểm tra lại ví MetaMask.');
+        alert('Lỗi quyền hạn: Ví đang kết nối chưa nắm giữ quyền Quản trị viên gốc trên Hợp đồng thông minh. Vui lòng kiểm tra lại ví MetaMask.');
       } else if (errStr.includes('user rejected') || errStr.includes('ACTION_REJECTED')) {
         alert('Giao dịch cấp quyền đã bị hủy trên MetaMask.');
       } else {
@@ -158,12 +158,12 @@ export default function AdminPage() {
     return (
       <div className="max-w-md mx-auto py-20 text-center px-4">
         <h1 className="text-base font-bold text-slate-900 mb-2">Trang Quản Trị Hệ Thống</h1>
-        <p className="text-xs text-slate-500 mb-5">Vui lòng kết nối ví Admin để tiếp tục.</p>
+        <p className="text-xs text-slate-500 mb-5">Vui lòng kết nối ví Quản trị viên để tiếp tục.</p>
         <button
           onClick={handleConnect}
           className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold"
         >
-          Kết nối Ví Admin
+          Kết nối Ví Quản trị viên
         </button>
       </div>
     );
@@ -180,7 +180,7 @@ export default function AdminPage() {
           Ví đang kết nối (<span className="font-mono text-slate-700">{truncateAddress(account)}</span>) không thuộc danh sách 2 ví Quản trị viên của hệ thống.
         </p>
         <p className="text-[11px] text-slate-400">
-          Chức năng Quản trị chỉ khả dụng khi kết nối đúng địa chỉ ví Admin trên MetaMask.
+          Chức năng Quản trị chỉ khả dụng khi kết nối đúng địa chỉ ví Quản trị viên trên MetaMask.
         </p>
       </div>
     );
@@ -194,7 +194,7 @@ export default function AdminPage() {
           <div className="flex items-center gap-2">
             <h1 className="text-base font-bold text-slate-900">Quản Trị Hệ Thống</h1>
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200">
-              <ShieldCheck className="w-3 h-3" /> Ví Admin
+              <ShieldCheck className="w-3 h-3" /> Ví Quản trị viên
             </span>
           </div>
           <p className="text-xs font-mono text-slate-500 mt-0.5">{account}</p>
@@ -253,7 +253,7 @@ export default function AdminPage() {
               <div className="p-8 text-center text-xs text-slate-400">Đang tải...</div>
             ) : accounts.length === 0 ? (
               <div className="p-8 text-center text-xs text-slate-500">
-                Không có hồ sơ nào ở trạng thái {filterStatus}.
+                Không có hồ sơ nào ở trạng thái {STATUS_LABELS[filterStatus] || filterStatus}.
               </div>
             ) : (
               <div className="overflow-x-auto">
