@@ -8,9 +8,11 @@ import { Html5Qrcode } from 'html5-qrcode';
 interface QrScannerModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onScanSuccess?: (batchId: string) => void;
+  title?: string;
 }
 
-export default function QrScannerModal({ isOpen, onClose }: QrScannerModalProps) {
+export default function QrScannerModal({ isOpen, onClose, onScanSuccess, title }: QrScannerModalProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'camera' | 'file'>('camera');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -35,7 +37,11 @@ export default function QrScannerModal({ isOpen, onClose }: QrScannerModalProps)
     stopCamera();
     const batchId = extractBatchId(decodedText);
     onClose();
-    router.push(`/trace/${batchId}`);
+    if (onScanSuccess) {
+      onScanSuccess(batchId);
+    } else {
+      router.push(`/trace/${batchId}`);
+    }
   }
 
   async function startCamera() {
@@ -113,7 +119,7 @@ export default function QrScannerModal({ isOpen, onClose }: QrScannerModalProps)
         {/* Header */}
         <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
           <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-            <Camera className="w-4 h-4 text-emerald-600" /> Quét Tem Mã QR
+            <Camera className="w-4 h-4 text-emerald-600" /> {title || 'Quét Tem Mã QR'}
           </h2>
           <button
             onClick={() => {

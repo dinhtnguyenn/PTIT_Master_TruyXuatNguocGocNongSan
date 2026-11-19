@@ -2,10 +2,42 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Wallet, CheckCircle2, Clock, ArrowRight } from 'lucide-react';
-import { connectWallet, truncateAddress, isWalletDisconnected, sendContractTx, formatBlockchainError } from '../../lib/web3';
-import { API_BASE_URL, ROLE_LABELS, isHardcodedAdmin } from '../../lib/constants';
+import {
+  Wallet,
+  CheckCircle2,
+  Clock,
+  ArrowRight,
+  QrCode,
+  Camera,
+  Upload,
+  AlertCircle,
+  ExternalLink,
+  Copy,
+  Download,
+  RefreshCw,
+  AlertTriangle,
+} from 'lucide-react';
+import QRCode from 'qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
+import QrScannerModal from '../../components/QrScannerModal';
+import {
+  connectWallet,
+  truncateAddress,
+  isWalletDisconnected,
+  sendContractTx,
+  formatBlockchainError,
+  getProvider,
+} from '../../lib/web3';
+import {
+  API_BASE_URL,
+  ROLE_LABELS,
+  STAGE_LABELS,
+  isHardcodedAdmin,
+  CONTRACT_ABI,
+  getDynamicContractAddress,
+} from '../../lib/constants';
 import { useToast } from '../../components/ToastProvider';
+import { ethers } from 'ethers';
 
 export default function SupplyChainPortalPage() {
   const { toast } = useToast();
@@ -16,6 +48,34 @@ export default function SupplyChainPortalPage() {
   const [activeBatches, setActiveBatches] = useState<any[]>([]);
   const [statusAlert, setStatusAlert] = useState<{ type: 'success' | 'error'; message: string; txHash?: string } | null>(null);
   const [selectedRole, setSelectedRole] = useState<string>('');
+
+  // Quét mã QR & Kiểm tra lô hàng Blockchain & Thứ tự quy trình
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [activeScannerRole, setActiveScannerRole] = useState<'INSPECTOR' | 'LOGISTICS' | 'DISTRIBUTOR'>('INSPECTOR');
+  const [manualBatchInput, setManualBatchInput] = useState<Record<string, string>>({
+    INSPECTOR: '',
+    LOGISTICS: '',
+    DISTRIBUTOR: '',
+  });
+  const [batchVerifications, setBatchVerifications] = useState<
+    Record<
+      'INSPECTOR' | 'LOGISTICS' | 'DISTRIBUTOR',
+      { loading: boolean; error: string | null; result: any | null }
+    >
+  >({
+    INSPECTOR: { loading: false, error: null, result: null },
+    LOGISTICS: { loading: false, error: null, result: null },
+    DISTRIBUTOR: { loading: false, error: null, result: null },
+  });
+
+  // Modal hiển thị tem QR cho Producer vừa tạo lô hàng
+  const [createdBatchModal, setCreatedBatchModal] = useState<{
+    isOpen: boolean;
+    batchId: string;
+    productName: string;
+    qrDataUrl: string;
+    txHash: string;
+  } | null>(null);
 
   // Form Producer (Bảng 1)
   const [producerForm, setProducerForm] = useState({
@@ -189,6 +249,342 @@ export default function SupplyChainPortalPage() {
     };
   }, []);
 
+  // QUÉT MÃ QR & ĐỐI SOÁT BLOCKCHAIN / THỨ TỰ QUY TRÌNH (KHÔNG NHẢY LƯỢT)
+  async function verifyBatch(scannedText: string, targetRole: 'INSPECTOR' | 'LOGISTICS' | 'DISTRIBUTOR') {
+    let cleanId = scannedText.trim();
+    if (cleanId.includes('/trace/')) {
+      const parts = cleanId.split('/trace/');
+      if (parts[1]) cleanId = parts[1].split('?')[0].split('#')[0].trim();
+    }
+    if (!cleanId) {
+      toast.warning('Vui lòng cung cấp mã lô sản phẩm để kiểm tra!');
+      return;
+    }
+
+    setBatchVerifications((prev) => ({
+      ...prev,
+      [targetRole]: { loading: true, error: null, result: null },
+    }));
+
+    try {
+      // 1. Kiểm tra trên Blockchain qua Smart Contract Polygon Amoy
+      let existsOnChain = false;
+      let onChainProof: any = null;
+      try {
+        const readProvider = await getProvider();
+        const contractAddress = await getDynamicContractAddress();
+        const contract = new ethers.Contract(contractAddress, CONTRACT_ABI, readProvider);
+        existsOnChain = await contract.exists(cleanId);
+        if (existsOnChain) {
+          onChainProof = await contract.getBatchProof(cleanId);
+        }
+      } catch (e) {
+        console.warn('Lỗi đọc Smart Contract on-chain:', e);
+      }
+
+      // 2. Lấy dữ liệu chi tiết từ CSDL
+      let dbBatch: any = null;
+      try {
+        const res = await fetch(`${API_BASE_URL}/batches/${cleanId}`);
+        if (res.ok) {
+          dbBatch = await res.json();
+        }
+      } catch (e) {}
+
+      // 3. KIỂM TRA 1: Lô hàng đã lưu lên Blockchain chưa?
+      if (!existsOnChain && (!dbBatch || !dbBatch.producerTxHash)) {
+        const errorMsg = `Lô hàng '${cleanId}' CHƯA ĐƯỢC LƯU LÊN BLOCKCHAIN! Vui lòng kiểm tra lại tem mã QR hoặc yêu cầu Nhà sản xuất hoàn tất việc ký và ghi nhận lô hàng on-chain.`;
+        setBatchVerifications((prev) => ({
+          ...prev,
+          [targetRole]: { loading: false, error: errorMsg, result: null },
+        }));
+        toast.error(errorMsg, 'Chưa lưu trên Blockchain');
+        if (targetRole === 'INSPECTOR') setInspectorForm((f) => ({ ...f, batchId: '' }));
+        if (targetRole === 'LOGISTICS') setLogisticsForm((f) => ({ ...f, batchId: '' }));
+        if (targetRole === 'DISTRIBUTOR') setDistributorForm((f) => ({ ...f, batchId: '' }));
+        return;
+      }
+
+      // 4. KIỂM TRA 2: Xác định giai đoạn hiện tại (0: Created, 1: Inspected, 2: InTransit, 3: Delivered)
+      let stageNum = 0;
+      if (onChainProof && onChainProof.currentStage !== undefined) {
+        stageNum = Number(onChainProof.currentStage);
+      } else if (dbBatch) {
+        if (dbBatch.stage === 'CREATED') stageNum = 0;
+        else if (dbBatch.stage === 'INSPECTED') stageNum = 1;
+        else if (dbBatch.stage === 'IN_TRANSIT') stageNum = 2;
+        else if (dbBatch.stage === 'DELIVERED') stageNum = 3;
+      }
+
+      const STAGE_NAMES = [
+        '1. Đã sản xuất (Producer)',
+        '2. Đã kiểm định (Inspector)',
+        '3. Đang vận chuyển (Logistics)',
+        '4. Đã phân phối (Distributor)',
+      ];
+      const stageText = STAGE_NAMES[stageNum] || 'Chưa xác định';
+
+      // 5. Kiểm tra không được nhảy lượt (Producer -> Inspector -> Logistics -> Distributor)
+      if (targetRole === 'INSPECTOR') {
+        if (stageNum > 0) {
+          const errorMsg = `Lô hàng '${cleanId}' ĐÃ ĐƯỢC KIỂM ĐỊNH TRƯỚC ĐÓ (Giai đoạn hiện tại: ${stageText}). Không thể thực hiện kiểm định lại để tránh trùng lặp dữ liệu.`;
+          setBatchVerifications((prev) => ({
+            ...prev,
+            [targetRole]: { loading: false, error: errorMsg, result: null },
+          }));
+          toast.error(errorMsg, 'Không thể kiểm định');
+          setInspectorForm((f) => ({ ...f, batchId: '' }));
+          return;
+        }
+      } else if (targetRole === 'LOGISTICS') {
+        if (stageNum < 1) {
+          const errorMsg = `CHƯA ĐẾN LƯỢT VẬN CHUYỂN (NHẢY LƯỢT)! Lô hàng '${cleanId}' mới ở giai đoạn [${stageText}] và CHƯA được Đơn vị Kiểm định đánh giá chất lượng. Quy trình bắt buộc: Nhà sản xuất -> Kiểm định -> Vận chuyển -> Phân phối. Không được nhảy lượt!`;
+          setBatchVerifications((prev) => ({
+            ...prev,
+            [targetRole]: { loading: false, error: errorMsg, result: null },
+          }));
+          toast.error(errorMsg, 'Vi phạm quy trình: Nhảy lượt');
+          setLogisticsForm((f) => ({ ...f, batchId: '' }));
+          return;
+        }
+        if (stageNum > 1) {
+          const errorMsg = `Lô hàng '${cleanId}' ĐÃ/ĐANG ĐƯỢC VẬN CHUYỂN (Giai đoạn hiện tại: ${stageText}). Không thể tạo hành trình vận chuyển mới.`;
+          setBatchVerifications((prev) => ({
+            ...prev,
+            [targetRole]: { loading: false, error: errorMsg, result: null },
+          }));
+          toast.error(errorMsg, 'Lô hàng đã vận chuyển');
+          setLogisticsForm((f) => ({ ...f, batchId: '' }));
+          return;
+        }
+      } else if (targetRole === 'DISTRIBUTOR') {
+        if (stageNum < 2) {
+          const errorMsg = `CHƯA ĐẾN LƯỢT PHÂN PHỐI (NHẢY LƯỢT)! Lô hàng '${cleanId}' hiện ở giai đoạn [${stageText}] và CHƯA qua khâu Vận chuyển (Logistics). Quy trình bắt buộc: Nhà sản xuất -> Kiểm định -> Vận chuyển -> Phân phối. Không được nhảy lượt!`;
+          setBatchVerifications((prev) => ({
+            ...prev,
+            [targetRole]: { loading: false, error: errorMsg, result: null },
+          }));
+          toast.error(errorMsg, 'Vi phạm quy trình: Nhảy lượt');
+          setDistributorForm((f) => ({ ...f, batchId: '' }));
+          return;
+        }
+        if (stageNum > 2) {
+          const errorMsg = `Lô hàng '${cleanId}' ĐÃ ĐƯỢC TIẾP NHẬN PHÂN PHỐI HOÀN TẤT TRƯỚC ĐÓ. Toàn bộ chuỗi cung ứng của lô hàng đã kết thúc.`;
+          setBatchVerifications((prev) => ({
+            ...prev,
+            [targetRole]: { loading: false, error: errorMsg, result: null },
+          }));
+          toast.error(errorMsg, 'Lô hàng đã hoàn tất');
+          setDistributorForm((f) => ({ ...f, batchId: '' }));
+          return;
+        }
+      }
+
+      // 6. XÁC THỰC THÀNH CÔNG!
+      const verifyData = {
+        batchId: cleanId,
+        productName: dbBatch?.productName || onChainProof?.productName || 'Nông sản',
+        weight: dbBatch?.weight || 0,
+        quantity: dbBatch?.quantity || 0,
+        productionLocation: dbBatch?.productionLocation || '—',
+        producerTxHash: dbBatch?.producerTxHash || null,
+        stageNum,
+        stageText,
+        dbBatch,
+        onChainProof,
+      };
+
+      setBatchVerifications((prev) => ({
+        ...prev,
+        [targetRole]: { loading: false, error: null, result: verifyData },
+      }));
+
+      // Tự động gán mã lô vào form tương ứng
+      if (targetRole === 'INSPECTOR') setInspectorForm((f) => ({ ...f, batchId: cleanId }));
+      if (targetRole === 'LOGISTICS') setLogisticsForm((f) => ({ ...f, batchId: cleanId }));
+      if (targetRole === 'DISTRIBUTOR') setDistributorForm((f) => ({ ...f, batchId: cleanId }));
+
+      toast.success(
+        `Xác thực thành công lô hàng '${cleanId}'! Đã lưu Blockchain & đúng giai đoạn tiếp nhận.`,
+        'Xác thực mã QR thành công'
+      );
+    } catch (err: any) {
+      setBatchVerifications((prev) => ({
+        ...prev,
+        [targetRole]: { loading: false, error: err.message || 'Lỗi kiểm tra lô hàng', result: null },
+      }));
+      toast.error(err.message || 'Lỗi kiểm tra lô hàng', 'Lỗi xác thực');
+    }
+  }
+
+  async function handleFileScanForRole(formRole: 'INSPECTOR' | 'LOGISTICS' | 'DISTRIBUTOR', file: File) {
+    try {
+      const html5QrCode = new Html5Qrcode('portal-qr-file-temp');
+      const decodedText = await html5QrCode.scanFile(file, true);
+      html5QrCode.clear();
+      setManualBatchInput((prev) => ({ ...prev, [formRole]: decodedText }));
+      await verifyBatch(decodedText, formRole);
+    } catch (err: any) {
+      toast.error('Không tìm thấy mã QR hợp lệ trong hình ảnh này. Vui lòng chọn ảnh rõ nét hơn.', 'Lỗi đọc mã QR');
+    }
+  }
+
+  function renderQrBatchSection(formRole: 'INSPECTOR' | 'LOGISTICS' | 'DISTRIBUTOR', currentBatchId: string) {
+    const verification = batchVerifications[formRole];
+
+    return (
+      <div className="sm:col-span-2 space-y-2.5 bg-slate-50 p-4 rounded-xl border border-slate-200">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+              <QrCode className="w-4 h-4 text-emerald-600" />
+              Mã lô sản phẩm (Quét tem mã QR) *
+            </span>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              Hệ thống tự động kiểm tra xem lô hàng đã lưu trên Blockchain chưa và đã đến giai đoạn của bạn chưa (không được nhảy lượt).
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setActiveScannerRole(formRole);
+                setIsScannerOpen(true);
+              }}
+              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition"
+            >
+              <Camera className="w-3.5 h-3.5" /> Quét mã QR
+            </button>
+            <label className="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition">
+              <Upload className="w-3.5 h-3.5" /> Tải ảnh QR
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files?.[0]) {
+                    handleFileScanForRole(formRole, e.target.files[0]);
+                  }
+                }}
+              />
+            </label>
+          </div>
+        </div>
+
+        {/* Input thủ công hoặc chọn nhanh từ danh sách */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1">
+          <div className="relative flex-1">
+            <input
+              type="text"
+              placeholder="Hoặc dán/nhập mã lô (VD: BATCH-2026-...) rồi nhấn Kiểm tra"
+              value={manualBatchInput[formRole] || ''}
+              onChange={(e) =>
+                setManualBatchInput((prev) => ({ ...prev, [formRole]: e.target.value }))
+              }
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  verifyBatch(manualBatchInput[formRole] || '', formRole);
+                }
+              }}
+              className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono pr-20"
+            />
+            <button
+              type="button"
+              disabled={verification?.loading}
+              onClick={() => verifyBatch(manualBatchInput[formRole] || '', formRole)}
+              className="absolute right-1 top-1 bottom-1 px-3 bg-slate-800 hover:bg-slate-900 disabled:bg-slate-300 text-white text-[11px] font-semibold rounded transition"
+            >
+              {verification?.loading ? 'Đang duyệt...' : 'Kiểm tra'}
+            </button>
+          </div>
+
+          <select
+            value={currentBatchId || ''}
+            onChange={(e) => {
+              if (e.target.value) {
+                setManualBatchInput((prev) => ({ ...prev, [formRole]: e.target.value }));
+                verifyBatch(e.target.value, formRole);
+              }
+            }}
+            className="sm:w-64 px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs bg-white text-slate-700 truncate"
+          >
+            <option value="">-- Chọn nhanh từ danh sách --</option>
+            {activeBatches.map((b) => (
+              <option key={b.batchId} value={b.batchId}>
+                {b.batchId} - {b.productName} ({STAGE_LABELS[b.stage]?.label || b.stage})
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* 1. Trạng thái Đang kiểm tra */}
+        {verification?.loading && (
+          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-800 text-xs flex items-center gap-2 animate-pulse">
+            <RefreshCw className="w-4 h-4 animate-spin text-blue-600 flex-shrink-0" />
+            <span>Đang xác thực thông tin lô hàng trên Smart Contract Polygon Amoy và kiểm tra thứ tự quy trình...</span>
+          </div>
+        )}
+
+        {/* 2. Trạng thái Lỗi / Nhảy lượt / Chưa lên Blockchain */}
+        {verification?.error && !verification?.loading && (
+          <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-900 text-xs space-y-2">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-bold">Không thể tiếp nhận lô hàng này!</p>
+                <p className="text-[11px] text-rose-800 leading-relaxed">{verification.error}</p>
+              </div>
+            </div>
+            <div className="pt-2 border-t border-rose-200/60 flex flex-wrap items-center gap-1 text-[10px] text-rose-800 font-semibold">
+              <span className="text-slate-500 font-normal">Trình tự quy trình:</span>
+              <span className={`px-1.5 py-0.5 rounded border ${formRole === 'INSPECTOR' ? 'bg-amber-100 border-amber-300 font-bold' : 'bg-white border-slate-200'}`}>1. Sản xuất</span>
+              <ArrowRight className="w-3 h-3 text-slate-400" />
+              <span className={`px-1.5 py-0.5 rounded border ${formRole === 'INSPECTOR' ? 'bg-emerald-100 border-emerald-300 font-bold text-emerald-900' : 'bg-white border-slate-200'}`}>2. Kiểm định</span>
+              <ArrowRight className="w-3 h-3 text-slate-400" />
+              <span className={`px-1.5 py-0.5 rounded border ${formRole === 'LOGISTICS' ? 'bg-emerald-100 border-emerald-300 font-bold text-emerald-900' : 'bg-white border-slate-200'}`}>3. Vận chuyển</span>
+              <ArrowRight className="w-3 h-3 text-slate-400" />
+              <span className={`px-1.5 py-0.5 rounded border ${formRole === 'DISTRIBUTOR' ? 'bg-emerald-100 border-emerald-300 font-bold text-emerald-900' : 'bg-white border-slate-200'}`}>4. Phân phối</span>
+            </div>
+          </div>
+        )}
+
+        {/* 3. Trạng thái Hợp lệ & Đã xác thực Blockchain */}
+        {verification?.result && !verification?.loading && (
+          <div className="p-3.5 bg-emerald-50 border border-emerald-300 rounded-lg text-emerald-950 text-xs space-y-2.5 animate-in fade-in">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 font-bold text-emerald-800">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>ĐÃ XÁC THỰC LÔ HÀNG HỢP LỆ TRÊN BLOCKCHAIN</span>
+              </div>
+              <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold border border-emerald-200">
+                Đúng giai đoạn tiếp nhận
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] bg-white/90 p-2.5 rounded-lg border border-emerald-200 shadow-xs">
+              <div>
+                <span className="text-slate-400 block text-[10px]">Mã lô:</span>
+                <span className="font-mono font-bold text-slate-900">{verification.result.batchId}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-[10px]">Tên nông sản:</span>
+                <span className="font-semibold text-slate-900">{verification.result.productName}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-[10px]">Khối lượng / SL:</span>
+                <span className="font-semibold text-slate-900">{verification.result.weight} kg ({verification.result.quantity} đv)</span>
+              </div>
+              <div>
+                <span className="text-slate-400 block text-[10px]">Giai đoạn hiện tại:</span>
+                <span className="font-semibold text-emerald-700">{verification.result.stageText}</span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   // 1. Submit Producer Form (Blockchain-First: Chỉ lưu CSDL sau khi Blockchain xác nhận thành công)
   async function submitProducer(e: React.FormEvent) {
     e.preventDefault();
@@ -233,14 +629,32 @@ export default function SupplyChainPortalPage() {
       }
 
       const createdBatchId = producerForm.batchId;
+      const createdProdName = producerForm.productName;
       setStatusAlert({
         type: 'success',
         message: `Đã tạo lô hàng '${createdBatchId}' và ghi nhận thành công trên Blockchain!`,
         txHash: receipt.hash,
       });
+
+      // Tạo mã QR cho lô hàng vừa tạo
+      try {
+        const traceUrl = typeof window !== 'undefined'
+          ? `${window.location.origin}/trace/${createdBatchId}`
+          : `https://voting.io.vn/trace/${createdBatchId}`;
+        const qrUrl = await QRCode.toDataURL(traceUrl, { width: 300, margin: 1 });
+        setCreatedBatchModal({
+          isOpen: true,
+          batchId: createdBatchId,
+          productName: createdProdName,
+          qrDataUrl: qrUrl,
+          txHash: receipt.hash,
+        });
+      } catch (err) {}
+
       setProducerForm((prev) => ({
         ...prev,
         batchId: `BATCH-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+        productName: '',
       }));
       loadBatches();
     } catch (err: any) {
@@ -683,22 +1097,7 @@ export default function SupplyChainPortalPage() {
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-            <div>
-              <label className="block text-slate-600 font-medium mb-1">Chọn Lô sản phẩm *</label>
-              <select
-                required
-                value={inspectorForm.batchId}
-                onChange={(e) => setInspectorForm({ ...inspectorForm, batchId: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white"
-              >
-                <option value="">-- Chọn lô cần kiểm định --</option>
-                {activeBatches.filter((b) => b.stage === 'CREATED').map((b) => (
-                  <option key={b.batchId} value={b.batchId}>
-                    {b.batchId} - {b.productName}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {renderQrBatchSection('INSPECTOR', inspectorForm.batchId)}
             <div>
               <label className="block text-slate-600 font-medium mb-1">Kết quả kiểm định *</label>
               <input
@@ -802,22 +1201,7 @@ export default function SupplyChainPortalPage() {
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-            <div>
-              <label className="block text-slate-600 font-medium mb-1">Chọn Lô hàng đã kiểm định *</label>
-              <select
-                required
-                value={logisticsForm.batchId}
-                onChange={(e) => setLogisticsForm({ ...logisticsForm, batchId: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white"
-              >
-                <option value="">-- Chọn lô cần vận chuyển --</option>
-                {activeBatches.filter((b) => b.stage === 'INSPECTED').map((b) => (
-                  <option key={b.batchId} value={b.batchId}>
-                    {b.batchId} - {b.productName}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {renderQrBatchSection('LOGISTICS', logisticsForm.batchId)}
             <div>
               <label className="block text-slate-600 font-medium mb-1">Tên đơn vị vận chuyển *</label>
               <input
@@ -956,22 +1340,7 @@ export default function SupplyChainPortalPage() {
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-            <div>
-              <label className="block text-slate-600 font-medium mb-1">Chọn Lô hàng đang vận chuyển *</label>
-              <select
-                required
-                value={distributorForm.batchId}
-                onChange={(e) => setDistributorForm({ ...distributorForm, batchId: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white"
-              >
-                <option value="">-- Chọn lô tiếp nhận --</option>
-                {activeBatches.filter((b) => b.stage === 'IN_TRANSIT').map((b) => (
-                  <option key={b.batchId} value={b.batchId}>
-                    {b.batchId} - {b.productName}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {renderQrBatchSection('DISTRIBUTOR', distributorForm.batchId)}
             <div>
               <label className="block text-slate-600 font-medium mb-1">Tên đơn vị phân phối *</label>
               <input
@@ -1054,6 +1423,78 @@ export default function SupplyChainPortalPage() {
             {submitting ? 'Đang gửi giao dịch...' : 'Lưu & Ký Blockchain (Tiếp nhận Phân phối)'}
           </button>
         </form>
+      )}
+
+      {/* Temp DOM node cho html5-qrcode scanFile */}
+      <div id="portal-qr-file-temp" className="hidden" />
+
+      {/* Modal Quét Mã QR bằng Camera */}
+      <QrScannerModal
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        title={`Quét Tem Mã QR (${ROLE_LABELS[activeScannerRole] || activeScannerRole})`}
+        onScanSuccess={(scannedId) => {
+          setManualBatchInput((prev) => ({ ...prev, [activeScannerRole]: scannedId }));
+          verifyBatch(scannedId, activeScannerRole);
+        }}
+      />
+
+      {/* Modal hiển thị Tem QR cho Producer sau khi khởi tạo lô hàng thành công */}
+      {createdBatchModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-2xl border border-slate-200 max-w-sm w-full p-5 shadow-2xl text-center space-y-4">
+            <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+              <CheckCircle2 className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-900 text-sm">Khởi Tạo Lô Hàng Thành Công!</h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Lô hàng đã được ghi nhận trên Blockchain. Tem mã QR dưới đây sẵn sàng để Đơn vị Kiểm định quét tiếp nhận.
+              </p>
+            </div>
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 inline-block mx-auto">
+              {createdBatchModal.qrDataUrl && (
+                <img
+                  src={createdBatchModal.qrDataUrl}
+                  alt={createdBatchModal.batchId}
+                  className="w-48 h-48 mx-auto rounded-lg shadow-sm"
+                />
+              )}
+              <div className="mt-2 font-mono font-bold text-xs text-slate-800">
+                {createdBatchModal.batchId}
+              </div>
+              <div className="text-[11px] text-slate-500 font-medium">
+                {createdBatchModal.productName}
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <a
+                href={createdBatchModal.qrDataUrl}
+                download={`tem-qr-${createdBatchModal.batchId}.png`}
+                className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition"
+              >
+                <Download className="w-3.5 h-3.5" /> Tải ảnh Tem QR về máy
+              </a>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(createdBatchModal.batchId);
+                  toast.success(`Đã sao chép: ${createdBatchModal.batchId}`);
+                }}
+                className="w-full py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition"
+              >
+                <Copy className="w-3.5 h-3.5" /> Sao chép Mã Lô
+              </button>
+              <button
+                type="button"
+                onClick={() => setCreatedBatchModal(null)}
+                className="w-full py-1.5 text-slate-400 hover:text-slate-600 text-xs font-medium"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
