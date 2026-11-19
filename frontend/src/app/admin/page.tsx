@@ -280,7 +280,7 @@ export default function AdminPage() {
                 <table className="w-full text-left text-xs text-slate-600">
                   <thead className="bg-slate-50 text-slate-700 font-semibold border-b border-slate-200">
                     <tr>
-                      <th className="py-2.5 px-3">Tên Đơn vị</th>
+                      <th className="py-2.5 px-3">Đơn vị / Tài khoản</th>
                       <th className="py-2.5 px-3">Vai trò</th>
                       <th className="py-2.5 px-3">Địa chỉ ví</th>
                       <th className="py-2.5 px-3">Thông tin liên hệ</th>
@@ -297,7 +297,9 @@ export default function AdminPage() {
                   <tbody className="divide-y divide-slate-100">
                     {accounts.map((acc) => (
                       <tr key={acc.id} className="hover:bg-slate-50">
-                        <td className="py-2.5 px-3 font-semibold text-slate-900">{acc.organizationName}</td>
+                        <td className="py-2.5 px-3 font-semibold text-slate-900">
+                          {acc.organizationName || ROLE_LABELS[acc.role] || truncateAddress(acc.walletAddress)}
+                        </td>
                         <td className="py-2.5 px-3">
                           <div className="flex flex-wrap gap-1">
                             {((Array.isArray(acc.roles) && acc.roles.length > 0) ? acc.roles : [acc.role]).map((r: string) => (

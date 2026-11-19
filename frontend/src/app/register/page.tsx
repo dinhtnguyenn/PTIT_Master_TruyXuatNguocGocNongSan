@@ -35,11 +35,8 @@ export default function RegisterPage() {
   const [account, setAccount] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     role: 'PRODUCER',
-    roles: ['PRODUCER'] as string[],
-    organizationName: '',
     phoneNumber: '',
     email: '',
-    address: '',
   });
   const [existingAccount, setExistingAccount] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -141,6 +138,15 @@ export default function RegisterPage() {
       toast.error('Địa chỉ ví không hợp lệ!');
       return;
     }
+    if (!formData.phoneNumber.trim()) {
+      toast.warning('Vui lòng nhập số điện thoại liên hệ!');
+      return;
+    }
+    if (!formData.email.trim()) {
+      toast.warning('Vui lòng nhập email liên hệ!');
+      return;
+    }
+
     setLoading(true);
     setStatusMessage(null);
 
@@ -150,12 +156,12 @@ export default function RegisterPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           walletAddress: account.toLowerCase(),
-          roles: formData.roles,
-          role: formData.roles[0] || 'PRODUCER',
-          organizationName: formData.organizationName,
-          phoneNumber: formData.phoneNumber,
-          email: formData.email,
-          address: formData.address,
+          role: formData.role,
+          roles: [formData.role],
+          phoneNumber: formData.phoneNumber.trim(),
+          email: formData.email.trim(),
+          organizationName: ROLE_LABELS[formData.role] || formData.role,
+          contactInfo: `SĐT: ${formData.phoneNumber.trim()} • Email: ${formData.email.trim()}`,
         }),
       });
 
@@ -301,7 +307,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <p>
+            <p className="text-slate-800">
               Vai trò hiện tại:{' '}
               <strong>
                 {((Array.isArray(existingAccount.roles) && existingAccount.roles.length > 0)
@@ -310,16 +316,20 @@ export default function RegisterPage() {
                 )
                   .map((r: string) => ROLE_LABELS[r] || r)
                   .join(', ')}
-              </strong>{' '}
-              • Đơn vị: <strong>{existingAccount.organizationName}</strong>
+              </strong>
             </p>
-            {(existingAccount.phoneNumber || existingAccount.email || existingAccount.address) && (
-              <p className="text-[11px] text-slate-600 mt-1">
-                {existingAccount.phoneNumber && <span>SĐT: {existingAccount.phoneNumber} </span>}
-                {existingAccount.email && <span>• Email: {existingAccount.email} </span>}
-                {existingAccount.address && <span>• Địa chỉ: {existingAccount.address}</span>}
-              </p>
-            )}
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-600 mt-1">
+              {existingAccount.phoneNumber && (
+                <span>
+                  <strong className="text-slate-500">SĐT:</strong> {existingAccount.phoneNumber}
+                </span>
+              )}
+              {existingAccount.email && (
+                <span>
+                  <strong className="text-slate-500">Email:</strong> {existingAccount.email}
+                </span>
+              )}
+            </div>
           </div>
 
           {existingAccount.status === 'APPROVED' && (
@@ -421,53 +431,39 @@ export default function RegisterPage() {
           )}
 
           <div>
-            <label className="block text-slate-600 font-medium mb-1.5">
-              Vai trò đăng ký tham gia (Có thể chọn một hoặc nhiều vai trò) *
+            <label className="block text-slate-700 font-bold mb-2">
+              Vai trò đăng ký tham gia (Chọn 1 trong 4 vai trò) *
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {[
                 { id: 'PRODUCER', label: 'Đơn vị Sản xuất' },
                 { id: 'INSPECTOR', label: 'Đơn vị Kiểm định' },
                 { id: 'LOGISTICS', label: 'Đơn vị Vận chuyển' },
                 { id: 'DISTRIBUTOR', label: 'Đơn vị Phân phối' },
               ].map((r) => {
-                const isChecked = formData.roles.includes(r.id);
+                const isChecked = formData.role === r.id;
                 return (
-                  <label key={r.id} className="flex items-center gap-2 cursor-pointer select-none text-xs">
+                  <label
+                    key={r.id}
+                    className={`flex items-center gap-2.5 p-3 rounded-lg border text-xs cursor-pointer transition select-none ${
+                      isChecked
+                        ? 'bg-emerald-50 border-emerald-400 text-emerald-950 font-bold shadow-sm'
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
                     <input
-                      type="checkbox"
+                      type="radio"
+                      name="registerRoleSelection"
+                      value={r.id}
                       checked={isChecked}
-                      onChange={(e) => {
-                        let newRoles: string[];
-                        if (e.target.checked) {
-                          newRoles = [...formData.roles, r.id];
-                        } else {
-                          newRoles = formData.roles.filter((x) => x !== r.id);
-                        }
-                        if (newRoles.length === 0) newRoles = [r.id];
-                        setFormData({ ...formData, roles: newRoles, role: newRoles[0] });
-                      }}
-                      className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                      onChange={() => setFormData({ ...formData, role: r.id })}
+                      className="border-slate-300 text-emerald-600 focus:ring-emerald-500"
                     />
-                    <span className={isChecked ? 'font-bold text-slate-900' : 'text-slate-600'}>
-                      {r.label}
-                    </span>
+                    <span>{r.label}</span>
                   </label>
                 );
               })}
             </div>
-          </div>
-
-          <div>
-            <label className="block text-slate-600 font-medium mb-1">Tên cá nhân / tổ chức *</label>
-            <input
-              type="text"
-              required
-              placeholder="VD: Hợp tác xã Nông nghiệp Hòa Lộc"
-              value={formData.organizationName}
-              onChange={(e) => setFormData({ ...formData, organizationName: e.target.value })}
-              className="w-full px-3 py-1.5 rounded-lg border border-slate-300"
-            />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -479,7 +475,7 @@ export default function RegisterPage() {
                 placeholder="VD: 0912345678"
                 value={formData.phoneNumber}
                 onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-lg border border-slate-300"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
               />
             </div>
             <div>
@@ -490,27 +486,15 @@ export default function RegisterPage() {
                 placeholder="VD: contact@nongsan.vn"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-lg border border-slate-300"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
               />
             </div>
-          </div>
-
-          <div>
-            <label className="block text-slate-600 font-medium mb-1">Địa chỉ cơ sở sản xuất / Trụ sở *</label>
-            <input
-              type="text"
-              required
-              placeholder="VD: Ấp Hòa, Xã Hòa Hưng, Huyện Cái Bè, Tiền Giang"
-              value={formData.address}
-              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              className="w-full px-3 py-1.5 rounded-lg border border-slate-300"
-            />
           </div>
 
           <button
             type="submit"
             disabled={loading || !account}
-            className="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-semibold transition"
+            className="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-semibold transition text-xs"
           >
             {loading ? 'Đang gửi...' : 'Gửi Hồ Sơ Đăng Ký'}
           </button>

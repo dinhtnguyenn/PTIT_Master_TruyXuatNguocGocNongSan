@@ -495,7 +495,7 @@ export default function SupplyChainPortalPage() {
           <span className="text-[11px] font-bold text-emerald-700 uppercase">
             {ROLE_LABELS[role] || role} {isAdm ? '(Ví Quản trị viên)' : ''}
           </span>
-          <p className="text-sm font-bold text-slate-900">{userData.organizationName}</p>
+          <p className="text-sm font-bold text-slate-900">{userData.organizationName || ROLE_LABELS[role] || 'Thành viên chuỗi cung ứng'}</p>
         </div>
         <span className="text-xs font-mono text-slate-500 bg-slate-50 px-2.5 py-1 rounded border border-slate-200">
           {truncateAddress(account)}

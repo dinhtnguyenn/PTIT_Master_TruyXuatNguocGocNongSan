@@ -7,6 +7,13 @@ import { isHardcodedAdmin } from '../admin.constants';
 
 const ALLOWED_SUPPLY_CHAIN_ROLES = ['PRODUCER', 'INSPECTOR', 'LOGISTICS', 'DISTRIBUTOR'];
 
+const ROLE_DISPLAY_NAMES: Record<string, string> = {
+  PRODUCER: 'Đơn vị Sản xuất',
+  INSPECTOR: 'Đơn vị Kiểm định',
+  LOGISTICS: 'Đơn vị Vận chuyển',
+  DISTRIBUTOR: 'Đơn vị Phân phối',
+};
+
 @Injectable()
 export class AccountsService implements OnModuleInit {
   constructor(
@@ -75,6 +82,7 @@ export class AccountsService implements OnModuleInit {
     const phoneNumber = (dto.phoneNumber || '').trim();
     const email = (dto.email || '').trim();
     const address = (dto.address || '').trim();
+    const orgName = (dto.organizationName || '').trim() || ROLE_DISPLAY_NAMES[primaryRole] || 'Đơn vị chuỗi cung ứng';
     const contactInfo = dto.contactInfo?.trim() || [phoneNumber, email, address].filter(Boolean).join(' - ');
 
     if (existing) {
@@ -90,7 +98,7 @@ export class AccountsService implements OnModuleInit {
         data: {
           role: primaryRole,
           roles: roles,
-          organizationName: dto.organizationName,
+          organizationName: orgName,
           phoneNumber,
           email,
           address,
@@ -106,7 +114,7 @@ export class AccountsService implements OnModuleInit {
         walletAddress: normalizedWallet,
         role: primaryRole,
         roles: roles,
-        organizationName: dto.organizationName,
+        organizationName: orgName,
         phoneNumber,
         email,
         address,

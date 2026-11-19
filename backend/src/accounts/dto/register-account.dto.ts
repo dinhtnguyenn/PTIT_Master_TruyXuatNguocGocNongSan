@@ -13,9 +13,9 @@ export class RegisterAccountDto {
   @IsArray()
   roles?: string[];
 
-  @IsNotEmpty({ message: 'Tên tổ chức/cá nhân không được để trống' })
+  @IsOptional()
   @IsString()
-  organizationName: string;
+  organizationName?: string;
 
   @IsOptional()
   @IsString()
