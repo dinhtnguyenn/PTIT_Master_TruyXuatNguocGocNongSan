@@ -186,6 +186,34 @@ export class AccountsService implements OnModuleInit {
     });
   }
 
+  async updateRoles(id: string, roles: string[]) {
+    const account = await this.prisma.userAccount.findUnique({ where: { id } });
+    if (!account) {
+      throw new NotFoundException('Không tìm thấy tài khoản');
+    }
+
+    let rawRoles: string[] = [];
+    if (Array.isArray(roles) && roles.length > 0) {
+      rawRoles = Array.from(new Set(roles));
+    } else {
+      rawRoles = ['PRODUCER'];
+    }
+
+    const validRoles = rawRoles.filter((r) => ALLOWED_SUPPLY_CHAIN_ROLES.includes(r));
+    if (validRoles.length === 0) {
+      throw new BadRequestException('Tài khoản phải có ít nhất một vai trò chuỗi cung ứng hợp lệ!');
+    }
+
+    return this.prisma.userAccount.update({
+      where: { id },
+      data: {
+        roles: validRoles,
+        role: validRoles[0],
+        status: 'APPROVED',
+      },
+    });
+  }
+
   async getStats() {
     const total = await this.prisma.userAccount.count();
     const pending = await this.prisma.userAccount.count({ where: { status: 'PENDING' } });

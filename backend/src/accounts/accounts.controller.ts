@@ -2,6 +2,7 @@ import { Controller, Post, Get, Patch, Body, Param, Query } from '@nestjs/common
 import { AccountsService } from './accounts.service';
 import { RegisterAccountDto } from './dto/register-account.dto';
 import { UpdateAccountStatusDto } from './dto/approve-account.dto';
+import { UpdateAccountRolesDto } from './dto/update-account-roles.dto';
 
 @Controller('accounts')
 export class AccountsController {
@@ -34,5 +35,13 @@ export class AccountsController {
     @Body() dto: UpdateAccountStatusDto,
   ) {
     return this.accountsService.updateStatus(id, dto);
+  }
+
+  @Patch(':id/roles')
+  updateRoles(
+    @Param('id') id: string,
+    @Body() dto: UpdateAccountRolesDto,
+  ) {
+    return this.accountsService.updateRoles(id, dto.roles);
   }
 }
