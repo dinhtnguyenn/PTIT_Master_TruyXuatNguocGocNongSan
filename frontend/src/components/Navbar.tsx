@@ -148,7 +148,7 @@ export default function Navbar() {
     { href: '/trace', label: 'Tra cứu Nguồn gốc' },
     { href: '/portal', label: 'Nhập liệu Chuỗi cung ứng' },
     { href: '/register', label: 'Đăng ký Vai trò' },
-    ...(isAdmin ? [{ href: '/admin', label: 'Quản trị Admin' }] : []),
+    ...(isAdmin ? [{ href: '/admin', label: 'Quản trị Hệ thống' }] : []),
   ];
 
   return (
