@@ -389,6 +389,7 @@ export default function SupplyChainPortalPage() {
       const verifyData = {
         batchId: cleanId,
         productName: dbBatch?.productName || onChainProof?.productName || 'Nông sản',
+        category: dbBatch?.category || '—',
         weight: dbBatch?.weight || 0,
         quantity: dbBatch?.quantity || 0,
         productionLocation: dbBatch?.productionLocation || '—',
@@ -509,15 +510,15 @@ export default function SupplyChainPortalPage() {
                 <span className="font-mono font-bold text-slate-900">{verification.result.batchId}</span>
               </div>
               <div>
-                <span className="text-slate-400 block text-[10px]">Tên nông sản:</span>
+                <span className="text-slate-400 block text-[10px]">Tên:</span>
                 <span className="font-semibold text-slate-900">{verification.result.productName}</span>
               </div>
               <div>
-                <span className="text-slate-400 block text-[10px]">Khối lượng / Số lượng:</span>
-                <span className="font-semibold text-slate-900">{verification.result.weight} kg ({verification.result.quantity} đơn vị)</span>
+                <span className="text-slate-400 block text-[10px]">Loại:</span>
+                <span className="font-semibold text-slate-900">{verification.result.category || '—'}</span>
               </div>
               <div>
-                <span className="text-slate-400 block text-[10px]">Giai đoạn hiện tại:</span>
+                <span className="text-slate-400 block text-[10px]">Giai đoạn:</span>
                 <span className="font-semibold text-emerald-700">{verification.result.stageText}</span>
               </div>
             </div>
