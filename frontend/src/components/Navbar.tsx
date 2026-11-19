@@ -142,11 +142,13 @@ export default function Navbar() {
     };
   }, [account, pathname]);
 
+  const isAdmin = !!account && isHardcodedAdmin(account);
+
   const navLinks = [
     { href: '/trace', label: 'Tra cứu Nguồn gốc' },
     { href: '/portal', label: 'Nhập liệu Chuỗi cung ứng' },
-    { href: '/register', label: 'Đăng ký Ví' },
-    { href: '/admin', label: 'Quản trị' },
+    { href: '/register', label: 'Đăng ký Vai trò' },
+    ...(isAdmin ? [{ href: '/admin', label: 'Quản trị Admin' }] : []),
   ];
 
   return (

@@ -283,7 +283,8 @@ export default function AdminPage() {
                       <th className="py-2.5 px-3">Đơn vị / Tài khoản</th>
                       <th className="py-2.5 px-3">Vai trò</th>
                       <th className="py-2.5 px-3">Địa chỉ ví</th>
-                      <th className="py-2.5 px-3">Thông tin liên hệ</th>
+                      <th className="py-2.5 px-3 whitespace-nowrap">Số điện thoại</th>
+                      <th className="py-2.5 px-3 whitespace-nowrap">Email</th>
                       {filterStatus === 'PENDING' ? (
                         <>
                           <th className="py-2.5 px-3 whitespace-nowrap">Thời gian gửi</th>
@@ -312,11 +313,11 @@ export default function AdminPage() {
                         <td className="py-2.5 px-3 font-mono text-slate-800">
                           {truncateAddress(acc.walletAddress)}
                         </td>
-                        <td className="py-2.5 px-3 text-[11px] text-slate-600 max-w-xs">
-                          {acc.phoneNumber && <div><span className="text-slate-400 font-medium">SĐT:</span> {acc.phoneNumber}</div>}
-                          {acc.email && <div><span className="text-slate-400 font-medium">Email:</span> {acc.email}</div>}
-                          {acc.address && <div><span className="text-slate-400 font-medium">Địa chỉ:</span> {acc.address}</div>}
-                          {!acc.phoneNumber && !acc.email && !acc.address && <div>{acc.contactInfo || '—'}</div>}
+                        <td className="py-2.5 px-3 font-mono text-slate-700 text-[11px] whitespace-nowrap">
+                          {acc.phoneNumber || '—'}
+                        </td>
+                        <td className="py-2.5 px-3 text-slate-700 text-[11px] whitespace-nowrap">
+                          {acc.email || '—'}
                         </td>
                         {filterStatus === 'PENDING' ? (
                           <>

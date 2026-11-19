@@ -88,7 +88,7 @@ export default function HomePage() {
             href="/register"
             className="text-slate-600 hover:text-emerald-700 font-medium px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50"
           >
-            Đăng ký ví mới
+            Đăng ký Vai trò
           </Link>
         </div>
       </div>
