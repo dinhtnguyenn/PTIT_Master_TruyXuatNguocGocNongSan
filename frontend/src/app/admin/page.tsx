@@ -6,6 +6,20 @@ import { connectWallet, truncateAddress, isWalletDisconnected, sendContractTx, f
 import { API_BASE_URL, ROLE_HASHES, ROLE_LABELS, STATUS_LABELS, isHardcodedAdmin } from '../../lib/constants';
 import { useToast } from '../../components/ToastProvider';
 
+function formatDateTime(dateStr?: string | Date | null): string {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '—';
+  return d.toLocaleString('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+}
+
 export default function AdminPage() {
   const { toast, confirmDialog } = useToast();
   const [account, setAccount] = useState<string | null>(null);
@@ -270,7 +284,14 @@ export default function AdminPage() {
                       <th className="py-2.5 px-3">Vai trò</th>
                       <th className="py-2.5 px-3">Địa chỉ ví</th>
                       <th className="py-2.5 px-3">Thông tin liên hệ</th>
-                      <th className="py-2.5 px-3 text-right">Thao tác</th>
+                      {filterStatus === 'PENDING' ? (
+                        <>
+                          <th className="py-2.5 px-3 whitespace-nowrap">Thời gian gửi</th>
+                          <th className="py-2.5 px-3 text-right whitespace-nowrap">Thao tác</th>
+                        </>
+                      ) : (
+                        <th className="py-2.5 px-3 text-right whitespace-nowrap">Thời gian thực hiện</th>
+                      )}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -295,30 +316,37 @@ export default function AdminPage() {
                           {acc.address && <div><span className="text-slate-400 font-medium">Địa chỉ:</span> {acc.address}</div>}
                           {!acc.phoneNumber && !acc.email && !acc.address && <div>{acc.contactInfo || '—'}</div>}
                         </td>
-                        <td className="py-2.5 px-3 text-right">
-                          {acc.status === 'PENDING' ? (
-                            <div className="flex items-center justify-end gap-1.5">
-                              <button
-                                disabled={actionLoadingId === acc.id}
-                                onClick={() => handleApprove(acc)}
-                                className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-semibold text-[11px]"
-                              >
-                                {actionLoadingId === acc.id ? 'Đang cấp...' : 'Duyệt'}
-                              </button>
-                              <button
-                                disabled={actionLoadingId === acc.id}
-                                onClick={() => handleReject(acc.id)}
-                                className="px-2 py-1 bg-slate-200 hover:bg-rose-100 hover:text-rose-700 text-slate-700 rounded font-semibold text-[11px]"
-                              >
-                                Từ chối
-                              </button>
-                            </div>
-                          ) : (
-                            <span className="text-[11px] font-semibold text-slate-500">
-                              {STATUS_LABELS[acc.status] || acc.status}
+                        {filterStatus === 'PENDING' ? (
+                          <>
+                            <td className="py-2.5 px-3 text-[11px] text-slate-500 font-mono whitespace-nowrap">
+                              {formatDateTime(acc.createdAt)}
+                            </td>
+                            <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <button
+                                  disabled={actionLoadingId === acc.id}
+                                  onClick={() => handleApprove(acc)}
+                                  className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-semibold text-[11px]"
+                                >
+                                  {actionLoadingId === acc.id ? 'Đang cấp...' : 'Duyệt'}
+                                </button>
+                                <button
+                                  disabled={actionLoadingId === acc.id}
+                                  onClick={() => handleReject(acc.id)}
+                                  className="px-2 py-1 bg-slate-200 hover:bg-rose-100 hover:text-rose-700 text-slate-700 rounded font-semibold text-[11px]"
+                                >
+                                  Từ chối
+                                </button>
+                              </div>
+                            </td>
+                          </>
+                        ) : (
+                          <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                            <span className="font-semibold text-slate-800 font-mono text-[11px]">
+                              {formatDateTime(acc.updatedAt || acc.createdAt)}
                             </span>
-                          )}
-                        </td>
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>
