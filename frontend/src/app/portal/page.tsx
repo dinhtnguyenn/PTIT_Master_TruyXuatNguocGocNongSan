@@ -52,11 +52,6 @@ export default function SupplyChainPortalPage() {
   // Quét mã QR & Kiểm tra lô hàng Blockchain & Thứ tự quy trình
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [activeScannerRole, setActiveScannerRole] = useState<'INSPECTOR' | 'LOGISTICS' | 'DISTRIBUTOR'>('INSPECTOR');
-  const [manualBatchInput, setManualBatchInput] = useState<Record<string, string>>({
-    INSPECTOR: '',
-    LOGISTICS: '',
-    DISTRIBUTOR: '',
-  });
   const [batchVerifications, setBatchVerifications] = useState<
     Record<
       'INSPECTOR' | 'LOGISTICS' | 'DISTRIBUTOR',
@@ -67,6 +62,16 @@ export default function SupplyChainPortalPage() {
     LOGISTICS: { loading: false, error: null, result: null },
     DISTRIBUTOR: { loading: false, error: null, result: null },
   });
+
+  function resetBatchVerification(targetRole: 'INSPECTOR' | 'LOGISTICS' | 'DISTRIBUTOR') {
+    setBatchVerifications((prev) => ({
+      ...prev,
+      [targetRole]: { loading: false, error: null, result: null },
+    }));
+    if (targetRole === 'INSPECTOR') setInspectorForm((f) => ({ ...f, batchId: '' }));
+    if (targetRole === 'LOGISTICS') setLogisticsForm((f) => ({ ...f, batchId: '' }));
+    if (targetRole === 'DISTRIBUTOR') setDistributorForm((f) => ({ ...f, batchId: '' }));
+  }
 
   // Modal hiển thị tem QR cho Producer vừa tạo lô hàng
   const [createdBatchModal, setCreatedBatchModal] = useState<{
@@ -249,15 +254,16 @@ export default function SupplyChainPortalPage() {
     };
   }, []);
 
-  // QUÉT MÃ QR & ĐỐI SOÁT BLOCKCHAIN / THỨ TỰ QUY TRÌNH (KHÔNG NHẢY LƯỢT)
+  // QUÉT MÃ QR & ĐỐI SOÁT BLOCKCHAIN / THỨ TỰ QUY TRÌNH
   async function verifyBatch(scannedText: string, targetRole: 'INSPECTOR' | 'LOGISTICS' | 'DISTRIBUTOR') {
     let cleanId = scannedText.trim();
     if (cleanId.includes('/trace/')) {
       const parts = cleanId.split('/trace/');
       if (parts[1]) cleanId = parts[1].split('?')[0].split('#')[0].trim();
     }
+    cleanId = decodeURIComponent(cleanId).trim();
     if (!cleanId) {
-      toast.warning('Vui lòng cung cấp mã lô sản phẩm để kiểm tra!');
+      toast.warning('Vui lòng quét tem mã QR của lô sản phẩm!');
       return;
     }
 
@@ -293,7 +299,7 @@ export default function SupplyChainPortalPage() {
 
       // 3. KIỂM TRA 1: Lô hàng đã lưu lên Blockchain chưa?
       if (!existsOnChain && (!dbBatch || !dbBatch.producerTxHash)) {
-        const errorMsg = `Lô hàng '${cleanId}' CHƯA ĐƯỢC LƯU LÊN BLOCKCHAIN! Vui lòng kiểm tra lại tem mã QR hoặc yêu cầu Nhà sản xuất hoàn tất việc ký và ghi nhận lô hàng on-chain.`;
+        const errorMsg = `Lô hàng '${cleanId}' chưa được lưu trên Blockchain. Vui lòng kiểm tra lại tem mã QR hoặc yêu cầu Nhà sản xuất hoàn tất việc ký và ghi nhận lô hàng.`;
         setBatchVerifications((prev) => ({
           ...prev,
           [targetRole]: { loading: false, error: errorMsg, result: null },
@@ -324,10 +330,10 @@ export default function SupplyChainPortalPage() {
       ];
       const stageText = STAGE_NAMES[stageNum] || 'Chưa xác định';
 
-      // 5. Kiểm tra không được nhảy lượt (Producer -> Inspector -> Logistics -> Distributor)
+      // 5. Kiểm tra đúng giai đoạn tiếp nhận
       if (targetRole === 'INSPECTOR') {
         if (stageNum > 0) {
-          const errorMsg = `Lô hàng '${cleanId}' ĐÃ ĐƯỢC KIỂM ĐỊNH TRƯỚC ĐÓ (Giai đoạn hiện tại: ${stageText}). Không thể thực hiện kiểm định lại để tránh trùng lặp dữ liệu.`;
+          const errorMsg = `Lô hàng '${cleanId}' đã được kiểm định trước đó (Giai đoạn hiện tại: ${stageText}). Không thể thực hiện kiểm định lại để tránh trùng lặp dữ liệu.`;
           setBatchVerifications((prev) => ({
             ...prev,
             [targetRole]: { loading: false, error: errorMsg, result: null },
@@ -338,17 +344,17 @@ export default function SupplyChainPortalPage() {
         }
       } else if (targetRole === 'LOGISTICS') {
         if (stageNum < 1) {
-          const errorMsg = `CHƯA ĐẾN LƯỢT VẬN CHUYỂN (NHẢY LƯỢT)! Lô hàng '${cleanId}' mới ở giai đoạn [${stageText}] và CHƯA được Đơn vị Kiểm định đánh giá chất lượng. Quy trình bắt buộc: Nhà sản xuất -> Kiểm định -> Vận chuyển -> Phân phối. Không được nhảy lượt!`;
+          const errorMsg = `Lô hàng '${cleanId}' mới ở giai đoạn [${stageText}] và chưa được Đơn vị Kiểm định đánh giá chất lượng. Vui lòng hoàn thành khâu Kiểm định trước khi tiếp nhận vận chuyển.`;
           setBatchVerifications((prev) => ({
             ...prev,
             [targetRole]: { loading: false, error: errorMsg, result: null },
           }));
-          toast.error(errorMsg, 'Vi phạm quy trình: Nhảy lượt');
+          toast.error(errorMsg, 'Chưa đến lượt vận chuyển');
           setLogisticsForm((f) => ({ ...f, batchId: '' }));
           return;
         }
         if (stageNum > 1) {
-          const errorMsg = `Lô hàng '${cleanId}' ĐÃ/ĐANG ĐƯỢC VẬN CHUYỂN (Giai đoạn hiện tại: ${stageText}). Không thể tạo hành trình vận chuyển mới.`;
+          const errorMsg = `Lô hàng '${cleanId}' đã/đang được vận chuyển (Giai đoạn hiện tại: ${stageText}). Không thể tạo hành trình vận chuyển mới.`;
           setBatchVerifications((prev) => ({
             ...prev,
             [targetRole]: { loading: false, error: errorMsg, result: null },
@@ -359,17 +365,17 @@ export default function SupplyChainPortalPage() {
         }
       } else if (targetRole === 'DISTRIBUTOR') {
         if (stageNum < 2) {
-          const errorMsg = `CHƯA ĐẾN LƯỢT PHÂN PHỐI (NHẢY LƯỢT)! Lô hàng '${cleanId}' hiện ở giai đoạn [${stageText}] và CHƯA qua khâu Vận chuyển (Logistics). Quy trình bắt buộc: Nhà sản xuất -> Kiểm định -> Vận chuyển -> Phân phối. Không được nhảy lượt!`;
+          const errorMsg = `Lô hàng '${cleanId}' hiện ở giai đoạn [${stageText}] và chưa qua khâu Vận chuyển (Logistics). Vui lòng hoàn thành khâu Vận chuyển trước khi tiếp nhận phân phối.`;
           setBatchVerifications((prev) => ({
             ...prev,
             [targetRole]: { loading: false, error: errorMsg, result: null },
           }));
-          toast.error(errorMsg, 'Vi phạm quy trình: Nhảy lượt');
+          toast.error(errorMsg, 'Chưa đến lượt phân phối');
           setDistributorForm((f) => ({ ...f, batchId: '' }));
           return;
         }
         if (stageNum > 2) {
-          const errorMsg = `Lô hàng '${cleanId}' ĐÃ ĐƯỢC TIẾP NHẬN PHÂN PHỐI HOÀN TẤT TRƯỚC ĐÓ. Toàn bộ chuỗi cung ứng của lô hàng đã kết thúc.`;
+          const errorMsg = `Lô hàng '${cleanId}' đã được tiếp nhận phân phối hoàn tất trước đó. Toàn bộ chuỗi cung ứng của lô hàng đã kết thúc.`;
           setBatchVerifications((prev) => ({
             ...prev,
             [targetRole]: { loading: false, error: errorMsg, result: null },
@@ -422,26 +428,25 @@ export default function SupplyChainPortalPage() {
       const html5QrCode = new Html5Qrcode('portal-qr-file-temp');
       const decodedText = await html5QrCode.scanFile(file, true);
       html5QrCode.clear();
-      setManualBatchInput((prev) => ({ ...prev, [formRole]: decodedText }));
       await verifyBatch(decodedText, formRole);
     } catch (err: any) {
       toast.error('Không tìm thấy mã QR hợp lệ trong hình ảnh này. Vui lòng chọn ảnh rõ nét hơn.', 'Lỗi đọc mã QR');
     }
   }
 
-  function renderQrBatchSection(formRole: 'INSPECTOR' | 'LOGISTICS' | 'DISTRIBUTOR', currentBatchId: string) {
+  function renderQrBatchSection(formRole: 'INSPECTOR' | 'LOGISTICS' | 'DISTRIBUTOR') {
     const verification = batchVerifications[formRole];
 
     return (
-      <div className="sm:col-span-2 space-y-2.5 bg-slate-50 p-4 rounded-xl border border-slate-200">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+      <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
               <QrCode className="w-4 h-4 text-emerald-600" />
-              Mã lô sản phẩm (Quét tem mã QR) *
+              Quét mã QR Lô sản phẩm *
             </span>
             <p className="text-[11px] text-slate-500 mt-0.5">
-              Hệ thống tự động kiểm tra xem lô hàng đã lưu trên Blockchain chưa và đã đến giai đoạn của bạn chưa (không được nhảy lượt).
+              Hệ thống tự động kiểm tra xem lô hàng đã lưu trên Blockchain chưa và đã đến đúng giai đoạn tiếp nhận.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -451,12 +456,12 @@ export default function SupplyChainPortalPage() {
                 setActiveScannerRole(formRole);
                 setIsScannerOpen(true);
               }}
-              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition"
+              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs transition"
             >
               <Camera className="w-3.5 h-3.5" /> Quét mã QR
             </button>
-            <label className="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition">
-              <Upload className="w-3.5 h-3.5" /> Tải ảnh QR
+            <label className="px-3.5 py-1.5 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition shadow-xs">
+              <Upload className="w-3.5 h-3.5 text-slate-500" /> Tải ảnh QR
               <input
                 type="file"
                 accept="image/*"
@@ -464,6 +469,7 @@ export default function SupplyChainPortalPage() {
                 onChange={(e) => {
                   if (e.target.files?.[0]) {
                     handleFileScanForRole(formRole, e.target.files[0]);
+                    e.target.value = '';
                   }
                 }}
               />
@@ -471,64 +477,17 @@ export default function SupplyChainPortalPage() {
           </div>
         </div>
 
-        {/* Input thủ công hoặc chọn nhanh từ danh sách */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-1">
-          <div className="relative flex-1">
-            <input
-              type="text"
-              placeholder="Hoặc dán/nhập mã lô (VD: BATCH-2026-...) rồi nhấn Kiểm tra"
-              value={manualBatchInput[formRole] || ''}
-              onChange={(e) =>
-                setManualBatchInput((prev) => ({ ...prev, [formRole]: e.target.value }))
-              }
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  verifyBatch(manualBatchInput[formRole] || '', formRole);
-                }
-              }}
-              className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono pr-20"
-            />
-            <button
-              type="button"
-              disabled={verification?.loading}
-              onClick={() => verifyBatch(manualBatchInput[formRole] || '', formRole)}
-              className="absolute right-1 top-1 bottom-1 px-3 bg-slate-800 hover:bg-slate-900 disabled:bg-slate-300 text-white text-[11px] font-semibold rounded transition"
-            >
-              {verification?.loading ? 'Đang duyệt...' : 'Kiểm tra'}
-            </button>
-          </div>
-
-          <select
-            value={currentBatchId || ''}
-            onChange={(e) => {
-              if (e.target.value) {
-                setManualBatchInput((prev) => ({ ...prev, [formRole]: e.target.value }));
-                verifyBatch(e.target.value, formRole);
-              }
-            }}
-            className="sm:w-64 px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs bg-white text-slate-700 truncate"
-          >
-            <option value="">-- Chọn nhanh từ danh sách --</option>
-            {activeBatches.map((b) => (
-              <option key={b.batchId} value={b.batchId}>
-                {b.batchId} - {b.productName} ({STAGE_LABELS[b.stage]?.label || b.stage})
-              </option>
-            ))}
-          </select>
-        </div>
-
         {/* 1. Trạng thái Đang kiểm tra */}
         {verification?.loading && (
           <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-800 text-xs flex items-center gap-2 animate-pulse">
             <RefreshCw className="w-4 h-4 animate-spin text-blue-600 flex-shrink-0" />
-            <span>Đang xác thực thông tin lô hàng trên Smart Contract Polygon Amoy và kiểm tra thứ tự quy trình...</span>
+            <span>Đang xác thực thông tin lô hàng trên Smart Contract Polygon Amoy và kiểm tra giai đoạn tiếp nhận...</span>
           </div>
         )}
 
-        {/* 2. Trạng thái Lỗi / Nhảy lượt / Chưa lên Blockchain */}
+        {/* 2. Trạng thái Lỗi / Chưa lên Blockchain / Sai giai đoạn */}
         {verification?.error && !verification?.loading && (
-          <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-900 text-xs space-y-2">
+          <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-lg text-rose-900 text-xs space-y-2">
             <div className="flex items-start gap-2">
               <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
               <div className="space-y-1">
@@ -538,7 +497,7 @@ export default function SupplyChainPortalPage() {
             </div>
             <div className="pt-2 border-t border-rose-200/60 flex flex-wrap items-center gap-1 text-[10px] text-rose-800 font-semibold">
               <span className="text-slate-500 font-normal">Trình tự quy trình:</span>
-              <span className={`px-1.5 py-0.5 rounded border ${formRole === 'INSPECTOR' ? 'bg-amber-100 border-amber-300 font-bold' : 'bg-white border-slate-200'}`}>1. Sản xuất</span>
+              <span className="px-1.5 py-0.5 rounded border bg-white border-slate-200">1. Sản xuất</span>
               <ArrowRight className="w-3 h-3 text-slate-400" />
               <span className={`px-1.5 py-0.5 rounded border ${formRole === 'INSPECTOR' ? 'bg-emerald-100 border-emerald-300 font-bold text-emerald-900' : 'bg-white border-slate-200'}`}>2. Kiểm định</span>
               <ArrowRight className="w-3 h-3 text-slate-400" />
@@ -557,9 +516,18 @@ export default function SupplyChainPortalPage() {
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                 <span>ĐÃ XÁC THỰC LÔ HÀNG HỢP LỆ TRÊN BLOCKCHAIN</span>
               </div>
-              <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold border border-emerald-200">
-                Đúng giai đoạn tiếp nhận
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold border border-emerald-200">
+                  Đúng giai đoạn tiếp nhận
+                </span>
+                <button
+                  type="button"
+                  onClick={() => resetBatchVerification(formRole)}
+                  className="text-[11px] text-slate-500 hover:text-slate-800 underline font-medium"
+                >
+                  Quét lại mã khác
+                </button>
+              </div>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] bg-white/90 p-2.5 rounded-lg border border-emerald-200 shadow-xs">
               <div>
@@ -712,6 +680,18 @@ export default function SupplyChainPortalPage() {
         message: `Kiểm định lô hàng '${inspectorForm.batchId}' thành công và đã ghi nhận trên Blockchain!`,
         txHash: receipt.hash,
       });
+      resetBatchVerification('INSPECTOR');
+      setInspectorForm({
+        batchId: '',
+        inspectionResult: '',
+        certificateCode: '',
+        certificateType: '',
+        issuingAuthority: '',
+        issuedDate: '',
+        expiryDate: '',
+        inspectionCriteria: '',
+        certImageUrl: '',
+      });
       loadBatches();
     } catch (err: any) {
       setStatusAlert({ type: 'error', message: formatBlockchainError(err) });
@@ -768,6 +748,21 @@ export default function SupplyChainPortalPage() {
         message: `Ghi nhận vận chuyển lô hàng '${logisticsForm.batchId}' thành công trên Blockchain!`,
         txHash: receipt.hash,
       });
+      resetBatchVerification('LOGISTICS');
+      setLogisticsForm({
+        batchId: '',
+        transporterName: '',
+        transporterContact: '',
+        transporterType: 'Tổ chức',
+        shippingCode: '',
+        originLocation: '',
+        destLocation: '',
+        departureTime: '',
+        completionTime: '',
+        temperature: 20,
+        humidity: 65,
+        storageNotes: '',
+      });
       loadBatches();
     } catch (err: any) {
       setStatusAlert({ type: 'error', message: formatBlockchainError(err) });
@@ -823,6 +818,17 @@ export default function SupplyChainPortalPage() {
         type: 'success',
         message: `Tiếp nhận phân phối lô hàng '${distributorForm.batchId}' thành công trên Blockchain!`,
         txHash: receipt.hash,
+      });
+      resetBatchVerification('DISTRIBUTOR');
+      setDistributorForm({
+        batchId: '',
+        distributorName: '',
+        distributorContact: '',
+        distributorType: 'Tổ chức',
+        receivedTime: '',
+        actualQuantity: 0,
+        actualWeight: 0,
+        receiptNotes: '',
       });
       loadBatches();
     } catch (err: any) {
@@ -1096,98 +1102,122 @@ export default function SupplyChainPortalPage() {
             Bảng 2: Thông tin cung cấp bởi Đơn vị Kiểm định
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-            {renderQrBatchSection('INSPECTOR', inspectorForm.batchId)}
-            <div>
-              <label className="block text-slate-600 font-medium mb-1">Kết quả kiểm định *</label>
-              <input
-                type="text"
-                required
-                value={inspectorForm.inspectionResult}
-                onChange={(e) => setInspectorForm({ ...inspectorForm, inspectionResult: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
-              />
-            </div>
-            <div>
-              <label className="block text-slate-600 font-medium mb-1">Mã chứng nhận *</label>
-              <input
-                type="text"
-                required
-                value={inspectorForm.certificateCode}
-                onChange={(e) => setInspectorForm({ ...inspectorForm, certificateCode: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono"
-              />
-            </div>
-            <div>
-              <label className="block text-slate-600 font-medium mb-1">Loại chứng nhận *</label>
-              <input
-                type="text"
-                required
-                value={inspectorForm.certificateType}
-                onChange={(e) => setInspectorForm({ ...inspectorForm, certificateType: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
-              />
-            </div>
-            <div>
-              <label className="block text-slate-600 font-medium mb-1">Cơ quan cấp *</label>
-              <input
-                type="text"
-                required
-                value={inspectorForm.issuingAuthority}
-                onChange={(e) => setInspectorForm({ ...inspectorForm, issuingAuthority: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-slate-600 font-medium mb-1">Ngày cấp *</label>
-                <input
-                  type="date"
-                  required
-                  value={inspectorForm.issuedDate}
-                  onChange={(e) => setInspectorForm({ ...inspectorForm, issuedDate: e.target.value })}
-                  className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
-                />
-              </div>
-              <div>
-                <label className="block text-slate-600 font-medium mb-1">Ngày hết hạn *</label>
-                <input
-                  type="date"
-                  required
-                  value={inspectorForm.expiryDate}
-                  onChange={(e) => setInspectorForm({ ...inspectorForm, expiryDate: e.target.value })}
-                  className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
-                />
-              </div>
-            </div>
-            <div className="sm:col-span-2">
-              <label className="block text-slate-600 font-medium mb-1">Chỉ tiêu kiểm định *</label>
-              <textarea
-                rows={2}
-                required
-                value={inspectorForm.inspectionCriteria}
-                onChange={(e) => setInspectorForm({ ...inspectorForm, inspectionCriteria: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
-              />
-            </div>
-            <div className="sm:col-span-2">
-              <label className="block text-slate-600 font-medium mb-1">Ảnh giấy chứng nhận</label>
-              <input
-                type="file"
-                accept="image/*,application/pdf"
-                onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'cert')}
-                className="text-xs file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:bg-slate-100"
-              />
-            </div>
-          </div>
+          {/* 1. KHU VỰC QUÉT MÃ QR */}
+          {renderQrBatchSection('INSPECTOR')}
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition"
-          >
-            {submitting ? 'Đang gửi giao dịch...' : 'Lưu & Ký Blockchain (Xác nhận Kiểm định)'}
-          </button>
+          {/* 2. FORM NHẬP THÔNG TIN KIỂM ĐỊNH: Chỉ hiển thị khi quét mã thành công và đúng giai đoạn */}
+          {batchVerifications.INSPECTOR?.result ? (
+            <div className="space-y-4 pt-2 border-t border-slate-100 animate-in fade-in duration-200">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-blue-900 bg-blue-50/70 p-2.5 rounded-lg border border-blue-200">
+                <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
+                <span>
+                  Đang nhập dữ liệu kiểm định cho lô hàng: <strong className="font-mono text-blue-950">{batchVerifications.INSPECTOR.result.batchId}</strong> ({batchVerifications.INSPECTOR.result.productName})
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div>
+                  <label className="block text-slate-600 font-medium mb-1">Kết quả kiểm định *</label>
+                  <input
+                    type="text"
+                    required
+                    value={inspectorForm.inspectionResult}
+                    onChange={(e) => setInspectorForm({ ...inspectorForm, inspectionResult: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-medium mb-1">Mã chứng nhận *</label>
+                  <input
+                    type="text"
+                    required
+                    value={inspectorForm.certificateCode}
+                    onChange={(e) => setInspectorForm({ ...inspectorForm, certificateCode: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-medium mb-1">Loại chứng nhận *</label>
+                  <input
+                    type="text"
+                    required
+                    value={inspectorForm.certificateType}
+                    onChange={(e) => setInspectorForm({ ...inspectorForm, certificateType: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-medium mb-1">Cơ quan cấp *</label>
+                  <input
+                    type="text"
+                    required
+                    value={inspectorForm.issuingAuthority}
+                    onChange={(e) => setInspectorForm({ ...inspectorForm, issuingAuthority: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-slate-600 font-medium mb-1">Ngày cấp *</label>
+                    <input
+                      type="date"
+                      required
+                      value={inspectorForm.issuedDate}
+                      onChange={(e) => setInspectorForm({ ...inspectorForm, issuedDate: e.target.value })}
+                      className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-600 font-medium mb-1">Ngày hết hạn *</label>
+                    <input
+                      type="date"
+                      required
+                      value={inspectorForm.expiryDate}
+                      onChange={(e) => setInspectorForm({ ...inspectorForm, expiryDate: e.target.value })}
+                      className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
+                    />
+                  </div>
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-slate-600 font-medium mb-1">Chỉ tiêu kiểm định *</label>
+                  <textarea
+                    rows={2}
+                    required
+                    value={inspectorForm.inspectionCriteria}
+                    onChange={(e) => setInspectorForm({ ...inspectorForm, inspectionCriteria: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-slate-600 font-medium mb-1">Ảnh giấy chứng nhận</label>
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'cert')}
+                    className="text-xs file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:bg-slate-100"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition"
+              >
+                {submitting ? 'Đang gửi giao dịch...' : 'Lưu & Ký Blockchain (Xác nhận Kiểm định)'}
+              </button>
+            </div>
+          ) : (
+            <div className="py-8 px-4 text-center bg-slate-50/70 rounded-xl border border-dashed border-slate-200 space-y-2">
+              <QrCode className="w-8 h-8 text-slate-400 mx-auto" />
+              <p className="text-xs font-medium text-slate-600">
+                Vui lòng quét tem mã QR của lô hàng để tải thông tin và mở biểu mẫu nhập liệu kiểm định.
+              </p>
+              <p className="text-[11px] text-slate-400">
+                Hệ thống sẽ đối soát trực tiếp trên Blockchain để đảm bảo lô hàng hợp lệ và sẵn sàng tiếp nhận.
+              </p>
+            </div>
+          )}
         </form>
       )}
 
@@ -1200,133 +1230,157 @@ export default function SupplyChainPortalPage() {
             Bảng 3: Thông tin cung cấp bởi Đơn vị Vận chuyển
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-            {renderQrBatchSection('LOGISTICS', logisticsForm.batchId)}
-            <div>
-              <label className="block text-slate-600 font-medium mb-1">Tên đơn vị vận chuyển *</label>
-              <input
-                type="text"
-                required
-                value={logisticsForm.transporterName}
-                onChange={(e) => setLogisticsForm({ ...logisticsForm, transporterName: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
-              />
-            </div>
-            <div>
-              <label className="block text-slate-600 font-medium mb-1">Thông tin liên hệ *</label>
-              <input
-                type="text"
-                required
-                value={logisticsForm.transporterContact}
-                onChange={(e) => setLogisticsForm({ ...logisticsForm, transporterContact: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
-              />
-            </div>
-            <div>
-              <label className="block text-slate-600 font-medium mb-1">Loại chủ thể *</label>
-              <select
-                value={logisticsForm.transporterType}
-                onChange={(e) => setLogisticsForm({ ...logisticsForm, transporterType: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white"
-              >
-                <option value="Tổ chức">Tổ chức</option>
-                <option value="Cá nhân">Cá nhân</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-slate-600 font-medium mb-1">Mã vận chuyển *</label>
-              <input
-                type="text"
-                required
-                value={logisticsForm.shippingCode}
-                onChange={(e) => setLogisticsForm({ ...logisticsForm, shippingCode: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono"
-              />
-            </div>
-            <div>
-              <label className="block text-slate-600 font-medium mb-1">Điểm đi *</label>
-              <input
-                type="text"
-                required
-                value={logisticsForm.originLocation}
-                onChange={(e) => setLogisticsForm({ ...logisticsForm, originLocation: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
-              />
-            </div>
-            <div>
-              <label className="block text-slate-600 font-medium mb-1">Điểm đến *</label>
-              <input
-                type="text"
-                required
-                value={logisticsForm.destLocation}
-                onChange={(e) => setLogisticsForm({ ...logisticsForm, destLocation: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-slate-600 font-medium mb-1">TG khởi hành *</label>
-                <input
-                  type="datetime-local"
-                  required
-                  value={logisticsForm.departureTime}
-                  onChange={(e) => setLogisticsForm({ ...logisticsForm, departureTime: e.target.value })}
-                  className="w-full px-2 py-1.5 rounded-lg border border-slate-300 text-xs"
-                />
-              </div>
-              <div>
-                <label className="block text-slate-600 font-medium mb-1">TG hoàn tất *</label>
-                <input
-                  type="datetime-local"
-                  required
-                  value={logisticsForm.completionTime}
-                  onChange={(e) => setLogisticsForm({ ...logisticsForm, completionTime: e.target.value })}
-                  className="w-full px-2 py-1.5 rounded-lg border border-slate-300 text-xs"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-slate-600 font-medium mb-1">Nhiệt độ (°C) *</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  required
-                  value={logisticsForm.temperature}
-                  onChange={(e) => setLogisticsForm({ ...logisticsForm, temperature: Number(e.target.value) })}
-                  className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
-                />
-              </div>
-              <div>
-                <label className="block text-slate-600 font-medium mb-1">Độ ẩm (%) *</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  required
-                  value={logisticsForm.humidity}
-                  onChange={(e) => setLogisticsForm({ ...logisticsForm, humidity: Number(e.target.value) })}
-                  className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-slate-600 font-medium mb-1">Ghi chú bảo quản</label>
-              <input
-                type="text"
-                value={logisticsForm.storageNotes}
-                onChange={(e) => setLogisticsForm({ ...logisticsForm, storageNotes: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
-              />
-            </div>
-          </div>
+          {/* 1. KHU VỰC QUÉT MÃ QR */}
+          {renderQrBatchSection('LOGISTICS')}
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full py-2.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs transition"
-          >
-            {submitting ? 'Đang gửi giao dịch...' : 'Lưu & Ký Blockchain (Xác nhận Vận chuyển)'}
-          </button>
+          {/* 2. FORM NHẬP THÔNG TIN VẬN CHUYỂN: Chỉ hiển thị khi quét mã thành công và đúng giai đoạn */}
+          {batchVerifications.LOGISTICS?.result ? (
+            <div className="space-y-4 pt-2 border-t border-slate-100 animate-in fade-in duration-200">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-900 bg-amber-50/70 p-2.5 rounded-lg border border-amber-200">
+                <CheckCircle2 className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>
+                  Đang nhập dữ liệu vận chuyển cho lô hàng: <strong className="font-mono text-amber-950">{batchVerifications.LOGISTICS.result.batchId}</strong> ({batchVerifications.LOGISTICS.result.productName})
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div>
+                  <label className="block text-slate-600 font-medium mb-1">Tên đơn vị vận chuyển *</label>
+                  <input
+                    type="text"
+                    required
+                    value={logisticsForm.transporterName}
+                    onChange={(e) => setLogisticsForm({ ...logisticsForm, transporterName: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-medium mb-1">Thông tin liên hệ *</label>
+                  <input
+                    type="text"
+                    required
+                    value={logisticsForm.transporterContact}
+                    onChange={(e) => setLogisticsForm({ ...logisticsForm, transporterContact: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-medium mb-1">Loại chủ thể *</label>
+                  <select
+                    value={logisticsForm.transporterType}
+                    onChange={(e) => setLogisticsForm({ ...logisticsForm, transporterType: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white"
+                  >
+                    <option value="Tổ chức">Tổ chức</option>
+                    <option value="Cá nhân">Cá nhân</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-medium mb-1">Mã vận chuyển *</label>
+                  <input
+                    type="text"
+                    required
+                    value={logisticsForm.shippingCode}
+                    onChange={(e) => setLogisticsForm({ ...logisticsForm, shippingCode: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-medium mb-1">Điểm đi *</label>
+                  <input
+                    type="text"
+                    required
+                    value={logisticsForm.originLocation}
+                    onChange={(e) => setLogisticsForm({ ...logisticsForm, originLocation: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-medium mb-1">Điểm đến *</label>
+                  <input
+                    type="text"
+                    required
+                    value={logisticsForm.destLocation}
+                    onChange={(e) => setLogisticsForm({ ...logisticsForm, destLocation: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-slate-600 font-medium mb-1">TG khởi hành *</label>
+                    <input
+                      type="datetime-local"
+                      required
+                      value={logisticsForm.departureTime}
+                      onChange={(e) => setLogisticsForm({ ...logisticsForm, departureTime: e.target.value })}
+                      className="w-full px-2 py-1.5 rounded-lg border border-slate-300 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-600 font-medium mb-1">TG hoàn tất *</label>
+                    <input
+                      type="datetime-local"
+                      required
+                      value={logisticsForm.completionTime}
+                      onChange={(e) => setLogisticsForm({ ...logisticsForm, completionTime: e.target.value })}
+                      className="w-full px-2 py-1.5 rounded-lg border border-slate-300 text-xs"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-slate-600 font-medium mb-1">Nhiệt độ (°C) *</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      required
+                      value={logisticsForm.temperature}
+                      onChange={(e) => setLogisticsForm({ ...logisticsForm, temperature: Number(e.target.value) })}
+                      className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-600 font-medium mb-1">Độ ẩm (%) *</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      required
+                      value={logisticsForm.humidity}
+                      onChange={(e) => setLogisticsForm({ ...logisticsForm, humidity: Number(e.target.value) })}
+                      className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-medium mb-1">Ghi chú bảo quản</label>
+                  <input
+                    type="text"
+                    value={logisticsForm.storageNotes}
+                    onChange={(e) => setLogisticsForm({ ...logisticsForm, storageNotes: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full py-2.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs transition"
+              >
+                {submitting ? 'Đang gửi giao dịch...' : 'Lưu & Ký Blockchain (Xác nhận Vận chuyển)'}
+              </button>
+            </div>
+          ) : (
+            <div className="py-8 px-4 text-center bg-slate-50/70 rounded-xl border border-dashed border-slate-200 space-y-2">
+              <QrCode className="w-8 h-8 text-slate-400 mx-auto" />
+              <p className="text-xs font-medium text-slate-600">
+                Vui lòng quét tem mã QR của lô hàng để tải thông tin và mở biểu mẫu nhập liệu vận chuyển.
+              </p>
+              <p className="text-[11px] text-slate-400">
+                Hệ thống sẽ đối soát trực tiếp trên Blockchain để đảm bảo lô hàng hợp lệ và sẵn sàng tiếp nhận.
+              </p>
+            </div>
+          )}
         </form>
       )}
 
@@ -1339,89 +1393,113 @@ export default function SupplyChainPortalPage() {
             Bảng 4: Thông tin cung cấp bởi Đơn vị Phân phối
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-            {renderQrBatchSection('DISTRIBUTOR', distributorForm.batchId)}
-            <div>
-              <label className="block text-slate-600 font-medium mb-1">Tên đơn vị phân phối *</label>
-              <input
-                type="text"
-                required
-                value={distributorForm.distributorName}
-                onChange={(e) => setDistributorForm({ ...distributorForm, distributorName: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
-              />
-            </div>
-            <div>
-              <label className="block text-slate-600 font-medium mb-1">Thông tin liên hệ *</label>
-              <input
-                type="text"
-                required
-                value={distributorForm.distributorContact}
-                onChange={(e) => setDistributorForm({ ...distributorForm, distributorContact: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
-              />
-            </div>
-            <div>
-              <label className="block text-slate-600 font-medium mb-1">Loại chủ thể *</label>
-              <select
-                value={distributorForm.distributorType}
-                onChange={(e) => setDistributorForm({ ...distributorForm, distributorType: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white"
-              >
-                <option value="Tổ chức">Tổ chức</option>
-                <option value="Cá nhân">Cá nhân</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-slate-600 font-medium mb-1">Thời gian tiếp nhận *</label>
-              <input
-                type="datetime-local"
-                required
-                value={distributorForm.receivedTime}
-                onChange={(e) => setDistributorForm({ ...distributorForm, receivedTime: e.target.value })}
-                className="w-full px-2 py-1.5 rounded-lg border border-slate-300 text-xs"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-slate-600 font-medium mb-1">Số lượng thực nhận *</label>
-                <input
-                  type="number"
-                  required
-                  value={distributorForm.actualQuantity}
-                  onChange={(e) => setDistributorForm({ ...distributorForm, actualQuantity: Number(e.target.value) })}
-                  className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
-                />
-              </div>
-              <div>
-                <label className="block text-slate-600 font-medium mb-1">Trọng lượng thực nhận (kg) *</label>
-                <input
-                  type="number"
-                  required
-                  value={distributorForm.actualWeight}
-                  onChange={(e) => setDistributorForm({ ...distributorForm, actualWeight: Number(e.target.value) })}
-                  className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
-                />
-              </div>
-            </div>
-            <div className="sm:col-span-2">
-              <label className="block text-slate-600 font-medium mb-1">Ghi chú tiếp nhận</label>
-              <input
-                type="text"
-                value={distributorForm.receiptNotes}
-                onChange={(e) => setDistributorForm({ ...distributorForm, receiptNotes: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
-              />
-            </div>
-          </div>
+          {/* 1. KHU VỰC QUÉT MÃ QR */}
+          {renderQrBatchSection('DISTRIBUTOR')}
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full py-2.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs transition"
-          >
-            {submitting ? 'Đang gửi giao dịch...' : 'Lưu & Ký Blockchain (Tiếp nhận Phân phối)'}
-          </button>
+          {/* 2. FORM NHẬP THÔNG TIN PHÂN PHỐI: Chỉ hiển thị khi quét mã thành công và đúng giai đoạn */}
+          {batchVerifications.DISTRIBUTOR?.result ? (
+            <div className="space-y-4 pt-2 border-t border-slate-100 animate-in fade-in duration-200">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-purple-900 bg-purple-50/70 p-2.5 rounded-lg border border-purple-200">
+                <CheckCircle2 className="w-4 h-4 text-purple-600 shrink-0" />
+                <span>
+                  Đang nhập dữ liệu tiếp nhận phân phối cho lô hàng: <strong className="font-mono text-purple-950">{batchVerifications.DISTRIBUTOR.result.batchId}</strong> ({batchVerifications.DISTRIBUTOR.result.productName})
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div>
+                  <label className="block text-slate-600 font-medium mb-1">Tên đơn vị phân phối *</label>
+                  <input
+                    type="text"
+                    required
+                    value={distributorForm.distributorName}
+                    onChange={(e) => setDistributorForm({ ...distributorForm, distributorName: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-medium mb-1">Thông tin liên hệ *</label>
+                  <input
+                    type="text"
+                    required
+                    value={distributorForm.distributorContact}
+                    onChange={(e) => setDistributorForm({ ...distributorForm, distributorContact: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-medium mb-1">Loại chủ thể *</label>
+                  <select
+                    value={distributorForm.distributorType}
+                    onChange={(e) => setDistributorForm({ ...distributorForm, distributorType: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white"
+                  >
+                    <option value="Tổ chức">Tổ chức</option>
+                    <option value="Cá nhân">Cá nhân</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-600 font-medium mb-1">Thời gian tiếp nhận *</label>
+                  <input
+                    type="datetime-local"
+                    required
+                    value={distributorForm.receivedTime}
+                    onChange={(e) => setDistributorForm({ ...distributorForm, receivedTime: e.target.value })}
+                    className="w-full px-2 py-1.5 rounded-lg border border-slate-300 text-xs"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-slate-600 font-medium mb-1">Số lượng thực nhận *</label>
+                    <input
+                      type="number"
+                      required
+                      value={distributorForm.actualQuantity}
+                      onChange={(e) => setDistributorForm({ ...distributorForm, actualQuantity: Number(e.target.value) })}
+                      className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-600 font-medium mb-1">Trọng lượng thực nhận (kg) *</label>
+                    <input
+                      type="number"
+                      required
+                      value={distributorForm.actualWeight}
+                      onChange={(e) => setDistributorForm({ ...distributorForm, actualWeight: Number(e.target.value) })}
+                      className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
+                    />
+                  </div>
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-slate-600 font-medium mb-1">Ghi chú tiếp nhận</label>
+                  <input
+                    type="text"
+                    value={distributorForm.receiptNotes}
+                    onChange={(e) => setDistributorForm({ ...distributorForm, receiptNotes: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full py-2.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs transition"
+              >
+                {submitting ? 'Đang gửi giao dịch...' : 'Lưu & Ký Blockchain (Tiếp nhận Phân phối)'}
+              </button>
+            </div>
+          ) : (
+            <div className="py-8 px-4 text-center bg-slate-50/70 rounded-xl border border-dashed border-slate-200 space-y-2">
+              <QrCode className="w-8 h-8 text-slate-400 mx-auto" />
+              <p className="text-xs font-medium text-slate-600">
+                Vui lòng quét tem mã QR của lô hàng để tải thông tin và mở biểu mẫu nhập liệu phân phối.
+              </p>
+              <p className="text-[11px] text-slate-400">
+                Hệ thống sẽ đối soát trực tiếp trên Blockchain để đảm bảo lô hàng hợp lệ và sẵn sàng tiếp nhận.
+              </p>
+            </div>
+          )}
         </form>
       )}
 
@@ -1434,7 +1512,6 @@ export default function SupplyChainPortalPage() {
         onClose={() => setIsScannerOpen(false)}
         title={`Quét Tem Mã QR (${ROLE_LABELS[activeScannerRole] || activeScannerRole})`}
         onScanSuccess={(scannedId) => {
-          setManualBatchInput((prev) => ({ ...prev, [activeScannerRole]: scannedId }));
           verifyBatch(scannedId, activeScannerRole);
         }}
       />
