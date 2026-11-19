@@ -338,16 +338,11 @@ export default function RegisterPage() {
           {/* GIAO DIỆN CẬP NHẬT VAI TRÒ DÀNH CHO QUẢN TRỊ VIÊN */}
           {isAdmin && (
             <div className="pt-4 border-t border-slate-200/80 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                  <Sliders className="w-4 h-4 text-purple-700" />
-                  <h3 className="font-bold text-slate-900 text-xs">
-                    Cập nhật vai trò tài khoản
-                  </h3>
-                </div>
-                <span className="text-[10px] bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full border border-purple-200">
-                  Quyền Quản trị
-                </span>
+              <div className="flex items-center gap-1.5">
+                <Sliders className="w-4 h-4 text-purple-700" />
+                <h3 className="font-bold text-slate-900 text-xs">
+                  Cập nhật vai trò tài khoản
+                </h3>
               </div>
               <p className="text-[11px] text-slate-600 leading-relaxed">
                 Chọn vai trò bạn muốn thiết lập cho tài khoản này (chọn 1 vai trò duy nhất mỗi khi cập nhật):
