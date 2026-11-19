@@ -18,7 +18,6 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import QRCode from 'qrcode';
-import { Html5Qrcode } from 'html5-qrcode';
 import QrScannerModal from '../../components/QrScannerModal';
 import {
   connectWallet,
@@ -423,17 +422,6 @@ export default function SupplyChainPortalPage() {
     }
   }
 
-  async function handleFileScanForRole(formRole: 'INSPECTOR' | 'LOGISTICS' | 'DISTRIBUTOR', file: File) {
-    try {
-      const html5QrCode = new Html5Qrcode('portal-qr-file-temp');
-      const decodedText = await html5QrCode.scanFile(file, true);
-      html5QrCode.clear();
-      await verifyBatch(decodedText, formRole);
-    } catch (err: any) {
-      toast.error('Không tìm thấy mã QR hợp lệ trong hình ảnh này. Vui lòng chọn ảnh rõ nét hơn.', 'Lỗi đọc mã QR');
-    }
-  }
-
   function renderQrBatchSection(formRole: 'INSPECTOR' | 'LOGISTICS' | 'DISTRIBUTOR') {
     const verification = batchVerifications[formRole];
 
@@ -449,31 +437,17 @@ export default function SupplyChainPortalPage() {
               Hệ thống tự động kiểm tra xem lô hàng đã lưu trên Blockchain chưa và đã đến đúng giai đoạn tiếp nhận.
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div>
             <button
               type="button"
               onClick={() => {
                 setActiveScannerRole(formRole);
                 setIsScannerOpen(true);
               }}
-              className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs transition"
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs transition"
             >
-              <Camera className="w-3.5 h-3.5" /> Quét mã QR
+              <Camera className="w-4 h-4" /> Quét mã QR
             </button>
-            <label className="px-3.5 py-1.5 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition shadow-xs">
-              <Upload className="w-3.5 h-3.5 text-slate-500" /> Tải ảnh QR
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  if (e.target.files?.[0]) {
-                    handleFileScanForRole(formRole, e.target.files[0]);
-                    e.target.value = '';
-                  }
-                }}
-              />
-            </label>
           </div>
         </div>
 
@@ -1502,9 +1476,6 @@ export default function SupplyChainPortalPage() {
           )}
         </form>
       )}
-
-      {/* Temp DOM node cho html5-qrcode scanFile */}
-      <div id="portal-qr-file-temp" className="hidden" />
 
       {/* Modal Quét Mã QR bằng Camera */}
       <QrScannerModal
