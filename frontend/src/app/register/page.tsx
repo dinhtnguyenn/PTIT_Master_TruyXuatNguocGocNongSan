@@ -204,25 +204,17 @@ export default function RegisterPage() {
       const contractAddress = await getDynamicContractAddress();
       const readContract = new ethers.Contract(contractAddress, CONTRACT_ABI, readProvider);
 
-      const allRoles = [
-        { key: 'PRODUCER', hash: ROLE_HASHES.PRODUCER, label: 'Đơn vị Sản xuất' },
-        { key: 'INSPECTOR', hash: ROLE_HASHES.INSPECTOR, label: 'Đơn vị Kiểm định' },
-        { key: 'LOGISTICS', hash: ROLE_HASHES.LOGISTICS, label: 'Đơn vị Vận chuyển' },
-        { key: 'DISTRIBUTOR', hash: ROLE_HASHES.DISTRIBUTOR, label: 'Đơn vị Phân phối' },
-      ];
-
-      // 1. Đồng bộ vai trò trên Smart Contract Polygon Amoy (cấp đúng 1 vai trò được chọn, thu hồi các vai trò khác)
-      for (const r of allRoles) {
-        const shouldHave = (r.key === selectedRoleForUpdate);
+      // 1. Đồng bộ vai trò trên Smart Contract Polygon Amoy
+      // Chỉ cần cấp quyền vai trò mới (grantRole) nếu ví chưa có trên Blockchain (Tối đa 1 lần xác nhận ví duy nhất!)
+      const targetRoleHash = (ROLE_HASHES as any)[selectedRoleForUpdate];
+      if (targetRoleHash) {
         let hasOnChain = false;
         try {
-          hasOnChain = await readContract.hasRole(r.hash, existingAccount.walletAddress);
+          hasOnChain = await readContract.hasRole(targetRoleHash, existingAccount.walletAddress);
         } catch (_) {}
 
-        if (shouldHave && !hasOnChain) {
-          await sendContractTx('grantRole', [r.hash, existingAccount.walletAddress]);
-        } else if (!shouldHave && hasOnChain) {
-          await sendContractTx('revokeRole', [r.hash, existingAccount.walletAddress]);
+        if (!hasOnChain) {
+          await sendContractTx('grantRole', [targetRoleHash, existingAccount.walletAddress]);
         }
       }
 
