@@ -111,7 +111,7 @@ export class SuperadminService {
     const existing = await this.prisma.userAccount.findUnique({
       where: { walletAddress: normalizedWallet },
     });
-    if (existing) throw new BadRequestException(`Địa chỉ ví ${normalizedWallet} đã tồn tại trong CSDL!`);
+    if (existing) throw new BadRequestException(`Địa chỉ ví ${normalizedWallet} đã tồn tại trong Cơ sở dữ liệu!`);
 
     let roles = Array.isArray(data.roles) && data.roles.length > 0 ? Array.from(new Set(data.roles)) : [];
     if (roles.length === 0 && data.role) roles = [data.role];

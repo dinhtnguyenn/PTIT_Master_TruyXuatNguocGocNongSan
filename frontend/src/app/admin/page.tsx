@@ -130,7 +130,7 @@ export default function AdminPage() {
         }),
       });
 
-      if (!res.ok) throw new Error('Không thể cập nhật CSDL');
+      if (!res.ok) throw new Error('Không thể cập nhật Cơ sở dữ liệu');
 
       toast.success(`Đã cấp quyền trên Blockchain cho ví ${truncateAddress(userAcc.walletAddress)}!`, 'Phê duyệt thành công');
       if (typeof window !== 'undefined') {
@@ -161,7 +161,7 @@ export default function AdminPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'REJECTED' }),
       });
-      if (!res.ok) throw new Error('Lỗi cập nhật CSDL');
+      if (!res.ok) throw new Error('Lỗi cập nhật Cơ sở dữ liệu');
       toast.info('Đã từ chối hồ sơ đăng ký.');
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new Event('account_updated'));

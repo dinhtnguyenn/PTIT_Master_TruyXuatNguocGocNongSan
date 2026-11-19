@@ -146,7 +146,7 @@ export default function TraceDetailPage() {
 
         {qrDataUrl && (
           <div className="flex items-center gap-3 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-            <img src={qrDataUrl} alt="QR Code" className="w-14 h-14 rounded" />
+            <img src={qrDataUrl} alt="Mã QR" className="w-14 h-14 rounded" />
             <div>
               <p className="text-[10px] font-bold text-slate-600 uppercase">Mã QR Sản Phẩm</p>
               <a

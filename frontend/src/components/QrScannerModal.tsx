@@ -172,7 +172,7 @@ export default function QrScannerModal({ isOpen, onClose, onScanSuccess, title }
                 className="w-full bg-black rounded-xl overflow-hidden min-h-[260px] flex items-center justify-center"
               />
               <p className="text-center text-[11px] text-slate-500">
-                Hướng camera vào tem QR trên bao bì sản phẩm nông sản
+                Hướng camera vào tem mã QR trên bao bì sản phẩm nông sản
               </p>
             </div>
           ) : (

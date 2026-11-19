@@ -644,7 +644,7 @@ export default function SuperadminPage() {
           </div>
 
           <div className="pt-2 text-center text-[11px] text-slate-400">
-            Khóa bí mật được quản lý và lưu trữ trực tiếp trong bảng Cấu hình (SystemConfig) trên CSDL.
+            Khóa bí mật được quản lý và lưu trữ trực tiếp trong bảng Cấu hình (SystemConfig) trên Cơ sở dữ liệu.
           </div>
         </div>
       </div>
@@ -851,7 +851,7 @@ export default function SuperadminPage() {
                     <th className="px-4 py-3">Tổ Chức / Đơn Vị</th>
                     <th className="px-4 py-3">Danh Sách Vai Trò</th>
                     <th className="px-4 py-3">Trạng Thái</th>
-                    <th className="px-4 py-3">Tx Cấp Quyền</th>
+                    <th className="px-4 py-3">Giao Dịch Cấp Quyền</th>
                     <th className="px-4 py-3 text-right">Thao Tác</th>
                   </tr>
                 </thead>
@@ -873,9 +873,9 @@ export default function SuperadminPage() {
                           <td className="px-4 py-3">
                             <div className="font-bold text-slate-900">{u.organizationName}</div>
                             <div className="text-[11px] text-slate-500 space-y-0.5 mt-0.5">
-                              {u.phoneNumber && <div><span className="text-slate-400">SĐT:</span> {u.phoneNumber}</div>}
+                              {u.phoneNumber && <div><span className="text-slate-400">Số điện thoại:</span> {u.phoneNumber}</div>}
                               {u.email && <div><span className="text-slate-400">Email:</span> {u.email}</div>}
-                              {u.address && <div><span className="text-slate-400">Đ/c:</span> {u.address}</div>}
+                              {u.address && <div><span className="text-slate-400">Địa chỉ:</span> {u.address}</div>}
                               {!u.phoneNumber && !u.email && !u.address && <div>{u.contactInfo}</div>}
                             </div>
                           </td>
@@ -1253,7 +1253,7 @@ export default function SuperadminPage() {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">Mã Tx Hash Grant Role (Tùy chọn)</label>
+                <label className="block font-semibold text-slate-700 mb-1">Mã giao dịch Blockchain cấp quyền (Tùy chọn)</label>
                 <input
                   type="text"
                   placeholder="0x..."
@@ -1461,7 +1461,7 @@ export default function SuperadminPage() {
                       <label className="block font-semibold text-slate-700 mb-1">Kết quả kiểm định</label>
                       <input
                         type="text"
-                        placeholder="VD: ĐẠT TIÊU CHUẨN XUẤT KHẨU"
+                        placeholder="Ví dụ: ĐẠT TIÊU CHUẨN XUẤT KHẨU"
                         value={batchForm.inspectionResult || ''}
                         onChange={(e) => setBatchForm({ ...batchForm, inspectionResult: e.target.value })}
                         className="w-full px-3 py-2 rounded-xl border border-slate-300"
@@ -1471,7 +1471,7 @@ export default function SuperadminPage() {
                       <label className="block font-semibold text-slate-700 mb-1">Tiêu chuẩn kiểm định</label>
                       <input
                         type="text"
-                        placeholder="VD: VietGAP, GlobalGAP..."
+                        placeholder="Ví dụ: VietGAP, GlobalGAP..."
                         value={batchForm.inspectionCriteria || ''}
                         onChange={(e) => setBatchForm({ ...batchForm, inspectionCriteria: e.target.value })}
                         className="w-full px-3 py-2 rounded-xl border border-slate-300"
@@ -1723,7 +1723,7 @@ export default function SuperadminPage() {
                   type="text"
                   required
                   disabled={!!editingConfig}
-                  placeholder="VD: CONTRACT_ADDRESS, RPC_URL..."
+                  placeholder="Ví dụ: CONTRACT_ADDRESS, RPC_URL..."
                   value={configForm.key}
                   onChange={(e) => setConfigForm({ ...configForm, key: e.target.value.toUpperCase() })}
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono text-xs uppercase disabled:bg-slate-100 disabled:text-slate-500"
@@ -1746,7 +1746,7 @@ export default function SuperadminPage() {
                 <label className="block font-semibold text-slate-700 mb-1">Mô tả công dụng</label>
                 <input
                   type="text"
-                  placeholder="VD: Địa chỉ Hợp đồng thông minh chính thức..."
+                  placeholder="Ví dụ: Địa chỉ Hợp đồng thông minh chính thức..."
                   value={configForm.description}
                   onChange={(e) => setConfigForm({ ...configForm, description: e.target.value })}
                   className="w-full px-3 py-2 rounded-xl border border-slate-300"

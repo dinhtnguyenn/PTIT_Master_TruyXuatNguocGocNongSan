@@ -513,8 +513,8 @@ export default function SupplyChainPortalPage() {
                 <span className="font-semibold text-slate-900">{verification.result.productName}</span>
               </div>
               <div>
-                <span className="text-slate-400 block text-[10px]">Khối lượng / SL:</span>
-                <span className="font-semibold text-slate-900">{verification.result.weight} kg ({verification.result.quantity} đv)</span>
+                <span className="text-slate-400 block text-[10px]">Khối lượng / Số lượng:</span>
+                <span className="font-semibold text-slate-900">{verification.result.weight} kg ({verification.result.quantity} đơn vị)</span>
               </div>
               <div>
                 <span className="text-slate-400 block text-[10px]">Giai đoạn hiện tại:</span>
@@ -567,7 +567,7 @@ export default function SupplyChainPortalPage() {
       const saveResult = await saveRes.json();
       if (!saveRes.ok) {
         const msg = Array.isArray(saveResult.message) ? saveResult.message.join(', ') : saveResult.message;
-        throw new Error(msg || 'Giao dịch Blockchain đã hoàn tất nhưng lưu CSDL gặp sự cố');
+        throw new Error(msg || 'Giao dịch Blockchain đã hoàn tất nhưng lưu Cơ sở dữ liệu gặp sự cố');
       }
 
       const createdBatchId = producerForm.batchId;
@@ -646,7 +646,7 @@ export default function SupplyChainPortalPage() {
       const saveResult = await saveRes.json();
       if (!saveRes.ok) {
         const msg = Array.isArray(saveResult.message) ? saveResult.message.join(', ') : saveResult.message;
-        throw new Error(msg || 'Giao dịch Blockchain đã hoàn tất nhưng lưu CSDL gặp sự cố');
+        throw new Error(msg || 'Giao dịch Blockchain đã hoàn tất nhưng lưu Cơ sở dữ liệu gặp sự cố');
       }
 
       setStatusAlert({
@@ -714,7 +714,7 @@ export default function SupplyChainPortalPage() {
       const saveResult = await saveRes.json();
       if (!saveRes.ok) {
         const msg = Array.isArray(saveResult.message) ? saveResult.message.join(', ') : saveResult.message;
-        throw new Error(msg || 'Giao dịch Blockchain đã hoàn tất nhưng lưu CSDL gặp sự cố');
+        throw new Error(msg || 'Giao dịch Blockchain đã hoàn tất nhưng lưu Cơ sở dữ liệu gặp sự cố');
       }
 
       setStatusAlert({
@@ -785,7 +785,7 @@ export default function SupplyChainPortalPage() {
       const saveResult = await saveRes.json();
       if (!saveRes.ok) {
         const msg = Array.isArray(saveResult.message) ? saveResult.message.join(', ') : saveResult.message;
-        throw new Error(msg || 'Giao dịch Blockchain đã hoàn tất nhưng lưu CSDL gặp sự cố');
+        throw new Error(msg || 'Giao dịch Blockchain đã hoàn tất nhưng lưu Cơ sở dữ liệu gặp sự cố');
       }
 
       setStatusAlert({
@@ -1281,7 +1281,7 @@ export default function SupplyChainPortalPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-slate-600 font-medium mb-1">TG khởi hành *</label>
+                    <label className="block text-slate-600 font-medium mb-1">Thời gian khởi hành *</label>
                     <input
                       type="datetime-local"
                       required
@@ -1291,7 +1291,7 @@ export default function SupplyChainPortalPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-600 font-medium mb-1">TG hoàn tất *</label>
+                    <label className="block text-slate-600 font-medium mb-1">Thời gian hoàn tất *</label>
                     <input
                       type="datetime-local"
                       required
@@ -1521,7 +1521,7 @@ export default function SupplyChainPortalPage() {
                 download={`tem-qr-${createdBatchModal.batchId}.png`}
                 className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition"
               >
-                <Download className="w-3.5 h-3.5" /> Tải ảnh Tem QR về máy
+                <Download className="w-3.5 h-3.5" /> Tải ảnh Tem mã QR về máy
               </a>
               <button
                 type="button"

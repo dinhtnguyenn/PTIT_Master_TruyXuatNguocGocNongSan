@@ -161,7 +161,7 @@ export default function RegisterPage() {
           phoneNumber: formData.phoneNumber.trim(),
           email: formData.email.trim(),
           organizationName: ROLE_LABELS[formData.role] || formData.role,
-          contactInfo: `SĐT: ${formData.phoneNumber.trim()} • Email: ${formData.email.trim()}`,
+          contactInfo: `Số điện thoại: ${formData.phoneNumber.trim()} • Email: ${formData.email.trim()}`,
         }),
       });
 
@@ -226,7 +226,7 @@ export default function RegisterPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.message || 'Lỗi cập nhật CSDL');
+        throw new Error(data.message || 'Lỗi cập nhật Cơ sở dữ liệu');
       }
 
       toast.success(
@@ -313,7 +313,7 @@ export default function RegisterPage() {
             <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-600 mt-1">
               {existingAccount.phoneNumber && (
                 <span>
-                  <strong className="text-slate-500">SĐT:</strong> {existingAccount.phoneNumber}
+                  <strong className="text-slate-500">Số điện thoại:</strong> {existingAccount.phoneNumber}
                 </span>
               )}
               {existingAccount.email && (
@@ -393,7 +393,7 @@ export default function RegisterPage() {
                 {isUpdatingRoles ? (
                   <>
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Đang đồng bộ vai trò On-chain & CSDL...</span>
+                    <span>Đang đồng bộ vai trò On-chain & Cơ sở dữ liệu...</span>
                   </>
                 ) : (
                   <>
@@ -464,7 +464,7 @@ export default function RegisterPage() {
               <input
                 type="tel"
                 required
-                placeholder="VD: 0912345678"
+                placeholder="Ví dụ: 0912345678"
                 value={formData.phoneNumber}
                 onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
                 className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
@@ -475,7 +475,7 @@ export default function RegisterPage() {
               <input
                 type="email"
                 required
-                placeholder="VD: contact@nongsan.vn"
+                placeholder="Ví dụ: contact@nongsan.vn"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
