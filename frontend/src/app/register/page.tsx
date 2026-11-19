@@ -46,7 +46,7 @@ export default function RegisterPage() {
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Quản trị viên cập nhật vai trò cho tài khoản
-  const [selectedRolesForUpdate, setSelectedRolesForUpdate] = useState<string[]>([]);
+  const [selectedRoleForUpdate, setSelectedRoleForUpdate] = useState<string>('PRODUCER');
   const [isUpdatingRoles, setIsUpdatingRoles] = useState(false);
 
   async function checkExisting(addr: string) {
@@ -57,9 +57,9 @@ export default function RegisterPage() {
         if (data && data.status) {
           setExistingAccount(data);
           const r = Array.isArray(data.roles) && data.roles.length > 0
-            ? data.roles
-            : (data.role ? [data.role] : ['PRODUCER']);
-          setSelectedRolesForUpdate(r);
+            ? data.roles[0]
+            : (data.role ? data.role : 'PRODUCER');
+          setSelectedRoleForUpdate(r);
         } else {
           setExistingAccount(null);
         }
@@ -187,8 +187,8 @@ export default function RegisterPage() {
   // Quản trị viên cập nhật vai trò trực tiếp cho account
   async function handleUpdateRoles() {
     if (!account || !existingAccount) return;
-    if (selectedRolesForUpdate.length === 0) {
-      toast.warning('Tài khoản phải giữ lại ít nhất 1 vai trò!');
+    if (!selectedRoleForUpdate) {
+      toast.warning('Vui lòng chọn 1 vai trò!');
       return;
     }
 
@@ -205,9 +205,9 @@ export default function RegisterPage() {
         { key: 'DISTRIBUTOR', hash: ROLE_HASHES.DISTRIBUTOR, label: 'Đơn vị Phân phối' },
       ];
 
-      // 1. Đồng bộ vai trò trên Smart Contract Polygon Amoy
+      // 1. Đồng bộ vai trò trên Smart Contract Polygon Amoy (cấp đúng 1 vai trò được chọn, thu hồi các vai trò khác)
       for (const r of allRoles) {
-        const shouldHave = selectedRolesForUpdate.includes(r.key);
+        const shouldHave = (r.key === selectedRoleForUpdate);
         let hasOnChain = false;
         try {
           hasOnChain = await readContract.hasRole(r.hash, existingAccount.walletAddress);
@@ -224,7 +224,7 @@ export default function RegisterPage() {
       const res = await fetch(`${API_BASE_URL}/accounts/${existingAccount.id}/roles`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roles: selectedRolesForUpdate }),
+        body: JSON.stringify({ roles: [selectedRoleForUpdate] }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -232,7 +232,7 @@ export default function RegisterPage() {
       }
 
       toast.success(
-        'Đã cập nhật vai trò thành công trên Blockchain và Hệ thống! Bạn có thể vào Cổng nhập liệu để thử nghiệm ngay.',
+        'Đã cập nhật vai trò thành công trên Blockchain và Hệ thống! Bạn có thể vào Cổng nhập liệu để sử dụng ngay.',
         'Cập nhật thành công'
       );
 
@@ -333,14 +333,14 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {/* GIAO DIỆN CẬP NHẬT VAI TRÒ DÀNH CHO QUẢN TRỊ VIÊN ĐỂ DỄ DÀNG TEST ROLE */}
+          {/* GIAO DIỆN CẬP NHẬT VAI TRÒ DÀNH CHO QUẢN TRỊ VIÊN */}
           {isAdmin && (
             <div className="pt-4 border-t border-slate-200/80 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <Sliders className="w-4 h-4 text-purple-700" />
                   <h3 className="font-bold text-slate-900 text-xs">
-                    Cập nhật vai trò tài khoản (Dành cho Quản trị viên thử nghiệm)
+                    Cập nhật vai trò tài khoản
                   </h3>
                 </div>
                 <span className="text-[10px] bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded-full border border-purple-200">
@@ -348,7 +348,7 @@ export default function RegisterPage() {
                 </span>
               </div>
               <p className="text-[11px] text-slate-600 leading-relaxed">
-                Tích chọn các vai trò bạn muốn cấp cho ví này để thử nghiệm đồng thời nhiều công đoạn trên Cổng nhập liệu (/portal):
+                Chọn vai trò bạn muốn thiết lập cho tài khoản này (chọn 1 vai trò duy nhất mỗi khi cập nhật):
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -358,33 +358,23 @@ export default function RegisterPage() {
                   { id: 'LOGISTICS', label: 'Đơn vị Vận chuyển' },
                   { id: 'DISTRIBUTOR', label: 'Đơn vị Phân phối' },
                 ].map((r) => {
-                  const isChecked = selectedRolesForUpdate.includes(r.id);
+                  const isChecked = selectedRoleForUpdate === r.id;
                   return (
                     <label
                       key={r.id}
-                      className={`flex items-center gap-2 p-2.5 rounded-lg border text-xs cursor-pointer transition select-none ${
+                      className={`flex items-center gap-2.5 p-2.5 rounded-lg border text-xs cursor-pointer transition select-none ${
                         isChecked
-                          ? 'bg-purple-50 border-purple-300 text-purple-950 font-bold shadow-sm'
+                          ? 'bg-purple-50 border-purple-400 text-purple-950 font-bold shadow-sm'
                           : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                       }`}
                     >
                       <input
-                        type="checkbox"
+                        type="radio"
+                        name="updateRoleOption"
+                        value={r.id}
                         checked={isChecked}
-                        onChange={(e) => {
-                          let updated: string[];
-                          if (e.target.checked) {
-                            updated = [...selectedRolesForUpdate, r.id];
-                          } else {
-                            updated = selectedRolesForUpdate.filter((x) => x !== r.id);
-                          }
-                          if (updated.length === 0) {
-                            toast.warning('Tài khoản phải giữ lại ít nhất 1 vai trò!');
-                            return;
-                          }
-                          setSelectedRolesForUpdate(updated);
-                        }}
-                        className="rounded border-slate-300 text-purple-600 focus:ring-purple-500"
+                        onChange={() => setSelectedRoleForUpdate(r.id)}
+                        className="border-slate-300 text-purple-600 focus:ring-purple-500"
                       />
                       <span>{r.label}</span>
                     </label>
