@@ -44,7 +44,7 @@ export default function TraceIndexPage() {
           Tra Cứu Nguồn Gốc Nông Sản
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto">
-          Nhập mã lô sản phẩm hoặc quét tem mã QR trên bao bì để kiểm tra thông tin xuất xứ và xác thực trên Blockchain.
+          Nhập mã lô sản phẩm hoặc quét mã QR trên bao bì để kiểm tra thông tin xuất xứ và xác thực trên Blockchain.
         </p>
 
         {/* Search Bar + Nút Quét QR */}

@@ -45,7 +45,7 @@ export default function HomePage() {
           Tra Cứu Nguồn Gốc Nông Sản
         </h1>
         <p className="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto">
-          Nhập mã lô sản phẩm hoặc bấm quét tem mã QR trên bao bì để kiểm tra xuất xứ và xác thực trên Blockchain.
+          Nhập mã lô sản phẩm hoặc bấm quét mã QR trên bao bì để kiểm tra xuất xứ và xác thực trên Blockchain.
         </p>
 
         <div className="max-w-xl mx-auto flex gap-2 pt-2">

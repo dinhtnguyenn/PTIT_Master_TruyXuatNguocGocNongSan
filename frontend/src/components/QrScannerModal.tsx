@@ -135,7 +135,7 @@ export default function QrScannerModal({ isOpen, onClose, onScanSuccess, title }
         {/* Header */}
         <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
           <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-            <Camera className="w-4 h-4 text-emerald-600" /> {title || 'Quét Tem Mã QR'}
+            <Camera className="w-4 h-4 text-emerald-600" /> {title || 'Quét Mã QR'}
           </h2>
           <button
             onClick={() => {
@@ -188,7 +188,7 @@ export default function QrScannerModal({ isOpen, onClose, onScanSuccess, title }
                 className="w-full bg-black rounded-xl overflow-hidden min-h-[260px] flex items-center justify-center"
               />
               <p className="text-center text-[11px] text-slate-500">
-                Hướng camera vào tem mã QR trên bao bì sản phẩm nông sản
+                Hướng camera vào mã QR trên bao bì sản phẩm nông sản
               </p>
             </div>
           ) : (

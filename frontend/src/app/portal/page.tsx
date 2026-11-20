@@ -74,7 +74,7 @@ export default function SupplyChainPortalPage() {
     if (targetRole === 'DISTRIBUTOR') setDistributorForm((f) => ({ ...f, batchId: '' }));
   }
 
-  // Modal hiển thị tem QR cho Producer vừa tạo lô hàng
+  // Modal hiển thị Mã QR cho Producer vừa tạo lô hàng
   const [createdBatchModal, setCreatedBatchModal] = useState<{
     isOpen: boolean;
     batchId: string;
@@ -308,7 +308,7 @@ export default function SupplyChainPortalPage() {
     }
     cleanId = decodeURIComponent(cleanId).trim();
     if (!cleanId) {
-      toast.warning('Vui lòng quét tem mã QR của lô sản phẩm!');
+      toast.warning('Vui lòng quét mã QR của lô sản phẩm!');
       return;
     }
 
@@ -344,7 +344,7 @@ export default function SupplyChainPortalPage() {
 
       // 3. KIỂM TRA 1: Lô hàng đã lưu lên Blockchain chưa?
       if (!existsOnChain && (!dbBatch || !dbBatch.producerTxHash)) {
-        const errorMsg = `Lô hàng '${cleanId}' chưa được lưu trên Blockchain. Vui lòng kiểm tra lại tem mã QR hoặc yêu cầu Nhà sản xuất hoàn tất việc ký và ghi nhận lô hàng.`;
+        const errorMsg = `Lô hàng '${cleanId}' chưa được lưu trên Blockchain. Vui lòng kiểm tra lại mã QR hoặc yêu cầu Nhà sản xuất hoàn tất việc ký và ghi nhận lô hàng.`;
         setBatchVerifications((prev) => ({
           ...prev,
           [targetRole]: { loading: false, error: errorMsg, result: null },
@@ -517,7 +517,7 @@ export default function SupplyChainPortalPage() {
             <QrCode className="w-8 h-8 text-slate-400 mx-auto" />
             <div className="space-y-1.5 w-full mx-auto">
               <p className="text-xs font-medium text-slate-600 whitespace-normal sm:whitespace-nowrap">
-                Vui lòng quét tem mã QR của lô hàng để tải thông tin và mở biểu mẫu nhập liệu {roleActionText}.
+                Vui lòng quét mã QR của lô hàng để tải thông tin và mở biểu mẫu nhập liệu {roleActionText}.
               </p>
               <p className="text-[11px] text-slate-400 whitespace-normal sm:whitespace-nowrap">
                 Hệ thống sẽ đối soát trực tiếp trên Blockchain để đảm bảo lô hàng hợp lệ và sẵn sàng tiếp nhận.
@@ -1522,13 +1522,13 @@ export default function SupplyChainPortalPage() {
     <QrScannerModal
       isOpen={isScannerOpen}
       onClose={() => setIsScannerOpen(false)}
-      title={`Quét Tem Mã QR (${ROLE_LABELS[activeScannerRole] || activeScannerRole})`}
+      title={`Quét Mã QR (${ROLE_LABELS[activeScannerRole] || activeScannerRole})`}
       onScanSuccess={(scannedId) => {
         verifyBatch(scannedId, activeScannerRole);
       }}
     />
 
-    {/* Modal hiển thị Tem QR cho Producer sau khi khởi tạo lô hàng thành công */}
+    {/* Modal hiển thị Mã QR cho Producer sau khi khởi tạo lô hàng thành công */}
     {mounted && createdBatchModal && typeof document !== 'undefined' && createPortal(
       <div className="!m-0 fixed inset-0 top-0 left-0 right-0 bottom-0 w-screen h-screen z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto animate-in fade-in">
         <div className="relative bg-white rounded-2xl border border-slate-200 max-w-sm w-full p-5 shadow-2xl text-center space-y-4">
@@ -1546,7 +1546,7 @@ export default function SupplyChainPortalPage() {
           <div>
             <h3 className="font-bold text-slate-900 text-sm">Khởi Tạo Lô Hàng Thành Công!</h3>
             <p className="text-xs text-slate-500 mt-1">
-              Lô hàng đã được ghi nhận trên Blockchain. Tem mã QR dưới đây sẵn sàng để Đơn vị Kiểm định quét tiếp nhận.
+              Lô hàng đã được ghi nhận trên Blockchain. Mã QR dưới đây sẵn sàng để Đơn vị Kiểm định quét tiếp nhận.
             </p>
           </div>
           <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 inline-block mx-auto">
@@ -1567,10 +1567,10 @@ export default function SupplyChainPortalPage() {
           <div className="flex flex-col gap-2">
             <a
               href={createdBatchModal.qrDataUrl}
-              download={`tem-qr-${createdBatchModal.batchId}.png`}
+              download={`ma-qr-${createdBatchModal.batchId}.png`}
               className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition"
             >
-              <Download className="w-3.5 h-3.5" /> Tải ảnh Tem mã QR về máy
+              <Download className="w-3.5 h-3.5" /> Tải ảnh Mã QR về máy
             </a>
             <button
               type="button"
