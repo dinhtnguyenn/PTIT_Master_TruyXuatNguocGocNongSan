@@ -575,10 +575,7 @@ export default function SupplyChainPortalPage() {
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                 <span>ĐÃ XÁC THỰC LÔ HÀNG HỢP LỆ TRÊN BLOCKCHAIN</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold border border-emerald-200">
-                  Đúng giai đoạn tiếp nhận
-                </span>
+              <div>
                 <button
                   type="button"
                   onClick={() => resetBatchVerification(formRole)}
