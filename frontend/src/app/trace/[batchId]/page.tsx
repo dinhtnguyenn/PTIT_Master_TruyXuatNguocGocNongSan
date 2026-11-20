@@ -239,7 +239,7 @@ export default function TraceDetailPage() {
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
           <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200 flex justify-between items-center">
             <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
-              Bảng 2: Thông tin cung cấp bởi Đơn vị Kiểm định
+              Thông tin cung cấp bởi Đơn vị Kiểm định
             </h2>
             {batch.inspectorTxHash && (
               <a
@@ -278,7 +278,7 @@ export default function TraceDetailPage() {
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
           <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200 flex justify-between items-center">
             <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
-              Bảng 3: Thông tin cung cấp bởi Đơn vị Vận chuyển
+              Thông tin cung cấp bởi Đơn vị Vận chuyển
             </h2>
             {batch.logisticsTxHash && (
               <a
@@ -314,7 +314,7 @@ export default function TraceDetailPage() {
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
           <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200 flex justify-between items-center">
             <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
-              Bảng 4: Thông tin cung cấp bởi Đơn vị Phân phối
+              Thông tin cung cấp bởi Đơn vị Phân phối
             </h2>
             {batch.distributorTxHash && (
               <a

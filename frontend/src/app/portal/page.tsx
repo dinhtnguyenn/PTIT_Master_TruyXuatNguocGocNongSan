@@ -1070,7 +1070,7 @@ export default function SupplyChainPortalPage() {
       {role === 'INSPECTOR' && (
         <form onSubmit={submitInspector} className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
           <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide border-b pb-2">
-            Bảng 2: Thông tin cung cấp bởi Đơn vị Kiểm định
+            Thông tin cung cấp bởi Đơn vị Kiểm định
           </h2>
 
           {/* 1. KHU VỰC QUÉT MÃ QR */}
@@ -1198,7 +1198,7 @@ export default function SupplyChainPortalPage() {
       {role === 'LOGISTICS' && (
         <form onSubmit={submitLogistics} className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
           <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide border-b pb-2">
-            Bảng 3: Thông tin cung cấp bởi Đơn vị Vận chuyển
+            Thông tin cung cấp bởi Đơn vị Vận chuyển
           </h2>
 
           {/* 1. KHU VỰC QUÉT MÃ QR */}
@@ -1361,7 +1361,7 @@ export default function SupplyChainPortalPage() {
       {role === 'DISTRIBUTOR' && (
         <form onSubmit={submitDistributor} className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
           <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide border-b pb-2">
-            Bảng 4: Thông tin cung cấp bởi Đơn vị Phân phối
+            Thông tin cung cấp bởi Đơn vị Phân phối
           </h2>
 
           {/* 1. KHU VỰC QUÉT MÃ QR */}
