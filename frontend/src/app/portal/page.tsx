@@ -56,7 +56,7 @@ export default function SupplyChainPortalPage() {
   const [batchVerifications, setBatchVerifications] = useState<
     Record<
       'INSPECTOR' | 'LOGISTICS' | 'DISTRIBUTOR',
-      { loading: boolean; error: string | null; result: any | null }
+      { loading: boolean; error: string | null; result: any | null; currentStage?: number }
     >
   >({
     INSPECTOR: { loading: false, error: null, result: null },
@@ -347,7 +347,7 @@ export default function SupplyChainPortalPage() {
         const errorMsg = `Lô hàng '${cleanId}' chưa được lưu trên Blockchain. Vui lòng kiểm tra lại mã QR hoặc yêu cầu Nhà sản xuất hoàn tất việc ký và ghi nhận lô hàng.`;
         setBatchVerifications((prev) => ({
           ...prev,
-          [targetRole]: { loading: false, error: errorMsg, result: null },
+          [targetRole]: { loading: false, error: errorMsg, result: null, currentStage: undefined },
         }));
         toast.error(errorMsg, 'Chưa lưu trên Blockchain');
         if (targetRole === 'INSPECTOR') setInspectorForm((f) => ({ ...f, batchId: '' }));
@@ -368,10 +368,10 @@ export default function SupplyChainPortalPage() {
       }
 
       const STAGE_NAMES = [
-        '1. Đã sản xuất (Producer)',
-        '2. Đã kiểm định (Inspector)',
-        '3. Đang vận chuyển (Logistics)',
-        '4. Đã phân phối (Distributor)',
+        '1. Đã sản xuất',
+        '2. Đã kiểm định',
+        '3. Đang vận chuyển',
+        '4. Đã phân phối',
       ];
       const stageText = STAGE_NAMES[stageNum] || 'Chưa xác định';
 
@@ -381,7 +381,7 @@ export default function SupplyChainPortalPage() {
           const errorMsg = `Lô hàng '${cleanId}' đã được kiểm định trước đó (Giai đoạn hiện tại: ${stageText}). Không thể thực hiện kiểm định lại để tránh trùng lặp dữ liệu.`;
           setBatchVerifications((prev) => ({
             ...prev,
-            [targetRole]: { loading: false, error: errorMsg, result: null },
+            [targetRole]: { loading: false, error: errorMsg, result: null, currentStage: stageNum },
           }));
           toast.error(errorMsg, 'Không thể kiểm định');
           setInspectorForm((f) => ({ ...f, batchId: '' }));
@@ -392,7 +392,7 @@ export default function SupplyChainPortalPage() {
           const errorMsg = `Lô hàng '${cleanId}' mới ở giai đoạn [${stageText}] và chưa được Đơn vị Kiểm định đánh giá chất lượng. Vui lòng hoàn thành khâu Kiểm định trước khi tiếp nhận vận chuyển.`;
           setBatchVerifications((prev) => ({
             ...prev,
-            [targetRole]: { loading: false, error: errorMsg, result: null },
+            [targetRole]: { loading: false, error: errorMsg, result: null, currentStage: stageNum },
           }));
           toast.error(errorMsg, 'Chưa đến lượt vận chuyển');
           setLogisticsForm((f) => ({ ...f, batchId: '' }));
@@ -402,7 +402,7 @@ export default function SupplyChainPortalPage() {
           const errorMsg = `Lô hàng '${cleanId}' đã/đang được vận chuyển (Giai đoạn hiện tại: ${stageText}). Không thể tạo hành trình vận chuyển mới.`;
           setBatchVerifications((prev) => ({
             ...prev,
-            [targetRole]: { loading: false, error: errorMsg, result: null },
+            [targetRole]: { loading: false, error: errorMsg, result: null, currentStage: stageNum },
           }));
           toast.error(errorMsg, 'Lô hàng đã vận chuyển');
           setLogisticsForm((f) => ({ ...f, batchId: '' }));
@@ -410,10 +410,10 @@ export default function SupplyChainPortalPage() {
         }
       } else if (targetRole === 'DISTRIBUTOR') {
         if (stageNum < 2) {
-          const errorMsg = `Lô hàng '${cleanId}' hiện ở giai đoạn [${stageText}] và chưa qua khâu Vận chuyển (Logistics). Vui lòng hoàn thành khâu Vận chuyển trước khi tiếp nhận phân phối.`;
+          const errorMsg = `Lô hàng '${cleanId}' hiện ở giai đoạn [${stageText}] và chưa qua khâu Vận chuyển. Vui lòng hoàn thành khâu Vận chuyển trước khi tiếp nhận phân phối.`;
           setBatchVerifications((prev) => ({
             ...prev,
-            [targetRole]: { loading: false, error: errorMsg, result: null },
+            [targetRole]: { loading: false, error: errorMsg, result: null, currentStage: stageNum },
           }));
           toast.error(errorMsg, 'Chưa đến lượt phân phối');
           setDistributorForm((f) => ({ ...f, batchId: '' }));
@@ -423,7 +423,7 @@ export default function SupplyChainPortalPage() {
           const errorMsg = `Lô hàng '${cleanId}' đã được tiếp nhận phân phối hoàn tất trước đó. Toàn bộ chuỗi cung ứng của lô hàng đã kết thúc.`;
           setBatchVerifications((prev) => ({
             ...prev,
-            [targetRole]: { loading: false, error: errorMsg, result: null },
+            [targetRole]: { loading: false, error: errorMsg, result: null, currentStage: stageNum },
           }));
           toast.error(errorMsg, 'Lô hàng đã hoàn tất');
           setDistributorForm((f) => ({ ...f, batchId: '' }));
@@ -448,7 +448,7 @@ export default function SupplyChainPortalPage() {
 
       setBatchVerifications((prev) => ({
         ...prev,
-        [targetRole]: { loading: false, error: null, result: verifyData },
+        [targetRole]: { loading: false, error: null, result: verifyData, currentStage: stageNum },
       }));
 
       // Tự động gán mã lô vào form tương ứng
@@ -498,15 +498,44 @@ export default function SupplyChainPortalPage() {
                 <p className="text-[11px] text-rose-800 leading-relaxed">{verification.error}</p>
               </div>
             </div>
-            <div className="pt-2 border-t border-rose-200/60 flex flex-wrap items-center gap-1 text-[10px] text-rose-800 font-semibold">
-              <span className="text-slate-500 font-normal">Trình tự quy trình:</span>
-              <span className="px-1.5 py-0.5 rounded border bg-white border-slate-200">1. Sản xuất</span>
-              <ArrowRight className="w-3 h-3 text-slate-400" />
-              <span className={`px-1.5 py-0.5 rounded border ${formRole === 'INSPECTOR' ? 'bg-emerald-100 border-emerald-300 font-bold text-emerald-900' : 'bg-white border-slate-200'}`}>2. Kiểm định</span>
-              <ArrowRight className="w-3 h-3 text-slate-400" />
-              <span className={`px-1.5 py-0.5 rounded border ${formRole === 'LOGISTICS' ? 'bg-emerald-100 border-emerald-300 font-bold text-emerald-900' : 'bg-white border-slate-200'}`}>3. Vận chuyển</span>
-              <ArrowRight className="w-3 h-3 text-slate-400" />
-              <span className={`px-1.5 py-0.5 rounded border ${formRole === 'DISTRIBUTOR' ? 'bg-emerald-100 border-emerald-300 font-bold text-emerald-900' : 'bg-white border-slate-200'}`}>4. Phân phối</span>
+            <div className="pt-2 border-t border-rose-200/60 flex flex-wrap items-center gap-1.5 text-[10px] text-rose-800 font-semibold">
+              <span className="text-slate-500 font-normal mr-0.5">Trình tự quy trình:</span>
+              {[
+                { index: 0, label: '1. Sản xuất' },
+                { index: 1, label: '2. Kiểm định' },
+                { index: 2, label: '3. Vận chuyển' },
+                { index: 3, label: '4. Phân phối' },
+              ].map((step, idx) => {
+                const currentStage = verification?.currentStage;
+                let stepClass = 'bg-white text-slate-400 border border-slate-200';
+
+                if (currentStage !== undefined) {
+                  if (step.index <= currentStage) {
+                    // Giai đoạn đã thực hiện xong: tô màu xám
+                    stepClass = 'bg-slate-200 text-slate-700 border border-slate-300 font-medium';
+                  } else if (step.index === currentStage + 1) {
+                    // Giai đoạn cần làm hiện tại: tô màu xanh
+                    stepClass = 'bg-emerald-100 text-emerald-900 border border-emerald-400 font-bold shadow-xs';
+                  } else {
+                    // Giai đoạn chưa tới: màu trắng
+                    stepClass = 'bg-white text-slate-400 border border-slate-200';
+                  }
+                } else {
+                  const roleIdx = formRole === 'INSPECTOR' ? 1 : formRole === 'LOGISTICS' ? 2 : 3;
+                  if (step.index === roleIdx) {
+                    stepClass = 'bg-emerald-100 text-emerald-900 border border-emerald-400 font-bold';
+                  }
+                }
+
+                return (
+                  <React.Fragment key={step.index}>
+                    {idx > 0 && <ArrowRight className="w-3 h-3 text-slate-400 shrink-0" />}
+                    <span className={`px-2 py-0.5 rounded ${stepClass}`}>
+                      {step.label}
+                    </span>
+                  </React.Fragment>
+                );
+              })}
             </div>
           </div>
         )}
