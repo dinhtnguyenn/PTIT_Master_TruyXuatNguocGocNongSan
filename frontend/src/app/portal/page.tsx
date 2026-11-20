@@ -470,11 +470,11 @@ export default function SupplyChainPortalPage() {
         {!verification?.result && (
           <div className="py-8 px-4 text-center bg-slate-50/70 rounded-xl border border-dashed border-slate-200 space-y-3">
             <QrCode className="w-8 h-8 text-slate-400 mx-auto" />
-            <div className="space-y-1 max-w-md mx-auto">
-              <p className="text-xs font-medium text-slate-600">
+            <div className="space-y-1.5 w-full mx-auto">
+              <p className="text-xs font-medium text-slate-600 whitespace-normal sm:whitespace-nowrap">
                 Vui lòng quét tem mã QR của lô hàng để tải thông tin và mở biểu mẫu nhập liệu {roleActionText}.
               </p>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-slate-400 whitespace-normal sm:whitespace-nowrap">
                 Hệ thống sẽ đối soát trực tiếp trên Blockchain để đảm bảo lô hàng hợp lệ và sẵn sàng tiếp nhận.
               </p>
             </div>

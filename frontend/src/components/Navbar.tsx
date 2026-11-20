@@ -168,10 +168,13 @@ export default function Navbar() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="flex justify-between items-center h-14">
           <Link href="/" className="flex items-center gap-2">
-            <div className="bg-emerald-600 text-white p-1.5 rounded-lg">
+            <div className="bg-emerald-600 text-white p-1.5 rounded-lg shadow-xs">
               <ShieldCheck className="w-5 h-5" />
             </div>
-            <span className="font-bold text-base text-slate-900 tracking-tight">
+            <span
+              className="font-bold text-base text-slate-900 tracking-tight brand-logo"
+              style={{ fontFamily: "'Be Vietnam Pro', 'Plus Jakarta Sans', system-ui, sans-serif" }}
+            >
               Agri<span className="text-emerald-600">Trace</span>
             </span>
           </Link>
