@@ -199,7 +199,7 @@ export default function TraceDetailPage() {
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
           <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200 flex justify-between items-center">
             <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
-              Bảng 1: Thông tin cung cấp bởi Đơn vị Sản xuất
+              Thông tin cung cấp bởi Đơn vị Sản xuất
             </h2>
             {batch.producerTxHash && (
               <a

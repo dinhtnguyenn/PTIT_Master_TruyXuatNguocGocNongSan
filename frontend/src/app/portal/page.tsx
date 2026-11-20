@@ -937,7 +937,7 @@ export default function SupplyChainPortalPage() {
       {role === 'PRODUCER' && (
         <form onSubmit={submitProducer} className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">
           <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide border-b pb-2">
-            Bảng 1: Thông tin cung cấp bởi Đơn vị Sản xuất
+            Thông tin cung cấp bởi Đơn vị Sản xuất
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
