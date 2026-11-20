@@ -118,7 +118,7 @@ export default function SupplyChainPortalPage() {
     batchId: '',
     inspectionResult: 'Đạt tiêu chuẩn an toàn',
     inspectionCriteria: 'Dư lượng thuốc BVTV, vi sinh vật',
-    certificateCode: `CERT-${Math.floor(100000 + Math.random() * 900000)}`,
+    certificateCode: '',
     certificateType: 'VietGAP',
     issuingAuthority: '',
     issuedDate: '',
@@ -723,7 +723,7 @@ export default function SupplyChainPortalPage() {
         batchId: '',
         inspectionResult: 'Đạt tiêu chuẩn an toàn',
         inspectionCriteria: 'Dư lượng thuốc BVTV, vi sinh vật',
-        certificateCode: `CERT-${Math.floor(100000 + Math.random() * 900000)}`,
+        certificateCode: '',
         certificateType: 'VietGAP',
         issuingAuthority: '',
         issuedDate: '',
@@ -1175,9 +1175,10 @@ export default function SupplyChainPortalPage() {
                   <input
                     type="text"
                     required
-                    readOnly
+                    placeholder="Ví dụ: CERT-2026-089..."
                     value={inspectorForm.certificateCode}
-                    className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono bg-slate-100 cursor-not-allowed select-all"
+                    onChange={(e) => setInspectorForm({ ...inspectorForm, certificateCode: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
                   />
                 </div>
                 <div>
