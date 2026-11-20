@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ShieldCheck, Wallet, LogOut } from 'lucide-react';
+import { ShieldCheck, Wallet, LogOut, User } from 'lucide-react';
 import {
   connectWallet,
   disconnectWallet,
@@ -22,6 +22,7 @@ export default function Navbar() {
   const [role, setRole] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isDbAdmin, setIsDbAdmin] = useState(false);
 
   async function checkUser(walletAddr: string) {
     const isAdm = isHardcodedAdmin(walletAddr);
@@ -33,23 +34,33 @@ export default function Navbar() {
           const rawRoles: string[] = Array.isArray(data.roles) && data.roles.length > 0
             ? data.roles
             : (data.role ? [data.role] : []);
-          const supplyChainRoles = rawRoles.map((r) => ROLE_LABELS[r] || r).join(', ');
-          const displayRole = isAdm
-            ? (supplyChainRoles ? `Quản trị viên • ${supplyChainRoles}` : 'Quản trị viên')
-            : supplyChainRoles;
-          setRole(displayRole);
+          const isUserAdmin = isAdm || !!data.isAdmin || rawRoles.includes('ADMIN');
+          setIsDbAdmin(isUserAdmin);
+          const supplyChainRoles = rawRoles
+            .filter((r) => r !== 'ADMIN')
+            .map((r) => ROLE_LABELS[r] || r)
+            .join(', ');
+          setRole(supplyChainRoles || null);
           setStatus(data.status);
           return;
         }
       }
       if (isAdm) {
-        setRole('Quản trị viên');
+        setIsDbAdmin(true);
+        setRole(null);
         setStatus('APPROVED');
         return;
       }
+      setIsDbAdmin(false);
       setRole(null);
       setStatus(null);
-    } catch (e) {}
+    } catch (e) {
+      if (isAdm) {
+        setIsDbAdmin(true);
+        setRole(null);
+        setStatus('APPROVED');
+      }
+    }
   }
 
   async function handleConnect() {
@@ -70,6 +81,7 @@ export default function Navbar() {
     setAccount(null);
     setRole(null);
     setStatus(null);
+    setIsDbAdmin(false);
     router.push('/');
   }
 
@@ -142,7 +154,7 @@ export default function Navbar() {
     };
   }, [account, pathname]);
 
-  const isAdmin = !!account && isHardcodedAdmin(account);
+  const isAdmin = !!account && (isHardcodedAdmin(account) || isDbAdmin);
 
   const navLinks = [
     { href: '/trace', label: 'Tra cứu Nguồn gốc' },
@@ -200,8 +212,20 @@ export default function Navbar() {
                     {status === 'PENDING' ? ' (Chờ duyệt)' : status === 'REJECTED' ? ' (Từ chối)' : ''}
                   </span>
                 )}
-                <div className="text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded-md font-mono">
-                  {truncateAddress(account)}
+                <div
+                  title={isAdmin ? `Quản trị viên: ${account}` : `Địa chỉ ví: ${account}`}
+                  className={`text-xs px-2.5 py-1 rounded-md font-mono flex items-center gap-1.5 transition ${
+                    isAdmin
+                      ? 'bg-purple-50 text-purple-900 border border-purple-200 font-semibold shadow-2xs'
+                      : 'bg-slate-100 text-slate-700 border border-slate-200'
+                  }`}
+                >
+                  {isAdmin ? (
+                    <ShieldCheck className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                  ) : (
+                    <User className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                  )}
+                  <span>{truncateAddress(account)}</span>
                 </div>
                 <button
                   onClick={handleLogout}
