@@ -177,7 +177,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       {/* Custom Confirm Modal (thay thế window.confirm) */}
       {confirmState && (
         <div
-          className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/45 backdrop-blur-[2px] p-4"
+          className="!m-0 fixed inset-0 top-0 left-0 right-0 bottom-0 w-screen h-screen z-[9999] flex items-center justify-center bg-slate-900/45 backdrop-blur-[2px] p-4"
           onClick={() => handleConfirmChoice(false)}
         >
           <div

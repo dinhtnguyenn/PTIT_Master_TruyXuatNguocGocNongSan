@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { Camera, Upload, X, AlertCircle } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
@@ -99,6 +100,21 @@ export default function QrScannerModal({ isOpen, onClose, onScanSuccess, title }
     }
   }
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      const orig = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = orig;
+      };
+    }
+  }, [isOpen]);
+
   useEffect(() => {
     if (isOpen && activeTab === 'camera') {
       startCamera();
@@ -111,10 +127,10 @@ export default function QrScannerModal({ isOpen, onClose, onScanSuccess, title }
     };
   }, [isOpen, activeTab]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150">
+  const modalContent = (
+    <div className="!m-0 fixed inset-0 top-0 left-0 right-0 bottom-0 w-screen h-screen z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-150">
       <div className="bg-white rounded-2xl border border-slate-200 max-w-md w-full overflow-hidden shadow-2xl">
         {/* Header */}
         <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
@@ -199,4 +215,6 @@ export default function QrScannerModal({ isOpen, onClose, onScanSuccess, title }
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : null;
 }

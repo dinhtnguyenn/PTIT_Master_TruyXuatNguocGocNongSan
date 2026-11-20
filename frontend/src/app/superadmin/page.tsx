@@ -185,6 +185,16 @@ export default function SuperadminPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (userModalOpen || batchModalOpen || configModalOpen) {
+      const orig = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = orig;
+      };
+    }
+  }, [userModalOpen, batchModalOpen, configModalOpen]);
+
   async function verifyAuth(walletAddr?: string, keyVal?: string) {
     setAuthLoading(true);
     setAuthError(null);
@@ -655,7 +665,8 @@ export default function SuperadminPage() {
   // VIEW: MAIN DASHBOARD
   // =========================================================================
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
+    <>
+      <div className="max-w-7xl mx-auto px-4 py-8 space-y-6">
       {/* Top Header Bar */}
       <div className="bg-slate-900 text-white rounded-2xl p-6 shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
@@ -1126,12 +1137,13 @@ export default function SuperadminPage() {
           </div>
         </div>
       )}
+      </div>
 
       {/* ===================================================================== */}
       {/* MODAL 1: USER ACCOUNT (ADD / EDIT) */}
       {/* ===================================================================== */}
       {userModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="!m-0 fixed inset-0 top-0 left-0 right-0 bottom-0 w-screen h-screen z-[9999] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-lg bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden animate-in fade-in">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <h2 className="text-sm font-bold text-slate-900">
@@ -1287,7 +1299,7 @@ export default function SuperadminPage() {
       {/* MODAL 2: BATCH (ADD / EDIT ALL FIELDS) */}
       {/* ===================================================================== */}
       {batchModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+        <div className="!m-0 fixed inset-0 top-0 left-0 right-0 bottom-0 w-screen h-screen z-[9999] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
           <div className="w-full max-w-3xl bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden my-8 animate-in fade-in">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <h2 className="text-sm font-bold text-slate-900">
@@ -1702,7 +1714,7 @@ export default function SuperadminPage() {
       {/* MODAL 3: SYSTEM CONFIG (ADD / EDIT) */}
       {/* ===================================================================== */}
       {configModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="!m-0 fixed inset-0 top-0 left-0 right-0 bottom-0 w-screen h-screen z-[9999] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden animate-in fade-in">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
               <h2 className="text-sm font-bold text-slate-900">
@@ -1772,6 +1784,6 @@ export default function SuperadminPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

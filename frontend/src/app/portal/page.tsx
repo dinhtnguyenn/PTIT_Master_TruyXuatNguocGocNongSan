@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import {
   Wallet,
@@ -81,6 +82,21 @@ export default function SupplyChainPortalPage() {
     qrDataUrl: string;
     txHash: string;
   } | null>(null);
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (createdBatchModal) {
+      const orig = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = orig;
+      };
+    }
+  }, [createdBatchModal]);
 
   // Form Producer (Bảng 1)
   const [producerForm, setProducerForm] = useState({
@@ -938,7 +954,8 @@ export default function SupplyChainPortalPage() {
     : (availableRoles[0] || 'PRODUCER');
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
+    <>
+      <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
       {/* Actor Bar */}
       <div className="bg-white rounded-xl border border-slate-200 px-4 py-3 shadow-sm">
         <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wide block">
@@ -1499,75 +1516,77 @@ export default function SupplyChainPortalPage() {
           )}
         </form>
       )}
+    </div>
 
-      {/* Modal Quét Mã QR bằng Camera */}
-      <QrScannerModal
-        isOpen={isScannerOpen}
-        onClose={() => setIsScannerOpen(false)}
-        title={`Quét Tem Mã QR (${ROLE_LABELS[activeScannerRole] || activeScannerRole})`}
-        onScanSuccess={(scannedId) => {
-          verifyBatch(scannedId, activeScannerRole);
-        }}
-      />
+    {/* Modal Quét Mã QR bằng Camera */}
+    <QrScannerModal
+      isOpen={isScannerOpen}
+      onClose={() => setIsScannerOpen(false)}
+      title={`Quét Tem Mã QR (${ROLE_LABELS[activeScannerRole] || activeScannerRole})`}
+      onScanSuccess={(scannedId) => {
+        verifyBatch(scannedId, activeScannerRole);
+      }}
+    />
 
-      {/* Modal hiển thị Tem QR cho Producer sau khi khởi tạo lô hàng thành công */}
-      {createdBatchModal && (
-        <div className="fixed inset-0 min-h-screen w-full z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto animate-in fade-in">
-          <div className="relative bg-white rounded-2xl border border-slate-200 max-w-sm w-full p-5 shadow-2xl text-center space-y-4">
-            <button
-              type="button"
-              onClick={() => setCreatedBatchModal(null)}
-              className="absolute top-3 right-3 text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition"
-              aria-label="Đóng"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
-              <CheckCircle2 className="w-6 h-6" />
+    {/* Modal hiển thị Tem QR cho Producer sau khi khởi tạo lô hàng thành công */}
+    {mounted && createdBatchModal && typeof document !== 'undefined' && createPortal(
+      <div className="!m-0 fixed inset-0 top-0 left-0 right-0 bottom-0 w-screen h-screen z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto animate-in fade-in">
+        <div className="relative bg-white rounded-2xl border border-slate-200 max-w-sm w-full p-5 shadow-2xl text-center space-y-4">
+          <button
+            type="button"
+            onClick={() => setCreatedBatchModal(null)}
+            className="absolute top-3 right-3 text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition"
+            aria-label="Đóng"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+            <CheckCircle2 className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="font-bold text-slate-900 text-sm">Khởi Tạo Lô Hàng Thành Công!</h3>
+            <p className="text-xs text-slate-500 mt-1">
+              Lô hàng đã được ghi nhận trên Blockchain. Tem mã QR dưới đây sẵn sàng để Đơn vị Kiểm định quét tiếp nhận.
+            </p>
+          </div>
+          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 inline-block mx-auto">
+            {createdBatchModal.qrDataUrl && (
+              <img
+                src={createdBatchModal.qrDataUrl}
+                alt={createdBatchModal.batchId}
+                className="w-48 h-48 mx-auto rounded-lg shadow-sm"
+              />
+            )}
+            <div className="mt-2 font-mono font-bold text-xs text-slate-800">
+              {createdBatchModal.batchId}
             </div>
-            <div>
-              <h3 className="font-bold text-slate-900 text-sm">Khởi Tạo Lô Hàng Thành Công!</h3>
-              <p className="text-xs text-slate-500 mt-1">
-                Lô hàng đã được ghi nhận trên Blockchain. Tem mã QR dưới đây sẵn sàng để Đơn vị Kiểm định quét tiếp nhận.
-              </p>
-            </div>
-            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 inline-block mx-auto">
-              {createdBatchModal.qrDataUrl && (
-                <img
-                  src={createdBatchModal.qrDataUrl}
-                  alt={createdBatchModal.batchId}
-                  className="w-48 h-48 mx-auto rounded-lg shadow-sm"
-                />
-              )}
-              <div className="mt-2 font-mono font-bold text-xs text-slate-800">
-                {createdBatchModal.batchId}
-              </div>
-              <div className="text-[11px] text-slate-500 font-medium">
-                {createdBatchModal.productName}
-              </div>
-            </div>
-            <div className="flex flex-col gap-2">
-              <a
-                href={createdBatchModal.qrDataUrl}
-                download={`tem-qr-${createdBatchModal.batchId}.png`}
-                className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition"
-              >
-                <Download className="w-3.5 h-3.5" /> Tải ảnh Tem mã QR về máy
-              </a>
-              <button
-                type="button"
-                onClick={() => {
-                  navigator.clipboard.writeText(createdBatchModal.batchId);
-                  toast.success(`Đã sao chép: ${createdBatchModal.batchId}`);
-                }}
-                className="w-full py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition"
-              >
-                <Copy className="w-3.5 h-3.5" /> Sao chép Mã Lô
-              </button>
+            <div className="text-[11px] text-slate-500 font-medium">
+              {createdBatchModal.productName}
             </div>
           </div>
+          <div className="flex flex-col gap-2">
+            <a
+              href={createdBatchModal.qrDataUrl}
+              download={`tem-qr-${createdBatchModal.batchId}.png`}
+              className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition"
+            >
+              <Download className="w-3.5 h-3.5" /> Tải ảnh Tem mã QR về máy
+            </a>
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard.writeText(createdBatchModal.batchId);
+                toast.success(`Đã sao chép: ${createdBatchModal.batchId}`);
+              }}
+              className="w-full py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition"
+            >
+              <Copy className="w-3.5 h-3.5" /> Sao chép Mã Lô
+            </button>
+          </div>
         </div>
-      )}
-    </div>
-  );
+      </div>,
+      document.body
+    )}
+  </>
+);
 }
