@@ -140,20 +140,49 @@ export default function SupplyChainPortalPage() {
 
   async function loadUser(addr: string) {
     setLoading(true);
+    const isAdm = isHardcodedAdmin(addr);
     try {
       const res = await fetch(`${API_BASE_URL}/accounts/me/${addr}`);
       if (res.ok) {
         const data = await res.json();
-        if (data && data.status) {
+        if (data && (data.status || isAdm)) {
+          if (isAdm) {
+            data.status = 'APPROVED';
+          }
           setUserData(data);
+        } else if (isAdm) {
+          setUserData({
+            walletAddress: addr,
+            role: 'PRODUCER',
+            roles: ['PRODUCER'],
+            status: 'APPROVED',
+            organizationName: 'Quản trị Hệ thống',
+          });
         } else {
           setUserData(null);
         }
+      } else if (isAdm) {
+        setUserData({
+          walletAddress: addr,
+          role: 'PRODUCER',
+          roles: ['PRODUCER'],
+          status: 'APPROVED',
+          organizationName: 'Quản trị Hệ thống',
+        });
       } else {
         setUserData(null);
       }
       loadBatches();
     } catch (err) {
+      if (isAdm) {
+        setUserData({
+          walletAddress: addr,
+          role: 'PRODUCER',
+          roles: ['PRODUCER'],
+          status: 'APPROVED',
+          organizationName: 'Quản trị Hệ thống',
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -855,18 +884,26 @@ export default function SupplyChainPortalPage() {
     );
   }
 
-  if (!userData || userData.status !== 'APPROVED') {
-    const isAdm = isHardcodedAdmin(account);
+  const isAdm = isHardcodedAdmin(account);
+  const effectiveUserData = userData || (isAdm && account ? {
+    walletAddress: account,
+    role: 'PRODUCER',
+    roles: ['PRODUCER'],
+    status: 'APPROVED',
+    organizationName: 'Quản trị Hệ thống',
+  } : null);
+
+  if (!effectiveUserData || (effectiveUserData.status !== 'APPROVED' && !isAdm)) {
     return (
       <div className="max-w-md mx-auto py-20 text-center px-4">
         <div className="w-12 h-12 rounded-xl bg-amber-100 text-amber-700 mx-auto flex items-center justify-center mb-3">
           <Clock className="w-6 h-6" />
         </div>
         <h1 className="text-base font-bold text-slate-900">
-          {userData?.status === 'PENDING' ? 'Hồ sơ đang chờ duyệt' : 'Chưa đăng ký tham gia chuỗi cung ứng'}
+          {effectiveUserData?.status === 'PENDING' ? 'Hồ sơ đang chờ duyệt' : 'Chưa đăng ký tham gia chuỗi cung ứng'}
         </h1>
         <p className="text-xs text-slate-500 mt-1">
-          Địa chỉ ví <span className="font-mono">{truncateAddress(account)}</span> {userData?.status === 'PENDING' ? 'đang trong danh sách chờ Quản trị viên phê duyệt.' : 'chưa đăng ký vai trò nhập liệu trong chuỗi cung ứng.'}
+          Địa chỉ ví <span className="font-mono">{truncateAddress(account)}</span> {effectiveUserData?.status === 'PENDING' ? 'đang trong danh sách chờ Quản trị viên phê duyệt.' : 'chưa đăng ký vai trò nhập liệu trong chuỗi cung ứng.'}
         </p>
         <div className="mt-4 flex items-center justify-center gap-4">
           <Link
@@ -888,9 +925,10 @@ export default function SupplyChainPortalPage() {
     );
   }
 
-  const userRoles: string[] = (userData.roles && userData.roles.length > 0)
-    ? userData.roles
-    : (userData.role ? [userData.role] : []);
+  const activeUserData = effectiveUserData;
+  const userRoles: string[] = (activeUserData.roles && activeUserData.roles.length > 0)
+    ? activeUserData.roles
+    : (activeUserData.role ? [activeUserData.role] : ['PRODUCER']);
   const availableRoles = userRoles.length > 0
     ? userRoles
     : ['PRODUCER'];

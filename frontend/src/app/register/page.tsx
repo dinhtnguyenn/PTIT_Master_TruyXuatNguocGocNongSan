@@ -47,23 +47,55 @@ export default function RegisterPage() {
   const [isUpdatingRoles, setIsUpdatingRoles] = useState(false);
 
   async function checkExisting(addr: string) {
+    const isAdm = isHardcodedAdmin(addr);
     try {
       const res = await fetch(`${API_BASE_URL}/accounts/me/${addr}`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
-        if (data && data.status) {
+        if (data && (data.status || isAdm)) {
+          if (isAdm) {
+            data.status = 'APPROVED';
+            data.phoneNumber = '';
+            data.email = '';
+          }
           setExistingAccount(data);
           const r = Array.isArray(data.roles) && data.roles.length > 0
             ? data.roles[0]
             : (data.role ? data.role : 'PRODUCER');
           setSelectedRoleForUpdate(r);
-        } else {
-          setExistingAccount(null);
+          return;
         }
+      }
+      if (isAdm) {
+        setExistingAccount({
+          walletAddress: addr,
+          role: 'PRODUCER',
+          roles: ['PRODUCER'],
+          status: 'APPROVED',
+          organizationName: 'Quản trị Hệ thống',
+          phoneNumber: '',
+          email: '',
+        });
+        setSelectedRoleForUpdate('PRODUCER');
       } else {
         setExistingAccount(null);
       }
-    } catch (err) {}
+    } catch (err) {
+      if (isAdm) {
+        setExistingAccount({
+          walletAddress: addr,
+          role: 'PRODUCER',
+          roles: ['PRODUCER'],
+          status: 'APPROVED',
+          organizationName: 'Quản trị Hệ thống',
+          phoneNumber: '',
+          email: '',
+        });
+        setSelectedRoleForUpdate('PRODUCER');
+      } else {
+        setExistingAccount(null);
+      }
+    }
   }
 
   async function handleConnect() {
@@ -192,7 +224,7 @@ export default function RegisterPage() {
 
   // Quản trị viên cập nhật vai trò trực tiếp cho account
   async function handleUpdateRoles() {
-    if (!account || !existingAccount) return;
+    if (!account) return;
     if (!selectedRoleForUpdate) {
       toast.warning('Vui lòng chọn 1 vai trò!');
       return;
@@ -210,16 +242,17 @@ export default function RegisterPage() {
       if (targetRoleHash) {
         let hasOnChain = false;
         try {
-          hasOnChain = await readContract.hasRole(targetRoleHash, existingAccount.walletAddress);
+          hasOnChain = await readContract.hasRole(targetRoleHash, account);
         } catch (_) {}
 
         if (!hasOnChain) {
-          await sendContractTx('grantRole', [targetRoleHash, existingAccount.walletAddress]);
+          await sendContractTx('grantRole', [targetRoleHash, account]);
         }
       }
 
       // 2. Cập nhật vai trò vào CSDL
-      const res = await fetch(`${API_BASE_URL}/accounts/${existingAccount.id}/roles`, {
+      const targetId = existingAccount?.id || account;
+      const res = await fetch(`${API_BASE_URL}/accounts/${targetId}/roles`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ roles: [selectedRoleForUpdate] }),
@@ -230,7 +263,7 @@ export default function RegisterPage() {
       }
 
       toast.success(
-        'Đã cập nhật vai trò thành công trên Blockchain và Hệ thống! Bạn có thể vào Cổng nhập liệu để sử dụng ngay.',
+        `Đã chuyển sang vai trò ${ROLE_LABELS[selectedRoleForUpdate]} thành công! Bạn có thể vào Cổng nhập liệu để sử dụng ngay.`,
         'Cập nhật thành công'
       );
 
@@ -247,22 +280,35 @@ export default function RegisterPage() {
     }
   }
 
-  const isAdmin = isHardcodedAdmin(account) || existingAccount?.isAdmin;
+  const isAdmin = !!account && (isHardcodedAdmin(account) || existingAccount?.isAdmin);
+  const activeAccount = existingAccount || (isAdmin && account ? {
+    walletAddress: account,
+    role: selectedRoleForUpdate || 'PRODUCER',
+    roles: [selectedRoleForUpdate || 'PRODUCER'],
+    status: 'APPROVED',
+    organizationName: 'Quản trị Hệ thống',
+  } : null);
 
   return (
     <div className="max-w-xl mx-auto px-4 py-8 space-y-6">
       <div className="text-center">
-        <h1 className="text-xl font-bold text-slate-900">Đăng Ký Ví Chuỗi Cung Ứng</h1>
+        <h1 className="text-xl font-bold text-slate-900">
+          {isAdmin ? 'Thiết Lập Vai Trò Thử Nghiệm' : 'Đăng Ký Ví Chuỗi Cung Ứng'}
+        </h1>
         <p className="text-xs text-slate-500 mt-1">
-          Đăng ký địa chỉ ví để được Quản trị viên cấp quyền ký dữ liệu trên Blockchain.
+          {isAdmin
+            ? 'Chế độ Quản trị viên: Lựa chọn vai trò chuỗi cung ứng để kiểm thử trực tiếp các luồng nhập liệu.'
+            : 'Đăng ký địa chỉ ví để được Quản trị viên cấp quyền ký dữ liệu trên Blockchain.'}
         </p>
       </div>
 
       {/* Wallet Status */}
       <div className="bg-white rounded-xl border border-slate-200 p-4 flex items-center justify-between text-xs">
         <div>
-          <span className="text-slate-500 font-medium">Ví kết nối:</span>
-          <p className="font-mono text-slate-900 mt-0.5">
+          <span className="text-slate-500 font-medium">
+            {isAdmin ? 'Ví Quản trị viên:' : 'Ví kết nối:'}
+          </span>
+          <p className="font-mono text-slate-900 mt-0.5 break-all">
             {account ? account : 'Chưa kết nối ví'}
           </p>
         </div>
@@ -276,26 +322,26 @@ export default function RegisterPage() {
         )}
       </div>
 
-      {/* Current Status if already registered */}
-      {existingAccount && (
+      {/* Current Status if already registered or Admin */}
+      {activeAccount && (
         <div
           className={`rounded-xl p-5 border text-xs space-y-4 ${
-            existingAccount.status === 'APPROVED'
+            activeAccount.status === 'APPROVED'
               ? 'bg-emerald-50/70 border-emerald-200 text-emerald-950'
-              : existingAccount.status === 'PENDING'
+              : activeAccount.status === 'PENDING'
               ? 'bg-amber-50/70 border-amber-200 text-amber-950'
               : 'bg-rose-50/70 border-rose-200 text-rose-950'
           }`}
         >
           {!isAdmin && (
             <div className="flex items-center gap-2 font-semibold">
-              {existingAccount.status === 'APPROVED' && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
-              {existingAccount.status === 'PENDING' && <Clock className="w-4 h-4 text-amber-600" />}
-              {existingAccount.status === 'REJECTED' && <AlertTriangle className="w-4 h-4 text-rose-600" />}
+              {activeAccount.status === 'APPROVED' && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+              {activeAccount.status === 'PENDING' && <Clock className="w-4 h-4 text-amber-600" />}
+              {activeAccount.status === 'REJECTED' && <AlertTriangle className="w-4 h-4 text-rose-600" />}
               <span className="text-sm font-bold">
-                {existingAccount.status === 'APPROVED' && 'Tài khoản đã được duyệt!'}
-                {existingAccount.status === 'PENDING' && 'Hồ sơ đang chờ Quản trị viên duyệt'}
-                {existingAccount.status === 'REJECTED' && 'Hồ sơ bị từ chối'}
+                {activeAccount.status === 'APPROVED' && 'Tài khoản đã được duyệt!'}
+                {activeAccount.status === 'PENDING' && 'Hồ sơ đang chờ Quản trị viên duyệt'}
+                {activeAccount.status === 'REJECTED' && 'Hồ sơ bị từ chối'}
               </span>
             </div>
           )}
@@ -304,29 +350,31 @@ export default function RegisterPage() {
             <p className="text-slate-800">
               Vai trò hiện tại:{' '}
               <strong>
-                {((Array.isArray(existingAccount.roles) && existingAccount.roles.length > 0)
-                  ? existingAccount.roles
-                  : [existingAccount.role]
+                {((Array.isArray(activeAccount.roles) && activeAccount.roles.length > 0)
+                  ? activeAccount.roles
+                  : [activeAccount.role || selectedRoleForUpdate || 'PRODUCER']
                 )
                   .map((r: string) => ROLE_LABELS[r] || r)
                   .join(', ')}
               </strong>
             </p>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-600 mt-1">
-              {existingAccount.phoneNumber && (
-                <span>
-                  <strong className="text-slate-500">Số điện thoại:</strong> {existingAccount.phoneNumber}
-                </span>
-              )}
-              {existingAccount.email && (
-                <span>
-                  <strong className="text-slate-500">Email:</strong> {existingAccount.email}
-                </span>
-              )}
-            </div>
+            {!isAdmin && (
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-600 mt-1">
+                {activeAccount.phoneNumber && (
+                  <span>
+                    <strong className="text-slate-500">Số điện thoại:</strong> {activeAccount.phoneNumber}
+                  </span>
+                )}
+                {activeAccount.email && (
+                  <span>
+                    <strong className="text-slate-500">Email:</strong> {activeAccount.email}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
-          {existingAccount.status === 'APPROVED' && (
+          {(activeAccount.status === 'APPROVED' || isAdmin) && (
             <div>
               <Link
                 href="/portal"
@@ -401,8 +449,8 @@ export default function RegisterPage() {
         </div>
       )}
 
-      {/* Registration Form (Chỉ hiển thị khi ví chưa đăng ký hoặc bị từ chối) */}
-      {(!existingAccount || existingAccount.status === 'REJECTED') && (
+      {/* Registration Form (Chỉ hiển thị cho người dùng thông thường khi ví chưa đăng ký hoặc bị từ chối) */}
+      {!isAdmin && (!existingAccount || existingAccount.status === 'REJECTED') && (
         <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4 text-xs">
           {statusMessage && (
             <div

@@ -30,7 +30,7 @@ export default function Navbar() {
       const res = await fetch(`${API_BASE_URL}/accounts/me/${walletAddr}`, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
-        if (data && data.status) {
+        if (data && (data.status || isAdm)) {
           const rawRoles: string[] = Array.isArray(data.roles) && data.roles.length > 0
             ? data.roles
             : (data.role ? [data.role] : []);
@@ -40,14 +40,14 @@ export default function Navbar() {
             .filter((r) => r !== 'ADMIN')
             .map((r) => ROLE_LABELS[r] || r)
             .join(', ');
-          setRole(supplyChainRoles || null);
-          setStatus(data.status);
+          setRole(supplyChainRoles || (isAdm ? 'Đơn vị Sản xuất' : null));
+          setStatus(isAdm ? 'APPROVED' : data.status);
           return;
         }
       }
       if (isAdm) {
         setIsDbAdmin(true);
-        setRole(null);
+        setRole('Đơn vị Sản xuất');
         setStatus('APPROVED');
         return;
       }
@@ -57,7 +57,7 @@ export default function Navbar() {
     } catch (e) {
       if (isAdm) {
         setIsDbAdmin(true);
-        setRole(null);
+        setRole('Đơn vị Sản xuất');
         setStatus('APPROVED');
       }
     }
@@ -204,7 +204,7 @@ export default function Navbar() {
                 {role && (
                   <span
                     className={`text-[11px] px-2 py-0.5 rounded-md font-semibold ${
-                      status === 'APPROVED'
+                      (status === 'APPROVED' || isAdmin)
                         ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                         : status === 'REJECTED'
                         ? 'bg-rose-50 text-rose-700 border border-rose-200'
@@ -212,7 +212,7 @@ export default function Navbar() {
                     }`}
                   >
                     {role}
-                    {status === 'PENDING' ? ' (Chờ duyệt)' : status === 'REJECTED' ? ' (Từ chối)' : ''}
+                    {(!isAdmin && status === 'PENDING') ? ' (Chờ duyệt)' : (!isAdmin && status === 'REJECTED') ? ' (Từ chối)' : ''}
                   </span>
                 )}
                 <div

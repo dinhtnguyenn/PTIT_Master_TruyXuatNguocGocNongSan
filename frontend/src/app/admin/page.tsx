@@ -269,93 +269,108 @@ export default function AdminPage() {
           </div>
 
           <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
-            {loading ? (
-              <div className="p-8 text-center text-xs text-slate-400">Đang tải...</div>
-            ) : accounts.length === 0 ? (
-              <div className="p-8 text-center text-xs text-slate-500">
-                Không có hồ sơ nào ở trạng thái {STATUS_LABELS[filterStatus] || filterStatus}.
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-slate-600">
-                  <thead className="bg-slate-50 text-slate-700 font-semibold border-b border-slate-200">
-                    <tr>
-                      <th className="py-2.5 px-3">Tài khoản</th>
-                      <th className="py-2.5 px-3">Vai trò</th>
-                      <th className="py-2.5 px-3">Địa chỉ ví</th>
-                      <th className="py-2.5 px-3 whitespace-nowrap">Số điện thoại</th>
-                      <th className="py-2.5 px-3 whitespace-nowrap">Email</th>
-                      {filterStatus === 'PENDING' ? (
-                        <>
-                          <th className="py-2.5 px-3 whitespace-nowrap">Thời gian gửi</th>
-                          <th className="py-2.5 px-3 text-right whitespace-nowrap">Thao tác</th>
-                        </>
-                      ) : (
-                        <th className="py-2.5 px-3 text-right whitespace-nowrap">Thời gian thực hiện</th>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {accounts.map((acc) => (
-                      <tr key={acc.id} className="hover:bg-slate-50">
-                        <td className="py-2.5 px-3 font-semibold text-slate-900">
-                          {acc.organizationName || truncateAddress(acc.walletAddress)}
-                        </td>
-                        <td className="py-2.5 px-3">
-                          <div className="flex flex-wrap gap-1">
-                            {((Array.isArray(acc.roles) && acc.roles.length > 0) ? acc.roles : [acc.role]).map((r: string) => (
-                              <span key={r} className="font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px]">
-                                {ROLE_LABELS[r] || r}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="py-2.5 px-3 font-mono text-slate-800">
-                          {truncateAddress(acc.walletAddress)}
-                        </td>
-                        <td className="py-2.5 px-3 font-mono text-slate-700 text-[11px] whitespace-nowrap">
-                          {acc.phoneNumber || '—'}
-                        </td>
-                        <td className="py-2.5 px-3 text-slate-700 text-[11px] whitespace-nowrap">
-                          {acc.email || '—'}
-                        </td>
+            {(() => {
+              const displayAccounts = accounts.filter((acc) => {
+                if (filterStatus === 'PENDING') {
+                  return !isHardcodedAdmin(acc.walletAddress);
+                }
+                return true;
+              });
+
+              if (loading) {
+                return <div className="p-8 text-center text-xs text-slate-400">Đang tải...</div>;
+              }
+
+              if (displayAccounts.length === 0) {
+                return (
+                  <div className="p-8 text-center text-xs text-slate-500">
+                    Không có hồ sơ nào ở trạng thái {STATUS_LABELS[filterStatus] || filterStatus}.
+                  </div>
+                );
+              }
+
+              return (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs text-slate-600">
+                    <thead className="bg-slate-50 text-slate-700 font-semibold border-b border-slate-200">
+                      <tr>
+                        <th className="py-2.5 px-3">Tài khoản</th>
+                        <th className="py-2.5 px-3">Vai trò</th>
+                        <th className="py-2.5 px-3">Địa chỉ ví</th>
+                        <th className="py-2.5 px-3 whitespace-nowrap">Số điện thoại</th>
+                        <th className="py-2.5 px-3 whitespace-nowrap">Email</th>
                         {filterStatus === 'PENDING' ? (
                           <>
-                            <td className="py-2.5 px-3 text-[11px] text-slate-500 font-mono whitespace-nowrap">
-                              {formatDateTime(acc.createdAt)}
-                            </td>
-                            <td className="py-2.5 px-3 text-right whitespace-nowrap">
-                              <div className="flex items-center justify-end gap-1.5">
-                                <button
-                                  disabled={actionLoadingId === acc.id}
-                                  onClick={() => handleApprove(acc)}
-                                  className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-semibold text-[11px]"
-                                >
-                                  {actionLoadingId === acc.id ? 'Đang cấp...' : 'Duyệt'}
-                                </button>
-                                <button
-                                  disabled={actionLoadingId === acc.id}
-                                  onClick={() => handleReject(acc.id)}
-                                  className="px-2 py-1 bg-slate-200 hover:bg-rose-100 hover:text-rose-700 text-slate-700 rounded font-semibold text-[11px]"
-                                >
-                                  Từ chối
-                                </button>
-                              </div>
-                            </td>
+                            <th className="py-2.5 px-3 whitespace-nowrap">Thời gian gửi</th>
+                            <th className="py-2.5 px-3 text-right whitespace-nowrap">Thao tác</th>
                           </>
                         ) : (
-                          <td className="py-2.5 px-3 text-right whitespace-nowrap">
-                            <span className="font-semibold text-slate-800 font-mono text-[11px]">
-                              {formatDateTime(acc.updatedAt || acc.createdAt)}
-                            </span>
-                          </td>
+                          <th className="py-2.5 px-3 text-right whitespace-nowrap">Thời gian thực hiện</th>
                         )}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {displayAccounts.map((acc) => (
+                        <tr key={acc.id} className="hover:bg-slate-50">
+                          <td className="py-2.5 px-3 font-semibold text-slate-900">
+                            {acc.organizationName || truncateAddress(acc.walletAddress)}
+                          </td>
+                          <td className="py-2.5 px-3">
+                            <div className="flex flex-wrap gap-1">
+                              {((Array.isArray(acc.roles) && acc.roles.length > 0) ? acc.roles : [acc.role]).map((r: string) => (
+                                <span key={r} className="font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px]">
+                                  {ROLE_LABELS[r] || r}
+                                </span>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-3 font-mono text-slate-800">
+                            {truncateAddress(acc.walletAddress)}
+                          </td>
+                          <td className="py-2.5 px-3 font-mono text-slate-700 text-[11px] whitespace-nowrap">
+                            {acc.phoneNumber || '—'}
+                          </td>
+                          <td className="py-2.5 px-3 text-slate-700 text-[11px] whitespace-nowrap">
+                            {acc.email || '—'}
+                          </td>
+                          {filterStatus === 'PENDING' ? (
+                            <>
+                              <td className="py-2.5 px-3 text-[11px] text-slate-500 font-mono whitespace-nowrap">
+                                {formatDateTime(acc.createdAt)}
+                              </td>
+                              <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  <button
+                                    disabled={actionLoadingId === acc.id}
+                                    onClick={() => handleApprove(acc)}
+                                    className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-semibold text-[11px]"
+                                  >
+                                    {actionLoadingId === acc.id ? 'Đang cấp...' : 'Duyệt'}
+                                  </button>
+                                  <button
+                                    disabled={actionLoadingId === acc.id}
+                                    onClick={() => handleReject(acc.id)}
+                                    className="px-2 py-1 bg-slate-200 hover:bg-rose-100 hover:text-rose-700 text-slate-700 rounded font-semibold text-[11px]"
+                                  >
+                                    Từ chối
+                                  </button>
+                                </div>
+                              </td>
+                            </>
+                          ) : (
+                            <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                              <span className="font-semibold text-slate-800 font-mono text-[11px]">
+                                {formatDateTime(acc.updatedAt || acc.createdAt)}
+                              </span>
+                            </td>
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
