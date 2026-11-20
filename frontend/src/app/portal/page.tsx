@@ -944,7 +944,7 @@ export default function SupplyChainPortalPage() {
         <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wide block">
           {ROLE_LABELS[role] || role}
         </span>
-        <p className="text-sm font-bold font-mono text-slate-900 mt-0.5 break-all" title={account}>
+        <p className="text-xs font-mono text-slate-500 mt-0.5 break-all" title={account}>
           {account}
         </p>
       </div>

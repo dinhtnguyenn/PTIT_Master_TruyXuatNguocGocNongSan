@@ -308,7 +308,7 @@ export default function RegisterPage() {
           <span className="text-slate-500 font-medium">
             {isAdmin ? 'Ví Quản trị viên:' : 'Ví kết nối:'}
           </span>
-          <p className="font-mono text-slate-900 mt-0.5 break-all">
+          <p className="text-xs font-mono text-slate-500 mt-0.5 break-all">
             {account ? account : 'Chưa kết nối ví'}
           </p>
         </div>
