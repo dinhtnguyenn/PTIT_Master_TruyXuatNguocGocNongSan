@@ -10,7 +10,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import QRCode from 'qrcode';
-import { API_BASE_URL, STAGE_LABELS, getDynamicExplorerUrl } from '../../../lib/constants';
+import { API_BASE_URL, STAGE_LABELS, getDynamicExplorerUrl, formatRelativeTime } from '../../../lib/constants';
 import { getContract, truncateAddress } from '../../../lib/web3';
 
 function formatImageUrl(url?: string | null): string {
@@ -140,7 +140,7 @@ export default function TraceDetailPage() {
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900">{batch.productName}</h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Loại: {batch.category} • Số lượng: {batch.quantity} • Trọng lượng: {batch.weight} kg
+            Loại: {batch.category || '—'} • Cập nhật: {formatRelativeTime(batch.updatedAt || batch.createdAt || batch.harvestDate)}
           </p>
         </div>
 

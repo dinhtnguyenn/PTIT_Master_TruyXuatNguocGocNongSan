@@ -287,16 +287,18 @@ export default function RegisterPage() {
               : 'bg-rose-50/70 border-rose-200 text-rose-950'
           }`}
         >
-          <div className="flex items-center gap-2 font-semibold">
-            {existingAccount.status === 'APPROVED' && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
-            {existingAccount.status === 'PENDING' && <Clock className="w-4 h-4 text-amber-600" />}
-            {existingAccount.status === 'REJECTED' && <AlertTriangle className="w-4 h-4 text-rose-600" />}
-            <span className="text-sm font-bold">
-              {existingAccount.status === 'APPROVED' && 'Tài khoản đã được duyệt!'}
-              {existingAccount.status === 'PENDING' && 'Hồ sơ đang chờ Quản trị viên duyệt'}
-              {existingAccount.status === 'REJECTED' && 'Hồ sơ bị từ chối'}
-            </span>
-          </div>
+          {!isAdmin && (
+            <div className="flex items-center gap-2 font-semibold">
+              {existingAccount.status === 'APPROVED' && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+              {existingAccount.status === 'PENDING' && <Clock className="w-4 h-4 text-amber-600" />}
+              {existingAccount.status === 'REJECTED' && <AlertTriangle className="w-4 h-4 text-rose-600" />}
+              <span className="text-sm font-bold">
+                {existingAccount.status === 'APPROVED' && 'Tài khoản đã được duyệt!'}
+                {existingAccount.status === 'PENDING' && 'Hồ sơ đang chờ Quản trị viên duyệt'}
+                {existingAccount.status === 'REJECTED' && 'Hồ sơ bị từ chối'}
+              </span>
+            </div>
+          )}
 
           <div>
             <p className="text-slate-800">
@@ -344,9 +346,6 @@ export default function RegisterPage() {
                   Cập nhật vai trò tài khoản
                 </h3>
               </div>
-              <p className="text-[11px] text-slate-600 leading-relaxed">
-                Chọn vai trò bạn muốn thiết lập cho tài khoản này (chọn 1 vai trò duy nhất mỗi khi cập nhật):
-              </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {[

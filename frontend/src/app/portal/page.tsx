@@ -16,6 +16,7 @@ import {
   Download,
   RefreshCw,
   AlertTriangle,
+  X,
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import QrScannerModal from '../../components/QrScannerModal';
@@ -426,32 +427,14 @@ export default function SupplyChainPortalPage() {
   function renderQrBatchSection(formRole: 'INSPECTOR' | 'LOGISTICS' | 'DISTRIBUTOR') {
     const verification = batchVerifications[formRole];
 
-    return (
-      <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-              <QrCode className="w-4 h-4 text-emerald-600" />
-              Quét mã QR Lô sản phẩm *
-            </span>
-            <p className="text-[11px] text-slate-500 mt-0.5">
-              Hệ thống tự động kiểm tra xem lô hàng đã lưu trên Blockchain chưa và đã đến đúng giai đoạn tiếp nhận.
-            </p>
-          </div>
-          <div>
-            <button
-              type="button"
-              onClick={() => {
-                setActiveScannerRole(formRole);
-                setIsScannerOpen(true);
-              }}
-              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-xs transition"
-            >
-              <Camera className="w-4 h-4" /> Quét mã QR
-            </button>
-          </div>
-        </div>
+    const roleActionText = formRole === 'INSPECTOR'
+      ? 'kiểm định'
+      : formRole === 'LOGISTICS'
+      ? 'vận chuyển'
+      : 'tiếp nhận phân phối';
 
+    return (
+      <div className="space-y-3">
         {/* 1. Trạng thái Đang kiểm tra */}
         {verification?.loading && (
           <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-800 text-xs flex items-center gap-2 animate-pulse">
@@ -483,7 +466,34 @@ export default function SupplyChainPortalPage() {
           </div>
         )}
 
-        {/* 3. Trạng thái Hợp lệ & Đã xác thực Blockchain */}
+        {/* 3. Box hướng dẫn & Nút Quét mã QR chính giữa khi chưa quét mã */}
+        {!verification?.result && (
+          <div className="py-8 px-4 text-center bg-slate-50/70 rounded-xl border border-dashed border-slate-200 space-y-3">
+            <QrCode className="w-8 h-8 text-slate-400 mx-auto" />
+            <div className="space-y-1 max-w-md mx-auto">
+              <p className="text-xs font-medium text-slate-600">
+                Vui lòng quét tem mã QR của lô hàng để tải thông tin và mở biểu mẫu nhập liệu {roleActionText}.
+              </p>
+              <p className="text-[11px] text-slate-400">
+                Hệ thống sẽ đối soát trực tiếp trên Blockchain để đảm bảo lô hàng hợp lệ và sẵn sàng tiếp nhận.
+              </p>
+            </div>
+            <div>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveScannerRole(formRole);
+                  setIsScannerOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-xs transition mx-auto"
+              >
+                <Camera className="w-4 h-4" /> Quét mã QR
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 4. Trạng thái Hợp lệ & Đã xác thực Blockchain */}
         {verification?.result && !verification?.loading && (
           <div className="p-3.5 bg-emerald-50 border border-emerald-300 rounded-lg text-emerald-950 text-xs space-y-2.5 animate-in fade-in">
             <div className="flex items-center justify-between">
@@ -510,15 +520,15 @@ export default function SupplyChainPortalPage() {
                 <span className="font-mono font-bold text-slate-900">{verification.result.batchId}</span>
               </div>
               <div>
-                <span className="text-slate-400 block text-[10px]">Tên:</span>
+                <span className="text-slate-400 block text-[10px]">Tên nông sản:</span>
                 <span className="font-semibold text-slate-900">{verification.result.productName}</span>
               </div>
               <div>
-                <span className="text-slate-400 block text-[10px]">Loại:</span>
+                <span className="text-slate-400 block text-[10px]">Loại nông sản:</span>
                 <span className="font-semibold text-slate-900">{verification.result.category || '—'}</span>
               </div>
               <div>
-                <span className="text-slate-400 block text-[10px]">Giai đoạn:</span>
+                <span className="text-slate-400 block text-[10px]">Giai đoạn hiện tại:</span>
                 <span className="font-semibold text-emerald-700">{verification.result.stageText}</span>
               </div>
             </div>
@@ -594,11 +604,19 @@ export default function SupplyChainPortalPage() {
         });
       } catch (err) {}
 
-      setProducerForm((prev) => ({
-        ...prev,
+      setProducerForm({
         batchId: `BATCH-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
         productName: '',
-      }));
+        category: '',
+        quantity: 100,
+        weight: 200,
+        seedOrigin: '',
+        farmingSupplies: '',
+        productionLocation: '',
+        cultivationStartDate: '',
+        harvestDate: '',
+        productImageUrl: '',
+      });
       loadBatches();
     } catch (err: any) {
       setStatusAlert({ type: 'error', message: formatBlockchainError(err) });
@@ -658,13 +676,13 @@ export default function SupplyChainPortalPage() {
       resetBatchVerification('INSPECTOR');
       setInspectorForm({
         batchId: '',
-        inspectionResult: '',
-        certificateCode: '',
-        certificateType: '',
+        inspectionResult: 'Đạt tiêu chuẩn an toàn',
+        inspectionCriteria: 'Dư lượng thuốc BVTV, vi sinh vật',
+        certificateCode: `CERT-${Math.floor(100000 + Math.random() * 900000)}`,
+        certificateType: 'VietGAP',
         issuingAuthority: '',
         issuedDate: '',
         expiryDate: '',
-        inspectionCriteria: '',
         certImageUrl: '',
       });
       loadBatches();
@@ -729,13 +747,13 @@ export default function SupplyChainPortalPage() {
         transporterName: '',
         transporterContact: '',
         transporterType: 'Tổ chức',
-        shippingCode: '',
+        shippingCode: `SHIP-${Math.floor(100000 + Math.random() * 900000)}`,
         originLocation: '',
         destLocation: '',
         departureTime: '',
         completionTime: '',
-        temperature: 20,
-        humidity: 65,
+        temperature: 20.0,
+        humidity: 70.0,
         storageNotes: '',
       });
       loadBatches();
@@ -801,8 +819,8 @@ export default function SupplyChainPortalPage() {
         distributorContact: '',
         distributorType: 'Tổ chức',
         receivedTime: '',
-        actualQuantity: 0,
-        actualWeight: 0,
+        actualQuantity: 100,
+        actualWeight: 200,
         receiptNotes: '',
       });
       loadBatches();
@@ -819,12 +837,12 @@ export default function SupplyChainPortalPage() {
 
   if (!account) {
     return (
-      <div className="max-w-md mx-auto py-20 text-center px-4">
+      <div className="max-w-xl mx-auto py-20 text-center px-4">
         <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-700 mx-auto flex items-center justify-center mb-3">
           <Wallet className="w-6 h-6" />
         </div>
         <h1 className="text-lg font-bold text-slate-900">Yêu cầu kết nối Ví MetaMask</h1>
-        <p className="text-xs text-slate-500 mt-1 mb-5">
+        <p className="text-xs text-slate-500 mt-1 mb-5 sm:whitespace-nowrap">
           Vui lòng kết nối ví đã được cấp quyền để hiển thị form nhập liệu tương ứng.
         </p>
         <button
@@ -888,8 +906,8 @@ export default function SupplyChainPortalPage() {
         <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wide block">
           {ROLE_LABELS[role] || role}
         </span>
-        <p className="text-sm font-bold font-mono text-slate-900 mt-0.5" title={account}>
-          {truncateAddress(account)}
+        <p className="text-sm font-bold font-mono text-slate-900 mt-0.5 break-all" title={account}>
+          {account}
         </p>
       </div>
 
@@ -946,9 +964,9 @@ export default function SupplyChainPortalPage() {
               <input
                 type="text"
                 required
+                readOnly
                 value={producerForm.batchId}
-                onChange={(e) => setProducerForm({ ...producerForm, batchId: e.target.value })}
-                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono bg-slate-100 cursor-not-allowed select-all"
               />
             </div>
             <div>
@@ -1077,7 +1095,7 @@ export default function SupplyChainPortalPage() {
           {renderQrBatchSection('INSPECTOR')}
 
           {/* 2. FORM NHẬP THÔNG TIN KIỂM ĐỊNH: Chỉ hiển thị khi quét mã thành công và đúng giai đoạn */}
-          {batchVerifications.INSPECTOR?.result ? (
+          {batchVerifications.INSPECTOR?.result && (
             <div className="space-y-4 pt-2 border-t border-slate-100 animate-in fade-in duration-200">
               <div className="flex items-center gap-1.5 text-xs font-semibold text-blue-900 bg-blue-50/70 p-2.5 rounded-lg border border-blue-200">
                 <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
@@ -1102,9 +1120,9 @@ export default function SupplyChainPortalPage() {
                   <input
                     type="text"
                     required
+                    readOnly
                     value={inspectorForm.certificateCode}
-                    onChange={(e) => setInspectorForm({ ...inspectorForm, certificateCode: e.target.value })}
-                    className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono"
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono bg-slate-100 cursor-not-allowed select-all"
                   />
                 </div>
                 <div>
@@ -1178,16 +1196,6 @@ export default function SupplyChainPortalPage() {
                 {submitting ? 'Đang gửi giao dịch...' : 'Lưu & Ký Blockchain (Xác nhận Kiểm định)'}
               </button>
             </div>
-          ) : (
-            <div className="py-8 px-4 text-center bg-slate-50/70 rounded-xl border border-dashed border-slate-200 space-y-2">
-              <QrCode className="w-8 h-8 text-slate-400 mx-auto" />
-              <p className="text-xs font-medium text-slate-600">
-                Vui lòng quét tem mã QR của lô hàng để tải thông tin và mở biểu mẫu nhập liệu kiểm định.
-              </p>
-              <p className="text-[11px] text-slate-400">
-                Hệ thống sẽ đối soát trực tiếp trên Blockchain để đảm bảo lô hàng hợp lệ và sẵn sàng tiếp nhận.
-              </p>
-            </div>
           )}
         </form>
       )}
@@ -1205,7 +1213,7 @@ export default function SupplyChainPortalPage() {
           {renderQrBatchSection('LOGISTICS')}
 
           {/* 2. FORM NHẬP THÔNG TIN VẬN CHUYỂN: Chỉ hiển thị khi quét mã thành công và đúng giai đoạn */}
-          {batchVerifications.LOGISTICS?.result ? (
+          {batchVerifications.LOGISTICS?.result && (
             <div className="space-y-4 pt-2 border-t border-slate-100 animate-in fade-in duration-200">
               <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-900 bg-amber-50/70 p-2.5 rounded-lg border border-amber-200">
                 <CheckCircle2 className="w-4 h-4 text-amber-600 shrink-0" />
@@ -1251,9 +1259,9 @@ export default function SupplyChainPortalPage() {
                   <input
                     type="text"
                     required
+                    readOnly
                     value={logisticsForm.shippingCode}
-                    onChange={(e) => setLogisticsForm({ ...logisticsForm, shippingCode: e.target.value })}
-                    className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono"
+                    className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono bg-slate-100 cursor-not-allowed select-all"
                   />
                 </div>
                 <div>
@@ -1341,16 +1349,6 @@ export default function SupplyChainPortalPage() {
                 {submitting ? 'Đang gửi giao dịch...' : 'Lưu & Ký Blockchain (Xác nhận Vận chuyển)'}
               </button>
             </div>
-          ) : (
-            <div className="py-8 px-4 text-center bg-slate-50/70 rounded-xl border border-dashed border-slate-200 space-y-2">
-              <QrCode className="w-8 h-8 text-slate-400 mx-auto" />
-              <p className="text-xs font-medium text-slate-600">
-                Vui lòng quét tem mã QR của lô hàng để tải thông tin và mở biểu mẫu nhập liệu vận chuyển.
-              </p>
-              <p className="text-[11px] text-slate-400">
-                Hệ thống sẽ đối soát trực tiếp trên Blockchain để đảm bảo lô hàng hợp lệ và sẵn sàng tiếp nhận.
-              </p>
-            </div>
           )}
         </form>
       )}
@@ -1368,7 +1366,7 @@ export default function SupplyChainPortalPage() {
           {renderQrBatchSection('DISTRIBUTOR')}
 
           {/* 2. FORM NHẬP THÔNG TIN PHÂN PHỐI: Chỉ hiển thị khi quét mã thành công và đúng giai đoạn */}
-          {batchVerifications.DISTRIBUTOR?.result ? (
+          {batchVerifications.DISTRIBUTOR?.result && (
             <div className="space-y-4 pt-2 border-t border-slate-100 animate-in fade-in duration-200">
               <div className="flex items-center gap-1.5 text-xs font-semibold text-purple-900 bg-purple-50/70 p-2.5 rounded-lg border border-purple-200">
                 <CheckCircle2 className="w-4 h-4 text-purple-600 shrink-0" />
@@ -1460,16 +1458,6 @@ export default function SupplyChainPortalPage() {
                 {submitting ? 'Đang gửi giao dịch...' : 'Lưu & Ký Blockchain (Tiếp nhận Phân phối)'}
               </button>
             </div>
-          ) : (
-            <div className="py-8 px-4 text-center bg-slate-50/70 rounded-xl border border-dashed border-slate-200 space-y-2">
-              <QrCode className="w-8 h-8 text-slate-400 mx-auto" />
-              <p className="text-xs font-medium text-slate-600">
-                Vui lòng quét tem mã QR của lô hàng để tải thông tin và mở biểu mẫu nhập liệu phân phối.
-              </p>
-              <p className="text-[11px] text-slate-400">
-                Hệ thống sẽ đối soát trực tiếp trên Blockchain để đảm bảo lô hàng hợp lệ và sẵn sàng tiếp nhận.
-              </p>
-            </div>
           )}
         </form>
       )}
@@ -1486,8 +1474,16 @@ export default function SupplyChainPortalPage() {
 
       {/* Modal hiển thị Tem QR cho Producer sau khi khởi tạo lô hàng thành công */}
       {createdBatchModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white rounded-2xl border border-slate-200 max-w-sm w-full p-5 shadow-2xl text-center space-y-4">
+        <div className="fixed inset-0 min-h-screen w-full z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto animate-in fade-in">
+          <div className="relative bg-white rounded-2xl border border-slate-200 max-w-sm w-full p-5 shadow-2xl text-center space-y-4">
+            <button
+              type="button"
+              onClick={() => setCreatedBatchModal(null)}
+              className="absolute top-3 right-3 text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition"
+              aria-label="Đóng"
+            >
+              <X className="w-5 h-5" />
+            </button>
             <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
               <CheckCircle2 className="w-6 h-6" />
             </div>
@@ -1529,13 +1525,6 @@ export default function SupplyChainPortalPage() {
                 className="w-full py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition"
               >
                 <Copy className="w-3.5 h-3.5" /> Sao chép Mã Lô
-              </button>
-              <button
-                type="button"
-                onClick={() => setCreatedBatchModal(null)}
-                className="w-full py-1.5 text-slate-400 hover:text-slate-600 text-xs font-medium"
-              >
-                Đóng
               </button>
             </div>
           </div>

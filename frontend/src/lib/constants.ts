@@ -88,3 +88,36 @@ export const STAGE_LABELS: Record<string, { label: string; color: string }> = {
   IN_TRANSIT: { label: 'Đang vận chuyển', color: 'bg-amber-100 text-amber-800 border-amber-300' },
   DELIVERED: { label: 'Đã tiếp nhận', color: 'bg-purple-100 text-purple-800 border-purple-300' },
 };
+
+export function formatRelativeTime(dateInput: string | number | Date | undefined | null): string {
+  if (!dateInput) return 'Chưa cập nhật';
+  const date = typeof dateInput === 'number'
+    ? new Date(dateInput * (dateInput < 10000000000 ? 1000 : 1))
+    : new Date(dateInput);
+  if (isNaN(date.getTime())) return 'Chưa cập nhật';
+
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  if (diffMs < 0) return 'Vừa xong';
+
+  const diffSec = Math.floor(diffMs / 1000);
+  if (diffSec < 60) return 'Vừa xong';
+
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin} phút trước`;
+
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour} giờ trước`;
+
+  const diffDay = Math.floor(diffHour / 24);
+  if (diffDay <= 30) return `${diffDay} ngày trước`;
+
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+  const day = pad(date.getDate());
+  const month = pad(date.getMonth() + 1);
+  const year = date.getFullYear();
+  return `${hours}:${minutes} - ${day}/${month}/${year}`;
+}
+

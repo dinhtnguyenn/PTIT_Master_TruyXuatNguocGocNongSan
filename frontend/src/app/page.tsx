@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Search, QrCode, ArrowRight } from 'lucide-react';
-import { API_BASE_URL, STAGE_LABELS } from '../lib/constants';
+import { API_BASE_URL, STAGE_LABELS, formatRelativeTime } from '../lib/constants';
 import QrScannerModal from '../components/QrScannerModal';
 
 export default function HomePage() {
@@ -28,11 +28,14 @@ export default function HomePage() {
     loadBatches();
   }, []);
 
-  const filtered = batches.filter(
-    (b) =>
-      b.batchId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      b.productName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filtered = batches.filter((b) => {
+    const term = searchTerm.toLowerCase();
+    return (
+      b.batchId.toLowerCase().includes(term) ||
+      b.productName.toLowerCase().includes(term) ||
+      (b.category && b.category.toLowerCase().includes(term))
+    );
+  });
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
@@ -50,7 +53,7 @@ export default function HomePage() {
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Nhập mã lô (Ví dụ: BATCH-...) hoặc tên sản phẩm..."
+              placeholder="Nhập mã lô hoặc tên sản phẩm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm"
@@ -65,15 +68,6 @@ export default function HomePage() {
           >
             <QrCode className="w-4 h-4 text-emerald-600" /> Quét mã QR
           </button>
-
-          {searchTerm && (
-            <Link
-              href={`/trace/${searchTerm.trim()}`}
-              className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition"
-            >
-              Tra cứu <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          )}
         </div>
 
         {/* Action Shortcuts */}
@@ -82,7 +76,7 @@ export default function HomePage() {
             href="/portal"
             className="text-slate-600 hover:text-emerald-700 font-medium px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50"
           >
-            Nhập liệu Chuỗi cung ứng (Theo ví)
+            Nhập liệu Chuỗi cung ứng
           </Link>
           <Link
             href="/register"
@@ -129,16 +123,13 @@ export default function HomePage() {
                   </div>
                   <h3 className="font-semibold text-sm text-slate-900">{batch.productName}</h3>
                   <p className="text-xs text-slate-500 mt-1">
-                    Loại: {batch.category} • Khối lượng: {batch.weight} kg ({batch.quantity} đơn vị)
-                  </p>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Nơi sản xuất: {batch.productionLocation}
+                    Loại: {batch.category || '—'}
                   </p>
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
                   <span className="text-[11px] text-slate-400">
-                    Thu hoạch: {new Date(batch.harvestDate).toLocaleDateString('vi-VN')}
+                    Cập nhật: {formatRelativeTime(batch.updatedAt || batch.createdAt || batch.harvestDate)}
                   </span>
                   <Link
                     href={`/trace/${batch.batchId}`}

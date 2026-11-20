@@ -227,7 +227,7 @@ export default function AdminPage() {
               activeTab === 'APPROVAL' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
             }`}
           >
-            Duyệt Tài Khoản
+            Tài Khoản
           </button>
           <button
             onClick={() => setActiveTab('STATS')}
@@ -280,7 +280,7 @@ export default function AdminPage() {
                 <table className="w-full text-left text-xs text-slate-600">
                   <thead className="bg-slate-50 text-slate-700 font-semibold border-b border-slate-200">
                     <tr>
-                      <th className="py-2.5 px-3">Đơn vị / Tài khoản</th>
+                      <th className="py-2.5 px-3">Tài khoản</th>
                       <th className="py-2.5 px-3">Vai trò</th>
                       <th className="py-2.5 px-3">Địa chỉ ví</th>
                       <th className="py-2.5 px-3 whitespace-nowrap">Số điện thoại</th>
@@ -299,7 +299,7 @@ export default function AdminPage() {
                     {accounts.map((acc) => (
                       <tr key={acc.id} className="hover:bg-slate-50">
                         <td className="py-2.5 px-3 font-semibold text-slate-900">
-                          {acc.organizationName || ROLE_LABELS[acc.role] || truncateAddress(acc.walletAddress)}
+                          {acc.organizationName || truncateAddress(acc.walletAddress)}
                         </td>
                         <td className="py-2.5 px-3">
                           <div className="flex flex-wrap gap-1">
@@ -377,7 +377,7 @@ export default function AdminPage() {
               <p className="text-2xl font-bold text-amber-600 mt-1">{batchStats?.byStage?.inTransit || 0}</p>
             </div>
             <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-              <span className="text-slate-400 font-medium">Đã Tiếp nhận Điểm bán</span>
+              <span className="text-slate-400 font-medium">Đã tiếp nhận phân phối</span>
               <p className="text-2xl font-bold text-purple-600 mt-1">{batchStats?.byStage?.delivered || 0}</p>
             </div>
           </div>
@@ -409,7 +409,7 @@ export default function AdminPage() {
               <h3 className="font-bold text-slate-800 mb-2 pb-1 border-b">Tiến độ Lô hàng</h3>
               <div className="space-y-1.5">
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Đã sản xuất (Mới tạo)</span>
+                  <span className="text-slate-500">Đã sản xuất</span>
                   <span className="font-bold text-blue-600">{batchStats?.byStage?.created || 0}</span>
                 </div>
                 <div className="flex justify-between">
