@@ -873,7 +873,6 @@ export default function SupplyChainPortalPage() {
   const userRoles: string[] = (userData.roles && userData.roles.length > 0)
     ? userData.roles
     : (userData.role ? [userData.role] : []);
-  const isAdm = isHardcodedAdmin(account) || userData.isAdmin;
   const availableRoles = userRoles.length > 0
     ? userRoles
     : ['PRODUCER'];
@@ -885,16 +884,13 @@ export default function SupplyChainPortalPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
       {/* Actor Bar */}
-      <div className="bg-white rounded-xl border border-slate-200 px-4 py-3 flex items-center justify-between shadow-sm">
-        <div>
-          <span className="text-[11px] font-bold text-emerald-700 uppercase">
-            {ROLE_LABELS[role] || role} {isAdm ? '(Ví Quản trị viên)' : ''}
-          </span>
-          <p className="text-sm font-bold text-slate-900">{userData.organizationName || ROLE_LABELS[role] || 'Thành viên chuỗi cung ứng'}</p>
-        </div>
-        <span className="text-xs font-mono text-slate-500 bg-slate-50 px-2.5 py-1 rounded border border-slate-200">
-          {truncateAddress(account)}
+      <div className="bg-white rounded-xl border border-slate-200 px-4 py-3 shadow-sm">
+        <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wide block">
+          {ROLE_LABELS[role] || role}
         </span>
+        <p className="text-sm font-bold font-mono text-slate-900 mt-0.5" title={account}>
+          {truncateAddress(account)}
+        </p>
       </div>
 
       {/* Role Switcher if multi-role */}
