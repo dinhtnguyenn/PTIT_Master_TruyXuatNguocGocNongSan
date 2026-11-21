@@ -23,8 +23,8 @@ services:
     environment:
       - PORT=4000
       - DATABASE_URL=postgresql://postgres:AgriTrace2026Secure@postgres:5432/agritrace_db
-      - RPC_URL=https://polygon-amoy-bor-rpc.publicnode.com
-      - CONTRACT_ADDRESS=0x309f3A376Ea8c8d3f9462529b921f55cb612AB25
+      - RPC_URL=https://polygon-amoy.drpc.org
+      - CONTRACT_ADDRESS=0x68Af0988167fddD7Eb5CE70485EA41f3A4a582a6
     volumes:
       - backend_uploads:/app/uploads
     depends_on:
@@ -38,8 +38,8 @@ services:
       dockerfile: Dockerfile
       args:
         - NEXT_PUBLIC_API_URL=/api
-        - NEXT_PUBLIC_CONTRACT_ADDRESS=0x309f3A376Ea8c8d3f9462529b921f55cb612AB25
-        - NEXT_PUBLIC_RPC_URL=https://polygon-amoy-bor-rpc.publicnode.com
+        - NEXT_PUBLIC_CONTRACT_ADDRESS=0x68Af0988167fddD7Eb5CE70485EA41f3A4a582a6
+        - NEXT_PUBLIC_RPC_URL=https://polygon-amoy.drpc.org
     container_name: agritrace-frontend
     restart: always
     depends_on:

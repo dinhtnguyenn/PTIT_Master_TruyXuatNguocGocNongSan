@@ -49,15 +49,15 @@ describe("SupplyChainProof Contract", function () {
 
   it("Should prevent unauthorized users from recording production", async function () {
     await expect(
-      supplyChain.connect(unauthorizedUser).recordProduction(batchId, producerHash)
+      supplyChain.connect(unauthorizedUser).recordProduction(batchId, productName, producerHash)
     ).to.be.reverted;
   });
 
   it("Should execute full supply chain lifecycle successfully", async function () {
     // 1. Producer records production
-    await expect(supplyChain.connect(producer).recordProduction(batchId, producerHash))
+    await expect(supplyChain.connect(producer).recordProduction(batchId, productName, producerHash))
       .to.emit(supplyChain, "BatchCreated")
-      .withArgs(batchId, producer.address, producerHash, (ts) => ts > 0);
+      .withArgs(batchId, productName, producer.address, producerHash, (ts) => ts > 0);
 
     let batch = await supplyChain.getBatchProof(batchId);
     expect(batch.currentStage).to.equal(0); // Created
@@ -96,7 +96,7 @@ describe("SupplyChainProof Contract", function () {
   });
 
   it("Should reject out-of-order execution (e.g. Logistics before Inspection)", async function () {
-    await supplyChain.connect(producer).recordProduction(batchId, producerHash);
+    await supplyChain.connect(producer).recordProduction(batchId, productName, producerHash);
 
     // Try logistics before inspector
     await expect(

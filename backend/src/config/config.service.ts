@@ -13,12 +13,12 @@ export class ConfigService implements OnModuleInit {
     const defaults = [
       {
         key: 'CONTRACT_ADDRESS',
-        value: process.env.CONTRACT_ADDRESS || '0x309f3A376Ea8c8d3f9462529b921f55cb612AB25',
+        value: process.env.CONTRACT_ADDRESS || '0x68Af0988167fddD7Eb5CE70485EA41f3A4a582a6',
         description: 'Địa chỉ Smart Contract SupplyChainProof trên Polygon Amoy',
       },
       {
         key: 'RPC_URL',
-        value: process.env.RPC_URL || 'https://polygon-amoy-bor-rpc.publicnode.com',
+        value: process.env.RPC_URL || 'https://polygon-amoy.drpc.org',
         description: 'Endpoint JSON-RPC kết nối blockchain Polygon Amoy',
       },
       {
@@ -33,7 +33,7 @@ export class ConfigService implements OnModuleInit {
       },
       {
         key: 'ADMIN_WALLETS',
-        value: '0x33F34938981588Df03c8eB291C6abe75612eA49a,0xd308d759F0986aADe715d8B2bf18d58c1680b9CC',
+        value: '0xd308d759F0986aADe715d8B2bf18d58c1680b9CC,0x33F34938981588Df03c8eB291C6abe75612eA49a',
         description: 'Danh sách địa chỉ ví Admin hệ thống (phân cách bởi dấu phẩy)',
       },
       {

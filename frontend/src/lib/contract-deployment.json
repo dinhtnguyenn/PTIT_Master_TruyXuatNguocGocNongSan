@@ -1,6 +1,6 @@
 {
-  "contractAddress": "0x309f3A376Ea8c8d3f9462529b921f55cb612AB25",
-  "adminAddress": "0x33F34938981588Df03c8eB291C6abe75612eA49a",
+  "contractAddress": "0x68Af0988167fddD7Eb5CE70485EA41f3A4a582a6",
+  "adminAddress": "0xd308d759F0986aADe715d8B2bf18d58c1680b9CC",
   "network": "polygonAmoy",
   "chainId": "80002",
   "abi": [
@@ -43,6 +43,12 @@
           "indexed": true,
           "internalType": "string",
           "name": "batchId",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "productName",
           "type": "string"
         },
         {
@@ -337,6 +343,11 @@
               "type": "string"
             },
             {
+              "internalType": "string",
+              "name": "productName",
+              "type": "string"
+            },
+            {
               "internalType": "enum SupplyChainProof.Stage",
               "name": "currentStage",
               "type": "uint8"
@@ -577,6 +588,11 @@
         {
           "internalType": "string",
           "name": "batchId",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "productName",
           "type": "string"
         },
         {
