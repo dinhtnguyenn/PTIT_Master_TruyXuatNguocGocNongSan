@@ -7,7 +7,12 @@ import {
   Download,
   AlertTriangle,
   ExternalLink,
+  ZoomIn,
+  ZoomOut,
+  X,
+  RotateCcw,
 } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import QRCode from 'qrcode';
 import { API_BASE_URL, STAGE_LABELS, getDynamicExplorerUrl, formatRelativeTime } from '../../../lib/constants';
 import { getContract, truncateAddress } from '../../../lib/web3';
@@ -39,6 +44,43 @@ export default function TraceDetailPage() {
   const [loading, setLoading] = useState(true);
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [explorerUrl, setExplorerUrl] = useState<string>('https://amoy.polygonscan.com');
+  const [mounted, setMounted] = useState(false);
+  const [zoomImage, setZoomImage] = useState<{ url: string; title: string } | null>(null);
+  const [scale, setScale] = useState<number>(1);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  function openZoom(url: string, title: string) {
+    setZoomImage({ url, title });
+    setScale(1);
+  }
+
+  function closeZoom() {
+    setZoomImage(null);
+    setScale(1);
+  }
+
+  // Lắng nghe phím ESC & phím +/- để phóng to / thu nhỏ
+  useEffect(() => {
+    if (!zoomImage) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeZoom();
+      if (e.key === '+' || e.key === '=') setScale((s) => Math.min(Number((s + 0.25).toFixed(2)), 3));
+      if (e.key === '-') setScale((s) => Math.max(Number((s - 0.25).toFixed(2)), 0.5));
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    const origOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = origOverflow;
+    };
+  }, [zoomImage]);
 
   useEffect(() => {
     getDynamicExplorerUrl().then((url) => {
@@ -112,7 +154,17 @@ export default function TraceDetailPage() {
 
         {qrDataUrl && (
           <div className="flex items-center gap-3 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-            <img src={qrDataUrl} alt="Mã QR" className="w-14 h-14 rounded" />
+            <button
+              type="button"
+              onClick={() => openZoom(qrDataUrl, `Mã QR sản phẩm - ${batch.batchId}`)}
+              className="group relative overflow-hidden rounded-lg border border-slate-200 hover:border-emerald-500 cursor-zoom-in transition shrink-0"
+              title="Bấm để phóng to mã QR"
+            >
+              <img src={qrDataUrl} alt="Mã QR" className="w-14 h-14 rounded-lg transition duration-200 group-hover:scale-105" />
+              <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/25 flex items-center justify-center transition-colors">
+                <ZoomIn className="w-3.5 h-3.5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+            </button>
             <div>
               <p className="text-[10px] font-bold text-slate-600 uppercase">Mã QR Sản Phẩm</p>
               <a
@@ -163,7 +215,23 @@ export default function TraceDetailPage() {
             {batch.productImageUrl && (
               <div className="sm:col-span-2 pt-3 border-t border-slate-100">
                 <span className="text-slate-400 font-medium block mb-1.5">Ảnh nông sản / ruộng trồng:</span>
-                <img src={formatImageUrl(batch.productImageUrl)} alt="Ảnh sản phẩm" className="h-32 object-cover rounded-lg border border-slate-200" />
+                <button
+                  type="button"
+                  onClick={() => openZoom(formatImageUrl(batch.productImageUrl), `Ảnh nông sản / ruộng trồng - ${batch.productName}`)}
+                  className="group relative inline-block overflow-hidden rounded-xl border border-slate-200 hover:border-emerald-500 shadow-xs hover:shadow-md transition-all text-left cursor-zoom-in"
+                  title="Nhấp để phóng to ảnh nông sản"
+                >
+                  <img
+                    src={formatImageUrl(batch.productImageUrl)}
+                    alt="Ảnh nông sản / ruộng trồng"
+                    className="h-36 sm:h-40 max-w-full object-cover rounded-xl transition duration-200 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/30 transition-colors flex items-center justify-center rounded-xl">
+                    <span className="opacity-0 group-hover:opacity-100 transition-opacity px-2.5 py-1 bg-black/75 backdrop-blur-xs text-white text-[11px] font-medium rounded-lg flex items-center gap-1.5 shadow-md">
+                      <ZoomIn className="w-3.5 h-3.5" /> Phóng to
+                    </span>
+                  </div>
+                </button>
               </div>
             )}
           </div>
@@ -199,7 +267,23 @@ export default function TraceDetailPage() {
               {batch.certImageUrl && (
                 <div className="sm:col-span-2 pt-3 border-t border-slate-100">
                   <span className="text-slate-400 font-medium block mb-1.5">Ảnh giấy chứng nhận:</span>
-                  <img src={formatImageUrl(batch.certImageUrl)} alt="Chứng nhận" className="h-32 object-cover rounded-lg border border-slate-200" />
+                  <button
+                    type="button"
+                    onClick={() => openZoom(formatImageUrl(batch.certImageUrl), `Ảnh giấy chứng nhận kiểm định - ${batch.certificateCode || batch.certificateType || batch.batchId}`)}
+                    className="group relative inline-block overflow-hidden rounded-xl border border-slate-200 hover:border-emerald-500 shadow-xs hover:shadow-md transition-all text-left cursor-zoom-in"
+                    title="Nhấp để phóng to giấy chứng nhận"
+                  >
+                    <img
+                      src={formatImageUrl(batch.certImageUrl)}
+                      alt="Ảnh giấy chứng nhận kiểm định"
+                      className="h-36 sm:h-40 max-w-full object-cover rounded-xl transition duration-200 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/30 transition-colors flex items-center justify-center rounded-xl">
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity px-2.5 py-1 bg-black/75 backdrop-blur-xs text-white text-[11px] font-medium rounded-lg flex items-center gap-1.5 shadow-md">
+                        <ZoomIn className="w-3.5 h-3.5" /> Phóng to
+                      </span>
+                    </div>
+                  </button>
                 </div>
               )}
             </div>
@@ -280,6 +364,123 @@ export default function TraceDetailPage() {
           )}
         </div>
       </div>
+
+      {/* MODAL PHÓNG TO HÌNH ẢNH (IMAGE LIGHTBOX) */}
+      {mounted && zoomImage && typeof document !== 'undefined' && createPortal(
+        <div
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) closeZoom();
+          }}
+          className="fixed inset-0 z-[9999] bg-slate-950/85 backdrop-blur-md flex flex-col justify-between p-3 sm:p-6 animate-in fade-in duration-200"
+        >
+          {/* Thanh tiêu đề & điều khiển */}
+          <div className="w-full max-w-5xl mx-auto flex items-center justify-between gap-3 text-white pb-3 border-b border-white/10 shrink-0">
+            <div className="min-w-0">
+              <h3 className="text-sm font-semibold truncate text-white">{zoomImage.title}</h3>
+              <p className="text-[11px] text-slate-400 font-mono">{batch.batchId} • {batch.productName}</p>
+            </div>
+
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setScale((s) => Math.max(Number((s - 0.25).toFixed(2)), 0.5))}
+                disabled={scale <= 0.5}
+                className="p-1.5 sm:p-2 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed transition text-white"
+                title="Thu nhỏ (-)"
+              >
+                <ZoomOut className="w-4 h-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setScale(1)}
+                className="px-2 py-1 text-xs font-mono font-semibold rounded-lg bg-white/10 hover:bg-white/20 transition text-emerald-400 min-w-[52px] text-center"
+                title="Khôi phục kích thước 100%"
+              >
+                {Math.round(scale * 100)}%
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setScale((s) => Math.min(Number((s + 0.25).toFixed(2)), 3))}
+                disabled={scale >= 3}
+                className="p-1.5 sm:p-2 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed transition text-white"
+                title="Phóng to (+)"
+              >
+                <ZoomIn className="w-4 h-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setScale(1)}
+                className="p-1.5 sm:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition text-white hidden sm:inline-flex"
+                title="Đặt lại (100%)"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
+
+              <a
+                href={zoomImage.url}
+                target="_blank"
+                rel="noreferrer"
+                download
+                className="p-1.5 sm:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition text-white"
+                title="Tải ảnh gốc về máy"
+              >
+                <Download className="w-4 h-4" />
+              </a>
+
+              <a
+                href={zoomImage.url}
+                target="_blank"
+                rel="noreferrer"
+                className="p-1.5 sm:p-2 rounded-lg bg-white/10 hover:bg-white/20 transition text-white hidden sm:inline-flex"
+                title="Mở trong tab mới"
+              >
+                <ExternalLink className="w-4 h-4" />
+              </a>
+
+              <button
+                type="button"
+                onClick={closeZoom}
+                className="p-1.5 sm:p-2 rounded-lg bg-white/10 hover:bg-rose-600/90 text-white transition ml-1"
+                title="Đóng (Esc)"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Vùng xem ảnh phóng to */}
+          <div
+            onClick={(e) => {
+              if (e.target === e.currentTarget) closeZoom();
+            }}
+            className="flex-1 overflow-auto flex items-center justify-center p-2 sm:p-4 my-auto"
+          >
+            <img
+              src={zoomImage.url}
+              alt={zoomImage.title}
+              style={{
+                transform: `scale(${scale})`,
+                transition: 'transform 0.15s ease-out',
+              }}
+              onClick={() => setScale((s) => (s === 1 ? 1.75 : 1))}
+              className={`max-w-[92vw] max-h-[75vh] object-contain rounded-xl shadow-2xl select-none transition-shadow ${
+                scale === 1 ? 'cursor-zoom-in' : 'cursor-zoom-out'
+              }`}
+            />
+          </div>
+
+          {/* Hướng dẫn thao tác */}
+          <div className="w-full text-center py-2 text-[11px] text-slate-400 select-none shrink-0 border-t border-white/10">
+            <span>Nhấp vào ảnh để phóng to/thu nhỏ nhanh • Nhấn phím Esc hoặc bấm ra ngoài để đóng</span>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
