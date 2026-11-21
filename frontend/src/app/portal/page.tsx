@@ -1300,21 +1300,9 @@ export default function SupplyChainPortalPage() {
                 className="text-xs file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:bg-slate-100"
               />
               {producerForm.productImageCid && (
-                <div className="mt-2 p-2 bg-emerald-50 rounded-lg border border-emerald-200 text-xs text-emerald-800 flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5 overflow-hidden">
-                    <span className="font-semibold shrink-0">Mã định danh IPFS (CID):</span>
-                    <span className="font-mono text-[11px] truncate">{producerForm.productImageCid}</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      navigator.clipboard.writeText(producerForm.productImageCid);
-                      toast.success('Đã sao chép mã IPFS CID!');
-                    }}
-                    className="text-[11px] text-emerald-700 hover:text-emerald-800 font-semibold underline shrink-0 cursor-pointer"
-                  >
-                    Sao chép
-                  </button>
+                <div className="mt-2 p-2 bg-emerald-50 rounded-lg border border-emerald-200 text-xs text-emerald-800 flex items-center gap-1.5 overflow-hidden">
+                  <span className="font-semibold shrink-0">Mã định danh IPFS (CID):</span>
+                  <span className="font-mono text-[11px] truncate select-all">{producerForm.productImageCid}</span>
                 </div>
               )}
             </div>
@@ -1437,21 +1425,9 @@ export default function SupplyChainPortalPage() {
                     className="text-xs file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:bg-slate-100"
                   />
                   {inspectorForm.certImageCid && (
-                    <div className="mt-2 p-2 bg-emerald-50 rounded-lg border border-emerald-200 text-xs text-emerald-800 flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5 overflow-hidden">
-                        <span className="font-semibold shrink-0">Mã định danh IPFS (CID):</span>
-                        <span className="font-mono text-[11px] truncate">{inspectorForm.certImageCid}</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          navigator.clipboard.writeText(inspectorForm.certImageCid);
-                          toast.success('Đã sao chép mã IPFS CID!');
-                        }}
-                        className="text-[11px] text-emerald-700 hover:text-emerald-800 font-semibold underline shrink-0 cursor-pointer"
-                      >
-                        Sao chép
-                      </button>
+                    <div className="mt-2 p-2 bg-emerald-50 rounded-lg border border-emerald-200 text-xs text-emerald-800 flex items-center gap-1.5 overflow-hidden">
+                      <span className="font-semibold shrink-0">Mã định danh IPFS (CID):</span>
+                      <span className="font-mono text-[11px] truncate select-all">{inspectorForm.certImageCid}</span>
                     </div>
                   )}
                 </div>

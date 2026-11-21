@@ -235,12 +235,9 @@ export default function TraceDetailPage() {
                 {batch.productImageCid && (
                   <div className="mt-2 flex items-center gap-1.5 flex-wrap">
                     <span className="text-slate-400 font-medium text-xs">Mã định danh IPFS (CID):</span>
-                    <CopyableAddress
-                      address={batch.productImageCid}
-                      truncate={false}
-                      title={`Nhấp để sao chép IPFS CID:\n${batch.productImageCid}`}
-                      className="text-[11px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200"
-                    />
+                    <span className="text-[11px] font-mono text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 select-all">
+                      {batch.productImageCid}
+                    </span>
                   </div>
                 )}
               </div>
@@ -311,12 +308,9 @@ export default function TraceDetailPage() {
                   {batch.certImageCid && (
                     <div className="mt-2 flex items-center gap-1.5 flex-wrap">
                       <span className="text-slate-400 font-medium text-xs">Mã định danh IPFS (CID):</span>
-                      <CopyableAddress
-                        address={batch.certImageCid}
-                        truncate={false}
-                        title={`Nhấp để sao chép IPFS CID:\n${batch.certImageCid}`}
-                        className="text-[11px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200"
-                      />
+                      <span className="text-[11px] font-mono text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 select-all">
+                        {batch.certImageCid}
+                      </span>
                     </div>
                   )}
                 </div>
