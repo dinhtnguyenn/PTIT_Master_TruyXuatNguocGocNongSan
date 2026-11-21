@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { Copy, Check } from 'lucide-react';
 import { truncateAddress } from '../lib/web3';
-import { useToast } from './ToastProvider';
 
 interface CopyableAddressProps {
   address?: string | null;
@@ -23,7 +22,6 @@ export default function CopyableAddress({
   prefix,
 }: CopyableAddressProps) {
   const [copied, setCopied] = useState(false);
-  const { toast } = useToast();
 
   if (!address) {
     return <span className="text-slate-400 italic">Chưa cập nhật</span>;
@@ -37,7 +35,6 @@ export default function CopyableAddress({
     try {
       await navigator.clipboard.writeText(address!);
       setCopied(true);
-      toast.success(`Đã sao chép: ${address}`);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       const textArea = document.createElement('textarea');
@@ -47,7 +44,6 @@ export default function CopyableAddress({
       document.execCommand('copy');
       document.body.removeChild(textArea);
       setCopied(true);
-      toast.success(`Đã sao chép: ${address}`);
       setTimeout(() => setCopied(false), 2000);
     }
   }

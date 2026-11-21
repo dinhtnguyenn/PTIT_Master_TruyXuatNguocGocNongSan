@@ -29,7 +29,6 @@ export default function Navbar() {
     if (!account) return;
     navigator.clipboard.writeText(account);
     setCopiedAccount(true);
-    toast.success(`Đã sao chép địa chỉ ví: ${account}`);
     setTimeout(() => setCopiedAccount(false), 2000);
   }
 
