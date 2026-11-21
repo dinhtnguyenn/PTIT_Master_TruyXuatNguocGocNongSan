@@ -1458,10 +1458,10 @@ export default function SupplyChainPortalPage() {
                     />
                   </div>
                 </div>
-                <div>
+                <div className="sm:col-span-2">
                   <label className="block text-slate-600 font-medium mb-1">Ghi chú bảo quản</label>
-                  <input
-                    type="text"
+                  <textarea
+                    rows={2}
                     value={logisticsForm.storageNotes}
                     onChange={(e) => setLogisticsForm({ ...logisticsForm, storageNotes: e.target.value })}
                     className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
@@ -1569,8 +1569,8 @@ export default function SupplyChainPortalPage() {
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block text-slate-600 font-medium mb-1">Ghi chú tiếp nhận</label>
-                  <input
-                    type="text"
+                  <textarea
+                    rows={2}
                     value={distributorForm.receiptNotes}
                     onChange={(e) => setDistributorForm({ ...distributorForm, receiptNotes: e.target.value })}
                     className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"

@@ -1678,6 +1678,16 @@ export default function SuperadminPage() {
                   </div>
 
                   <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Ghi chú bảo quản</label>
+                    <textarea
+                      rows={2}
+                      value={batchForm.storageNotes || ''}
+                      onChange={(e) => setBatchForm({ ...batchForm, storageNotes: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300"
+                    />
+                  </div>
+
+                  <div>
                     <label className="block font-semibold text-slate-700 mb-1">Ví Đơn vị vận chuyển ký</label>
                     <input
                       type="text"
