@@ -364,7 +364,6 @@ export default function SupplyChainPortalPage() {
           ...prev,
           [targetRole]: { loading: false, error: errorMsg, result: null, currentStage: undefined },
         }));
-        toast.error(errorMsg, 'Chưa lưu trên Blockchain');
         if (targetRole === 'INSPECTOR') setInspectorForm((f) => ({ ...f, batchId: '' }));
         if (targetRole === 'LOGISTICS') setLogisticsForm((f) => ({ ...f, batchId: '' }));
         if (targetRole === 'DISTRIBUTOR') setDistributorForm((f) => ({ ...f, batchId: '' }));
@@ -398,7 +397,6 @@ export default function SupplyChainPortalPage() {
             ...prev,
             [targetRole]: { loading: false, error: errorMsg, result: null, currentStage: stageNum },
           }));
-          toast.error(errorMsg, 'Không thể kiểm định');
           setInspectorForm((f) => ({ ...f, batchId: '' }));
           return;
         }
@@ -409,7 +407,6 @@ export default function SupplyChainPortalPage() {
             ...prev,
             [targetRole]: { loading: false, error: errorMsg, result: null, currentStage: stageNum },
           }));
-          toast.error(errorMsg, 'Chưa đến lượt vận chuyển');
           setLogisticsForm((f) => ({ ...f, batchId: '' }));
           return;
         }
@@ -419,7 +416,6 @@ export default function SupplyChainPortalPage() {
             ...prev,
             [targetRole]: { loading: false, error: errorMsg, result: null, currentStage: stageNum },
           }));
-          toast.error(errorMsg, 'Lô hàng đã vận chuyển');
           setLogisticsForm((f) => ({ ...f, batchId: '' }));
           return;
         }
@@ -430,7 +426,6 @@ export default function SupplyChainPortalPage() {
             ...prev,
             [targetRole]: { loading: false, error: errorMsg, result: null, currentStage: stageNum },
           }));
-          toast.error(errorMsg, 'Chưa đến lượt phân phối');
           setDistributorForm((f) => ({ ...f, batchId: '' }));
           return;
         }
@@ -440,7 +435,6 @@ export default function SupplyChainPortalPage() {
             ...prev,
             [targetRole]: { loading: false, error: errorMsg, result: null, currentStage: stageNum },
           }));
-          toast.error(errorMsg, 'Lô hàng đã hoàn tất');
           setDistributorForm((f) => ({ ...f, batchId: '' }));
           return;
         }
@@ -480,7 +474,6 @@ export default function SupplyChainPortalPage() {
         ...prev,
         [targetRole]: { loading: false, error: err.message || 'Lỗi kiểm tra lô hàng', result: null },
       }));
-      toast.error(err.message || 'Lỗi kiểm tra lô hàng', 'Lỗi xác thực');
     }
   }
 
