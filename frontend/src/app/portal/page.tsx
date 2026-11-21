@@ -1234,7 +1234,7 @@ export default function SupplyChainPortalPage() {
               <div className="flex items-center gap-1.5 text-xs font-semibold text-blue-900 bg-blue-50/70 p-2.5 rounded-lg border border-blue-200">
                 <CheckCircle2 className="w-4 h-4 text-blue-600 shrink-0" />
                 <span>
-                  Đang nhập dữ liệu kiểm định cho lô hàng: <strong className="font-mono text-blue-950">{batchVerifications.INSPECTOR.result.batchId}</strong> ({batchVerifications.INSPECTOR.result.productName})
+                  Đang nhập dữ liệu kiểm định cho lô hàng: <strong className="font-mono text-blue-950">{batchVerifications.INSPECTOR.result.batchId}</strong>
                 </span>
               </div>
 
@@ -1353,7 +1353,7 @@ export default function SupplyChainPortalPage() {
               <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-900 bg-amber-50/70 p-2.5 rounded-lg border border-amber-200">
                 <CheckCircle2 className="w-4 h-4 text-amber-600 shrink-0" />
                 <span>
-                  Đang nhập dữ liệu vận chuyển cho lô hàng: <strong className="font-mono text-amber-950">{batchVerifications.LOGISTICS.result.batchId}</strong> ({batchVerifications.LOGISTICS.result.productName})
+                  Đang nhập dữ liệu vận chuyển cho lô hàng: <strong className="font-mono text-amber-950">{batchVerifications.LOGISTICS.result.batchId}</strong>
                 </span>
               </div>
 
@@ -1506,7 +1506,7 @@ export default function SupplyChainPortalPage() {
               <div className="flex items-center gap-1.5 text-xs font-semibold text-purple-900 bg-purple-50/70 p-2.5 rounded-lg border border-purple-200">
                 <CheckCircle2 className="w-4 h-4 text-purple-600 shrink-0" />
                 <span>
-                  Đang nhập dữ liệu tiếp nhận phân phối cho lô hàng: <strong className="font-mono text-purple-950">{batchVerifications.DISTRIBUTOR.result.batchId}</strong> ({batchVerifications.DISTRIBUTOR.result.productName})
+                  Đang nhập dữ liệu tiếp nhận phân phối cho lô hàng: <strong className="font-mono text-purple-950">{batchVerifications.DISTRIBUTOR.result.batchId}</strong>
                 </span>
               </div>
 
