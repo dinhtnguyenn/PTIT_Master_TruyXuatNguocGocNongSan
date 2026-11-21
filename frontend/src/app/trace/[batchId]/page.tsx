@@ -153,7 +153,7 @@ export default function TraceDetailPage() {
           <div className="flex items-center gap-3 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
             <button
               type="button"
-              onClick={() => openZoom(qrDataUrl, `Mã QR sản phẩm - ${batch.batchId}`)}
+              onClick={() => openZoom(qrDataUrl, 'Mã QR truy xuất nguồn gốc')}
               className="group relative overflow-hidden rounded-lg border border-slate-200 hover:border-emerald-500 cursor-zoom-in transition shrink-0"
               title="Bấm để phóng to mã QR"
             >
@@ -222,7 +222,7 @@ export default function TraceDetailPage() {
                 <span className="text-slate-400 font-medium block mb-1.5">Ảnh nông sản / ruộng trồng:</span>
                 <button
                   type="button"
-                  onClick={() => openZoom(formatImageUrl(batch.productImageUrl), `Ảnh nông sản / ruộng trồng - ${batch.productName}`)}
+                  onClick={() => openZoom(formatImageUrl(batch.productImageUrl), 'Ảnh nông sản / ruộng trồng')}
                   className="group relative inline-block overflow-hidden rounded-xl border border-slate-200 hover:border-emerald-500 shadow-xs hover:shadow-md transition-all text-left cursor-zoom-in"
                   title="Nhấp để phóng to ảnh nông sản"
                 >
@@ -295,7 +295,7 @@ export default function TraceDetailPage() {
                   <span className="text-slate-400 font-medium block mb-1.5">Ảnh giấy chứng nhận:</span>
                   <button
                     type="button"
-                    onClick={() => openZoom(formatImageUrl(batch.certImageUrl), `Ảnh giấy chứng nhận kiểm định - ${batch.certificateCode || batch.certificateType || batch.batchId}`)}
+                    onClick={() => openZoom(formatImageUrl(batch.certImageUrl), 'Ảnh giấy chứng nhận kiểm định')}
                     className="group relative inline-block overflow-hidden rounded-xl border border-slate-200 hover:border-emerald-500 shadow-xs hover:shadow-md transition-all text-left cursor-zoom-in"
                     title="Nhấp để phóng to giấy chứng nhận"
                   >
@@ -441,8 +441,19 @@ export default function TraceDetailPage() {
           {/* Thanh tiêu đề & điều khiển */}
           <div className="w-full max-w-5xl mx-auto flex items-center justify-between gap-3 text-white pb-3 border-b border-white/10 shrink-0">
             <div className="min-w-0">
-              <h3 className="text-sm font-semibold truncate text-white">{zoomImage.title}</h3>
-              <p className="text-[11px] text-slate-400 font-mono">{batch.batchId} • {batch.productName}</p>
+              <h3 className="text-sm font-bold font-mono text-white truncate flex items-center gap-2">
+                <span>{batch.batchId}</span>
+                {zoomImage.title && (
+                  <span className="text-xs font-normal text-slate-300 font-sans">
+                    • {zoomImage.title}
+                  </span>
+                )}
+              </h3>
+              <p className="text-xs text-slate-400 truncate mt-0.5">
+                <span>Tên sản phẩm: <strong className="font-medium text-slate-200">{batch.productName}</strong></span>
+                <span className="text-slate-500 mx-2">•</span>
+                <span>Loại sản phẩm: <strong className="font-medium text-slate-200">{batch.category || 'N/A'}</strong></span>
+              </p>
             </div>
 
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
