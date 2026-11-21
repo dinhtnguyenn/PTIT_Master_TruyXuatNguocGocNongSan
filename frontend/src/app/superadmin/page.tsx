@@ -27,6 +27,7 @@ import {
 import { connectWallet, disconnectWallet, truncateAddress, isWalletDisconnected } from '../../lib/web3';
 import { API_BASE_URL, ROLE_LABELS, STAGE_LABELS } from '../../lib/constants';
 import { useToast } from '../../components/ToastProvider';
+import CopyableAddress from '../../components/CopyableAddress';
 
 const ALL_ROLES = ['PRODUCER', 'INSPECTOR', 'LOGISTICS', 'DISTRIBUTOR', 'ADMIN'];
 const ALL_STAGES = ['CREATED', 'INSPECTED', 'IN_TRANSIT', 'DELIVERED'];
@@ -942,8 +943,8 @@ export default function SuperadminPage() {
                       const userRoles = Array.isArray(u.roles) && u.roles.length > 0 ? u.roles : [u.role];
                       return (
                         <tr key={u.id} className="hover:bg-slate-50/70 transition">
-                          <td className="px-4 py-3 font-mono text-[11px] text-slate-900">
-                            {truncateAddress(u.walletAddress)}
+                          <td className="px-4 py-3 text-[11px]">
+                            <CopyableAddress address={u.walletAddress} />
                           </td>
                           <td className="px-4 py-3">
                             <div className="font-bold text-slate-900">{u.organizationName}</div>
@@ -1101,8 +1102,8 @@ export default function SuperadminPage() {
                             {STAGE_LABELS[b.stage]?.label || b.stage}
                           </span>
                         </td>
-                        <td className="px-4 py-3 font-mono text-[11px] text-slate-500">
-                          {truncateAddress(b.producerWallet || b.createdByAddress)}
+                        <td className="px-4 py-3 text-[11px]">
+                          <CopyableAddress address={b.producerWallet || b.createdByAddress} />
                         </td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex items-center justify-end gap-1.5">

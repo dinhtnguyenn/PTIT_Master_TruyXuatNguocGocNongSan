@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ShieldCheck, Wallet, LogOut, User } from 'lucide-react';
+import { ShieldCheck, Wallet, LogOut, User, Copy, Check } from 'lucide-react';
 import {
   connectWallet,
   disconnectWallet,
@@ -23,6 +23,15 @@ export default function Navbar() {
   const [status, setStatus] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isDbAdmin, setIsDbAdmin] = useState(false);
+  const [copiedAccount, setCopiedAccount] = useState(false);
+
+  function handleCopyAccount() {
+    if (!account) return;
+    navigator.clipboard.writeText(account);
+    setCopiedAccount(true);
+    toast.success(`Đã sao chép địa chỉ ví: ${account}`);
+    setTimeout(() => setCopiedAccount(false), 2000);
+  }
 
   async function checkUser(walletAddr: string) {
     const isAdm = isHardcodedAdmin(walletAddr);
@@ -215,12 +224,14 @@ export default function Navbar() {
                     {(!isAdmin && status === 'PENDING') ? ' (Chờ duyệt)' : (!isAdmin && status === 'REJECTED') ? ' (Từ chối)' : ''}
                   </span>
                 )}
-                <div
-                  title={isAdmin ? `Quản trị viên: ${account}` : `Địa chỉ ví: ${account}`}
-                  className={`text-xs px-2.5 py-1 rounded-md font-mono flex items-center gap-1.5 transition ${
+                <button
+                  type="button"
+                  onClick={handleCopyAccount}
+                  title={`Địa chỉ ví: ${account}\n(Nhấp để sao chép đầy đủ)`}
+                  className={`text-xs px-2.5 py-1 rounded-md font-mono flex items-center gap-1.5 transition cursor-pointer group ${
                     isAdmin
-                      ? 'bg-purple-50 text-purple-900 border border-purple-200 font-semibold shadow-2xs'
-                      : 'bg-slate-100 text-slate-700 border border-slate-200'
+                      ? 'bg-purple-50 text-purple-900 border border-purple-200 hover:bg-purple-100 hover:border-purple-300 font-semibold shadow-2xs'
+                      : 'bg-slate-100 text-slate-700 border border-slate-200 hover:bg-emerald-50 hover:text-emerald-800 hover:border-emerald-300'
                   }`}
                 >
                   {isAdmin ? (
@@ -229,7 +240,12 @@ export default function Navbar() {
                     <User className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                   )}
                   <span>{truncateAddress(account)}</span>
-                </div>
+                  {copiedAccount ? (
+                    <Check className="w-3 h-3 text-emerald-600 animate-in zoom-in-50 duration-150 shrink-0" />
+                  ) : (
+                    <Copy className="w-3 h-3 text-slate-400 group-hover:text-emerald-600 transition-colors shrink-0" />
+                  )}
+                </button>
                 <button
                   onClick={handleLogout}
                   title="Đăng xuất khỏi phiên làm việc"

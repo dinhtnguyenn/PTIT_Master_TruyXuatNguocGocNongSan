@@ -29,6 +29,7 @@ import {
   getDynamicContractAddress,
 } from '../../lib/constants';
 import { useToast } from '../../components/ToastProvider';
+import CopyableAddress from '../../components/CopyableAddress';
 
 export default function RegisterPage() {
   const { toast } = useToast();
@@ -308,9 +309,13 @@ export default function RegisterPage() {
           <span className="text-slate-500 font-medium">
             {isAdmin ? 'Ví Quản trị viên:' : 'Ví kết nối:'}
           </span>
-          <p className="text-xs font-mono text-slate-500 mt-0.5 break-all">
-            {account ? account : 'Chưa kết nối ví'}
-          </p>
+          <div className="mt-0.5">
+            {account ? (
+              <CopyableAddress address={account} truncate={false} className="text-xs text-slate-600 break-all" />
+            ) : (
+              <span className="text-xs font-mono text-slate-400">Chưa kết nối ví</span>
+            )}
+          </div>
         </div>
         {!account && (
           <button

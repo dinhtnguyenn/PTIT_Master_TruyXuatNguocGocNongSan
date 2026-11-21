@@ -5,6 +5,7 @@ import { Users, BarChart3, Wallet, RefreshCw, ShieldAlert, ShieldCheck } from 'l
 import { connectWallet, truncateAddress, isWalletDisconnected, sendContractTx, formatBlockchainError } from '../../lib/web3';
 import { API_BASE_URL, ROLE_HASHES, ROLE_LABELS, STATUS_LABELS, isHardcodedAdmin } from '../../lib/constants';
 import { useToast } from '../../components/ToastProvider';
+import CopyableAddress from '../../components/CopyableAddress';
 
 function formatDateTime(dateStr?: string | Date | null): string {
   if (!dateStr) return '—';
@@ -196,8 +197,8 @@ export default function AdminPage() {
           <ShieldAlert className="w-6 h-6" />
         </div>
         <h1 className="text-base font-bold text-slate-900 mb-2">Quyền Truy Cập Bị Từ Chối</h1>
-        <p className="text-xs text-slate-500 mb-2">
-          Ví đang kết nối (<span className="font-mono text-slate-700">{truncateAddress(account)}</span>) không thuộc danh sách 2 ví Quản trị viên của hệ thống.
+        <p className="text-xs text-slate-500 mb-2 flex items-center justify-center gap-1 flex-wrap">
+          <span>Ví đang kết nối (</span><CopyableAddress address={account} /><span>) không thuộc danh sách 2 ví Quản trị viên của hệ thống.</span>
         </p>
         <p className="text-[11px] text-slate-400">
           Chức năng Quản trị chỉ khả dụng khi kết nối đúng địa chỉ ví Quản trị viên trên MetaMask.
@@ -217,7 +218,9 @@ export default function AdminPage() {
               <ShieldCheck className="w-3 h-3" /> Ví Quản trị viên
             </span>
           </div>
-          <p className="text-xs font-mono text-slate-500 mt-0.5">{account}</p>
+          <div className="mt-0.5">
+            <CopyableAddress address={account} truncate={false} className="text-xs text-slate-600" />
+          </div>
         </div>
 
         <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200 text-xs font-semibold">
@@ -324,8 +327,8 @@ export default function AdminPage() {
                               ))}
                             </div>
                           </td>
-                          <td className="py-2.5 px-3 font-mono text-slate-800">
-                            {truncateAddress(acc.walletAddress)}
+                          <td className="py-2.5 px-3">
+                            <CopyableAddress address={acc.walletAddress} />
                           </td>
                           <td className="py-2.5 px-3 font-mono text-slate-700 text-[11px] whitespace-nowrap">
                             {acc.phoneNumber || '—'}

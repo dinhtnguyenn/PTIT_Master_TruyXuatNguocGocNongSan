@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import QrScannerModal from '../../components/QrScannerModal';
+import CopyableAddress from '../../components/CopyableAddress';
 import {
   connectWallet,
   truncateAddress,
@@ -961,8 +962,8 @@ export default function SupplyChainPortalPage() {
         <h1 className="text-base font-bold text-slate-900">
           {effectiveUserData?.status === 'PENDING' ? 'Hồ sơ đang chờ duyệt' : 'Chưa đăng ký tham gia chuỗi cung ứng'}
         </h1>
-        <p className="text-xs text-slate-500 mt-1">
-          Địa chỉ ví <span className="font-mono">{truncateAddress(account)}</span> {effectiveUserData?.status === 'PENDING' ? 'đang trong danh sách chờ Quản trị viên phê duyệt.' : 'chưa đăng ký vai trò nhập liệu trong chuỗi cung ứng.'}
+        <p className="text-xs text-slate-500 mt-1 flex items-center justify-center gap-1 flex-wrap">
+          <span>Địa chỉ ví</span> <CopyableAddress address={account} /> <span>{effectiveUserData?.status === 'PENDING' ? 'đang trong danh sách chờ Quản trị viên phê duyệt.' : 'chưa đăng ký vai trò nhập liệu trong chuỗi cung ứng.'}</span>
         </p>
         <div className="mt-4 flex items-center justify-center gap-4">
           <Link
@@ -1004,9 +1005,9 @@ export default function SupplyChainPortalPage() {
         <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wide block">
           {ROLE_LABELS[role] || role}
         </span>
-        <p className="text-xs font-mono text-slate-500 mt-0.5 break-all" title={account}>
-          {account}
-        </p>
+        <div className="mt-0.5">
+          <CopyableAddress address={account} truncate={false} className="text-xs text-slate-600 break-all" />
+        </div>
       </div>
 
       {/* Role Switcher if multi-role */}

@@ -16,6 +16,7 @@ import { createPortal } from 'react-dom';
 import QRCode from 'qrcode';
 import { API_BASE_URL, STAGE_LABELS, getDynamicExplorerUrl, formatRelativeTime } from '../../../lib/constants';
 import { getContract, truncateAddress } from '../../../lib/web3';
+import CopyableAddress from '../../../components/CopyableAddress';
 
 function formatImageUrl(url?: string | null): string {
   if (!url) return '';
@@ -208,7 +209,7 @@ export default function TraceDetailPage() {
             <p><span className="text-slate-400 font-medium">Địa điểm sản xuất:</span> {batch.productionLocation}</p>
             <p><span className="text-slate-400 font-medium">Ngày bắt đầu canh tác:</span> {formatDate(batch.cultivationStartDate)}</p>
             <p><span className="text-slate-400 font-medium">Ngày thu hoạch:</span> {formatDate(batch.harvestDate)}</p>
-            <p><span className="text-slate-400 font-medium">Ví Nhà sản xuất:</span> <span className="font-mono">{truncateAddress(batch.producerWallet)}</span></p>
+            <p className="flex items-center gap-1.5 flex-wrap"><span className="text-slate-400 font-medium shrink-0">Ví Nhà sản xuất:</span> <CopyableAddress address={batch.producerWallet} /></p>
             <div className="sm:col-span-2 pt-3 border-t border-slate-100">
               <span className="text-slate-400 font-medium">Vật tư nông nghiệp:</span> {batch.farmingSupplies}
             </div>
@@ -263,7 +264,7 @@ export default function TraceDetailPage() {
               <p><span className="text-slate-400 font-medium">Cơ quan cấp:</span> {batch.issuingAuthority}</p>
               <p><span className="text-slate-400 font-medium">Ngày cấp:</span> {formatDate(batch.issuedDate)}</p>
               <p><span className="text-slate-400 font-medium">Ngày hết hạn:</span> {formatDate(batch.expiryDate)}</p>
-              <p><span className="text-slate-400 font-medium">Ví Đơn vị kiểm định:</span> <span className="font-mono">{truncateAddress(batch.inspectorWallet)}</span></p>
+              <p className="flex items-center gap-1.5 flex-wrap"><span className="text-slate-400 font-medium shrink-0">Ví Đơn vị kiểm định:</span> <CopyableAddress address={batch.inspectorWallet} /></p>
               {batch.certImageUrl && (
                 <div className="sm:col-span-2 pt-3 border-t border-slate-100">
                   <span className="text-slate-400 font-medium block mb-1.5">Ảnh giấy chứng nhận:</span>
@@ -321,6 +322,9 @@ export default function TraceDetailPage() {
               <p><span className="text-slate-400 font-medium">Thời gian hoàn tất:</span> {formatDateTime(batch.completionTime)}</p>
               <p><span className="text-slate-400 font-medium">Nhiệt độ:</span> {batch.temperature}°C</p>
               <p><span className="text-slate-400 font-medium">Độ ẩm:</span> {batch.humidity}%</p>
+              {batch.logisticsWallet && (
+                <p className="flex items-center gap-1.5 flex-wrap"><span className="text-slate-400 font-medium shrink-0">Ví Đơn vị vận chuyển:</span> <CopyableAddress address={batch.logisticsWallet} /></p>
+              )}
               <div className="sm:col-span-2 pt-3 border-t border-slate-100">
                 <span className="text-slate-400 font-medium">Ghi chú bảo quản:</span> {batch.storageNotes || 'Không'}
               </div>
@@ -355,6 +359,9 @@ export default function TraceDetailPage() {
               <p><span className="text-slate-400 font-medium">Thời gian tiếp nhận:</span> {formatDateTime(batch.receivedTime)}</p>
               <p><span className="text-slate-400 font-medium">Số lượng thực nhận:</span> {batch.actualQuantity}</p>
               <p><span className="text-slate-400 font-medium">Trọng lượng thực nhận:</span> {batch.actualWeight} kg</p>
+              {batch.distributorWallet && (
+                <p className="flex items-center gap-1.5 flex-wrap"><span className="text-slate-400 font-medium shrink-0">Ví Đơn vị phân phối:</span> <CopyableAddress address={batch.distributorWallet} /></p>
+              )}
               <div className="sm:col-span-2 pt-3 border-t border-slate-100">
                 <span className="text-slate-400 font-medium">Ghi chú tiếp nhận:</span> {batch.receiptNotes || 'Không'}
               </div>
