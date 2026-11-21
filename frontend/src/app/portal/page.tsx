@@ -323,7 +323,7 @@ export default function SupplyChainPortalPage() {
     }
     cleanId = decodeURIComponent(cleanId).trim();
     if (!cleanId) {
-      toast.warning('Vui lòng quét mã QR của lô sản phẩm!');
+      toast.warning('Vui lòng quét mã QR của lô hàng!');
       return;
     }
 
@@ -602,20 +602,20 @@ export default function SupplyChainPortalPage() {
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] bg-white/90 p-2.5 rounded-lg border border-emerald-200 shadow-xs">
               <div>
-                <span className="text-slate-400 block text-[10px]">Mã lô:</span>
-                <span className="font-mono font-bold text-slate-900">{verification.result.batchId}</span>
+                <span className="text-slate-400 block text-[10px]">Mã lô hàng:</span>
+                <span className="font-mono text-slate-900">{verification.result.batchId}</span>
               </div>
               <div>
                 <span className="text-slate-400 block text-[10px]">Tên nông sản:</span>
-                <span className="font-semibold text-slate-900">{verification.result.productName}</span>
+                <span className="text-slate-900">{verification.result.productName}</span>
               </div>
               <div>
                 <span className="text-slate-400 block text-[10px]">Loại nông sản:</span>
-                <span className="font-semibold text-slate-900">{verification.result.category || '—'}</span>
+                <span className="text-slate-900">{verification.result.category || '—'}</span>
               </div>
               <div>
                 <span className="text-slate-400 block text-[10px]">Giai đoạn hiện tại:</span>
-                <span className="font-semibold text-emerald-700">{verification.result.stageText}</span>
+                <span className="text-emerald-700">{verification.result.stageText}</span>
               </div>
             </div>
           </div>
@@ -716,7 +716,7 @@ export default function SupplyChainPortalPage() {
     e.preventDefault();
     if (!account) return;
     if (!inspectorForm.batchId) {
-      toast.warning('Vui lòng chọn mã lô cần kiểm định!');
+      toast.warning('Vui lòng chọn mã lô hàng cần kiểm định!');
       return;
     }
     setSubmitting(true);
@@ -785,7 +785,7 @@ export default function SupplyChainPortalPage() {
     e.preventDefault();
     if (!account) return;
     if (!logisticsForm.batchId) {
-      toast.warning('Vui lòng chọn mã lô cần vận chuyển!');
+      toast.warning('Vui lòng chọn mã lô hàng cần vận chuyển!');
       return;
     }
     setSubmitting(true);
@@ -857,7 +857,7 @@ export default function SupplyChainPortalPage() {
     e.preventDefault();
     if (!account) return;
     if (!distributorForm.batchId) {
-      toast.warning('Vui lòng chọn mã lô tiếp nhận!');
+      toast.warning('Vui lòng chọn mã lô hàng tiếp nhận!');
       return;
     }
     setSubmitting(true);
@@ -1094,13 +1094,13 @@ export default function SupplyChainPortalPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
             <div>
-              <label className="block text-slate-600 font-medium mb-1">Mã lô sản phẩm *</label>
+              <label className="block text-slate-800 font-bold mb-1">Mã lô hàng *</label>
               <input
                 type="text"
                 required
                 readOnly
                 value={producerForm.batchId}
-                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono bg-slate-100 cursor-not-allowed select-all"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono font-bold bg-slate-100 cursor-not-allowed select-all"
               />
             </div>
             <div>
@@ -1667,7 +1667,7 @@ export default function SupplyChainPortalPage() {
               }}
               className="w-full py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition"
             >
-              <Copy className="w-3.5 h-3.5" /> Sao chép Mã Lô
+              <Copy className="w-3.5 h-3.5" /> Sao chép Mã lô hàng
             </button>
           </div>
         </div>

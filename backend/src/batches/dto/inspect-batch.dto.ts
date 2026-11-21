@@ -1,7 +1,7 @@
 import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
 
 export class InspectBatchDto {
-  @IsNotEmpty({ message: 'Mã lô sản phẩm không được để trống' })
+  @IsNotEmpty({ message: 'Mã lô hàng không được để trống' })
   @IsString()
   batchId: string;
 

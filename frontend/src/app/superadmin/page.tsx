@@ -1033,7 +1033,7 @@ export default function SuperadminPage() {
                 <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Tìm mã lô, tên nông sản..."
+                  placeholder="Tìm mã lô hàng, tên nông sản..."
                   value={batchSearch}
                   onChange={(e) => setBatchSearch(e.target.value)}
                   className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200"

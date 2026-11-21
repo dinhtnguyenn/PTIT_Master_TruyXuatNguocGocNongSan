@@ -119,8 +119,8 @@ export default function TraceDetailPage() {
     return (
       <div className="max-w-md mx-auto py-20 text-center">
         <AlertTriangle className="w-10 h-10 text-rose-500 mx-auto mb-2" />
-        <h1 className="text-base font-bold text-slate-800">Không tìm thấy mã lô</h1>
-        <p className="text-xs text-slate-500 mt-1">Mã lô {batchId} không tồn tại trên hệ thống.</p>
+        <h1 className="text-base font-bold text-slate-800">Không tìm thấy lô hàng</h1>
+        <p className="text-xs text-slate-500 mt-1">Mã lô hàng {batchId} không tồn tại trên hệ thống.</p>
       </div>
     );
   }
@@ -195,7 +195,7 @@ export default function TraceDetailPage() {
             )}
           </div>
           <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-700">
-            <p><span className="text-slate-400 font-medium">Mã lô sản phẩm:</span> <strong className="font-mono">{batch.batchId}</strong></p>
+            <p><span className="text-slate-400 font-medium">Mã lô hàng:</span> <strong className="font-mono">{batch.batchId}</strong></p>
             <p><span className="text-slate-400 font-medium">Tên sản phẩm:</span> {batch.productName}</p>
             <p><span className="text-slate-400 font-medium">Loại sản phẩm:</span> {batch.category}</p>
             <p><span className="text-slate-400 font-medium">Số lượng:</span> {batch.quantity}</p>
@@ -252,9 +252,9 @@ export default function TraceDetailPage() {
           </div>
           {batch.inspectionResult ? (
             <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-700">
-              <p><span className="text-slate-400 font-medium">Kết quả kiểm định:</span> <strong>{batch.inspectionResult}</strong></p>
+              <p><span className="text-slate-400 font-medium">Kết quả kiểm định:</span> {batch.inspectionResult}</p>
               <p><span className="text-slate-400 font-medium">Chỉ tiêu kiểm định:</span> {batch.inspectionCriteria}</p>
-              <p><span className="text-slate-400 font-medium">Mã chứng nhận:</span> <strong className="font-mono">{batch.certificateCode}</strong></p>
+              <p><span className="text-slate-400 font-medium">Mã chứng nhận:</span> <span className="font-mono">{batch.certificateCode}</span></p>
               <p><span className="text-slate-400 font-medium">Loại chứng nhận:</span> {batch.certificateType}</p>
               <p><span className="text-slate-400 font-medium">Cơ quan cấp:</span> {batch.issuingAuthority}</p>
               <p><span className="text-slate-400 font-medium">Ngày cấp:</span> {formatDate(batch.issuedDate)}</p>
@@ -310,7 +310,7 @@ export default function TraceDetailPage() {
               <p><span className="text-slate-400 font-medium">Tên đơn vị vận chuyển:</span> {batch.transporterName}</p>
               <p><span className="text-slate-400 font-medium">Thông tin liên hệ:</span> {batch.transporterContact}</p>
               <p><span className="text-slate-400 font-medium">Loại chủ thể:</span> {batch.transporterType}</p>
-              <p><span className="text-slate-400 font-medium">Mã vận chuyển:</span> <strong className="font-mono">{batch.shippingCode}</strong></p>
+              <p><span className="text-slate-400 font-medium">Mã vận chuyển:</span> <span className="font-mono">{batch.shippingCode}</span></p>
               <p><span className="text-slate-400 font-medium">Điểm đi:</span> {batch.originLocation}</p>
               <p><span className="text-slate-400 font-medium">Điểm đến:</span> {batch.destLocation}</p>
               <p><span className="text-slate-400 font-medium">Thời gian khởi hành:</span> {formatDateTime(batch.departureTime)}</p>
