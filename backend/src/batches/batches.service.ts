@@ -183,12 +183,18 @@ export class BatchesService implements OnModuleInit {
       throw new BadRequestException(`Lô hàng chưa hoàn tất kiểm định!`);
     }
 
+    if (dto.transporterType === 'Tổ chức' && !dto.shippingCode?.trim()) {
+      throw new BadRequestException('Mã vận chuyển không được để trống đối với Đơn vị vận chuyển là Tổ chức!');
+    }
+
+    const finalShippingCode = dto.transporterType === 'Cá nhân' ? '' : (dto.shippingCode?.trim() || '');
+
     const payload = {
       batchId: dto.batchId,
       transporterName: dto.transporterName,
       transporterContact: dto.transporterContact,
       transporterType: dto.transporterType,
-      shippingCode: dto.shippingCode,
+      shippingCode: finalShippingCode,
       originLocation: dto.originLocation,
       destLocation: dto.destLocation,
       departureTime: dto.departureTime,
@@ -213,7 +219,7 @@ export class BatchesService implements OnModuleInit {
         transporterName: dto.transporterName,
         transporterContact: dto.transporterContact,
         transporterType: dto.transporterType,
-        shippingCode: dto.shippingCode,
+        shippingCode: dto.transporterType === 'Cá nhân' ? null : (dto.shippingCode?.trim() || null),
         originLocation: dto.originLocation,
         destLocation: dto.destLocation,
         departureTime: new Date(dto.departureTime),

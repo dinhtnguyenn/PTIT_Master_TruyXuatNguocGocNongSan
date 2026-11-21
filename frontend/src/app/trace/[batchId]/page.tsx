@@ -339,7 +339,7 @@ export default function TraceDetailPage() {
               <p><span className="text-slate-400 font-medium">Tên đơn vị vận chuyển:</span> {batch.transporterName}</p>
               <p><span className="text-slate-400 font-medium">Thông tin liên hệ:</span> {batch.transporterContact}</p>
               <p><span className="text-slate-400 font-medium">Loại chủ thể:</span> {batch.transporterType}</p>
-              <p><span className="text-slate-400 font-medium">Mã vận chuyển:</span> <span className="font-mono">{batch.shippingCode}</span></p>
+              <p><span className="text-slate-400 font-medium">Mã vận chuyển:</span> <span className="font-mono">{batch.shippingCode || 'Không áp dụng'}</span></p>
               <p><span className="text-slate-400 font-medium">Điểm đi:</span> {batch.originLocation}</p>
               <p><span className="text-slate-400 font-medium">Điểm đến:</span> {batch.destLocation}</p>
               <p><span className="text-slate-400 font-medium">Thời gian khởi hành:</span> {formatDateTime(batch.departureTime)}</p>

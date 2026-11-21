@@ -147,7 +147,7 @@ export default function SupplyChainPortalPage() {
     transporterName: '',
     transporterContact: '',
     transporterType: 'Tổ chức',
-    shippingCode: `SHIP-${Math.floor(100000 + Math.random() * 900000)}`,
+    shippingCode: '',
     originLocation: '',
     destLocation: '',
     departureTime: '',
@@ -781,14 +781,25 @@ export default function SupplyChainPortalPage() {
       toast.warning('Vui lòng chọn mã lô hàng cần vận chuyển!');
       return;
     }
+    if (logisticsForm.transporterType === 'Tổ chức' && !logisticsForm.shippingCode.trim()) {
+      toast.warning('Vui lòng nhập mã vận chuyển cho Đơn vị vận chuyển là Tổ chức!');
+      return;
+    }
     setSubmitting(true);
     setStatusAlert(null);
+
+    const finalShippingCode = logisticsForm.transporterType === 'Cá nhân' ? '' : logisticsForm.shippingCode.trim();
+    const logisticsPayload = {
+      ...logisticsForm,
+      shippingCode: finalShippingCode,
+      logisticsWallet: account,
+    };
 
     try {
       const prepRes = await fetch(`${API_BASE_URL}/batches/prepare/logistics`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...logisticsForm, logisticsWallet: account }),
+        body: JSON.stringify(logisticsPayload),
       });
       const prepData = await prepRes.json();
       if (!prepRes.ok) {
@@ -805,8 +816,7 @@ export default function SupplyChainPortalPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...logisticsForm,
-          logisticsWallet: account,
+          ...logisticsPayload,
           logisticsTxHash: receipt.hash,
         }),
       });
@@ -828,7 +838,7 @@ export default function SupplyChainPortalPage() {
         transporterName: '',
         transporterContact: '',
         transporterType: 'Tổ chức',
-        shippingCode: `SHIP-${Math.floor(100000 + Math.random() * 900000)}`,
+        shippingCode: '',
         originLocation: '',
         destLocation: '',
         departureTime: '',
@@ -1375,7 +1385,14 @@ export default function SupplyChainPortalPage() {
                   <label className="block text-slate-600 font-medium mb-1">Loại chủ thể *</label>
                   <select
                     value={logisticsForm.transporterType}
-                    onChange={(e) => setLogisticsForm({ ...logisticsForm, transporterType: e.target.value })}
+                    onChange={(e) => {
+                      const newType = e.target.value;
+                      setLogisticsForm({
+                        ...logisticsForm,
+                        transporterType: newType,
+                        shippingCode: newType === 'Cá nhân' ? '' : logisticsForm.shippingCode,
+                      });
+                    }}
                     className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white"
                   >
                     <option value="Tổ chức">Tổ chức</option>
@@ -1383,13 +1400,25 @@ export default function SupplyChainPortalPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-slate-600 font-medium mb-1">Mã vận chuyển *</label>
+                  <label className="block text-slate-600 font-medium mb-1">
+                    Mã vận chuyển {logisticsForm.transporterType === 'Tổ chức' ? '*' : ''}
+                  </label>
                   <input
                     type="text"
-                    required
-                    readOnly
-                    value={logisticsForm.shippingCode}
-                    className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono bg-slate-100 cursor-not-allowed select-all"
+                    required={logisticsForm.transporterType === 'Tổ chức'}
+                    disabled={logisticsForm.transporterType === 'Cá nhân'}
+                    placeholder={
+                      logisticsForm.transporterType === 'Cá nhân'
+                        ? 'Không áp dụng đối với Cá nhân'
+                        : 'Nhập mã vận chuyển...'
+                    }
+                    value={logisticsForm.transporterType === 'Cá nhân' ? '' : logisticsForm.shippingCode}
+                    onChange={(e) => setLogisticsForm({ ...logisticsForm, shippingCode: e.target.value })}
+                    className={`w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono transition ${
+                      logisticsForm.transporterType === 'Cá nhân'
+                        ? 'bg-slate-100 text-slate-400 cursor-not-allowed select-none'
+                        : 'bg-white text-slate-800'
+                    }`}
                   />
                 </div>
                 <div>

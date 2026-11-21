@@ -17,9 +17,9 @@ export class TransportBatchDto {
   @IsString()
   transporterType: string; // Cá nhân hoặc Tổ chức
 
-  @IsNotEmpty({ message: 'Mã vận chuyển không được để trống' })
+  @IsOptional()
   @IsString()
-  shippingCode: string;
+  shippingCode?: string;
 
   @IsNotEmpty({ message: 'Điểm đi không được để trống' })
   @IsString()
