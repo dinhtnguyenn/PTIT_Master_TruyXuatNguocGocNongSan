@@ -174,11 +174,15 @@ export default function TraceDetailPage() {
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
           <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <span className="text-[11px] text-slate-500 font-normal flex items-center gap-1" title="Thời gian thực hiện">
-                <Clock className="w-3 h-3 text-slate-400 shrink-0" />
-                <span className="font-mono text-slate-700">{formatDateTime(batch.createdAt)}</span>
-              </span>
-              <span className="text-slate-300 hidden sm:inline">•</span>
+              {batch.createdAt && (
+                <>
+                  <span className="text-[11px] text-slate-500 font-normal flex items-center gap-1" title="Thời gian thực hiện">
+                    <Clock className="w-3 h-3 text-slate-400 shrink-0" />
+                    <span className="font-mono text-slate-700">{formatDateTime(batch.createdAt)}</span>
+                  </span>
+                  <span className="text-slate-300 hidden sm:inline">•</span>
+                </>
+              )}
               <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
                 Thông tin cung cấp bởi Đơn vị Sản xuất
               </h2>
@@ -248,13 +252,17 @@ export default function TraceDetailPage() {
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
           <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <span className="text-[11px] text-slate-500 font-normal flex items-center gap-1" title="Thời gian thực hiện">
-                <Clock className="w-3 h-3 text-slate-400 shrink-0" />
-                <span className={`font-mono ${batch.inspectionResult ? 'text-slate-700' : 'text-slate-400 italic'}`}>
-                  {batch.inspectionResult ? formatDateTime(batch.issuedDate || batch.updatedAt) : 'Chưa thực hiện'}
-                </span>
-              </span>
-              <span className="text-slate-300 hidden sm:inline">•</span>
+              {batch.inspectionResult && (
+                <>
+                  <span className="text-[11px] text-slate-500 font-normal flex items-center gap-1" title="Thời gian thực hiện">
+                    <Clock className="w-3 h-3 text-slate-400 shrink-0" />
+                    <span className="font-mono text-slate-700">
+                      {formatDateTime(batch.issuedDate || batch.updatedAt)}
+                    </span>
+                  </span>
+                  <span className="text-slate-300 hidden sm:inline">•</span>
+                </>
+              )}
               <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
                 Thông tin cung cấp bởi Đơn vị Kiểm định
               </h2>
@@ -323,13 +331,17 @@ export default function TraceDetailPage() {
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
           <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <span className="text-[11px] text-slate-500 font-normal flex items-center gap-1" title="Thời gian thực hiện">
-                <Clock className="w-3 h-3 text-slate-400 shrink-0" />
-                <span className={`font-mono ${batch.transporterName ? 'text-slate-700' : 'text-slate-400 italic'}`}>
-                  {batch.transporterName ? formatDateTime(batch.completionTime || batch.departureTime) : 'Chưa thực hiện'}
-                </span>
-              </span>
-              <span className="text-slate-300 hidden sm:inline">•</span>
+              {batch.transporterName && (
+                <>
+                  <span className="text-[11px] text-slate-500 font-normal flex items-center gap-1" title="Thời gian thực hiện">
+                    <Clock className="w-3 h-3 text-slate-400 shrink-0" />
+                    <span className="font-mono text-slate-700">
+                      {formatDateTime(batch.completionTime || batch.departureTime)}
+                    </span>
+                  </span>
+                  <span className="text-slate-300 hidden sm:inline">•</span>
+                </>
+              )}
               <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
                 Thông tin cung cấp bởi Đơn vị Vận chuyển
               </h2>
@@ -373,13 +385,17 @@ export default function TraceDetailPage() {
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
           <div className="bg-slate-50 px-4 py-2.5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <span className="text-[11px] text-slate-500 font-normal flex items-center gap-1" title="Thời gian thực hiện">
-                <Clock className="w-3 h-3 text-slate-400 shrink-0" />
-                <span className={`font-mono ${batch.distributorName ? 'text-slate-700' : 'text-slate-400 italic'}`}>
-                  {batch.distributorName ? formatDateTime(batch.receivedTime) : 'Chưa thực hiện'}
-                </span>
-              </span>
-              <span className="text-slate-300 hidden sm:inline">•</span>
+              {batch.distributorName && (
+                <>
+                  <span className="text-[11px] text-slate-500 font-normal flex items-center gap-1" title="Thời gian thực hiện">
+                    <Clock className="w-3 h-3 text-slate-400 shrink-0" />
+                    <span className="font-mono text-slate-700">
+                      {formatDateTime(batch.receivedTime)}
+                    </span>
+                  </span>
+                  <span className="text-slate-300 hidden sm:inline">•</span>
+                </>
+              )}
               <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
                 Thông tin cung cấp bởi Đơn vị Phân phối
               </h2>
