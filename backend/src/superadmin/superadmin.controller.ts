@@ -190,4 +190,14 @@ export class SuperadminController {
     await this.checkAuth(wallet, key);
     return this.superadminService.deleteConfig(configKey);
   }
+
+  // --- XÓA TOÀN BỘ CƠ SỞ DỮ LIỆU ---
+  @Post('clean-database')
+  async cleanDatabase(
+    @Headers('x-wallet-address') wallet?: string,
+    @Headers('x-superadmin-key') key?: string,
+  ) {
+    await this.checkAuth(wallet, key);
+    return this.superadminService.cleanDatabase();
+  }
 }

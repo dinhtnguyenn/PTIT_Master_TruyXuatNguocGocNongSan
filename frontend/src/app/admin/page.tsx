@@ -183,7 +183,7 @@ export default function AdminPage() {
           onClick={handleConnect}
           className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold"
         >
-          Kết nối Ví Quản trị viên
+          Kết nối Ví ngay
         </button>
       </div>
     );

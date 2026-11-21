@@ -246,7 +246,7 @@ export default function Navbar() {
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-medium transition"
               >
                 <Wallet className="w-3.5 h-3.5" />
-                {isConnecting ? 'Đang kết nối...' : 'Kết nối Ví'}
+                {isConnecting ? 'Đang kết nối...' : 'Kết nối MetaMask'}
               </button>
             )}
           </div>

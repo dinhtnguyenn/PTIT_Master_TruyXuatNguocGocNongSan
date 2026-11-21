@@ -109,11 +109,8 @@ export default function RegisterPage() {
   }
 
   useEffect(() => {
-    if (isWalletDisconnected()) {
-      return;
-    }
-
-    if (typeof window !== 'undefined' && window.ethereum) {
+    // Chỉ tự động kiểm tra tài khoản khi người dùng chưa bấm đăng xuất
+    if (!isWalletDisconnected() && typeof window !== 'undefined' && window.ethereum) {
       window.ethereum
         .request({ method: 'eth_accounts' })
         .then((accounts: string[]) => {
@@ -123,21 +120,21 @@ export default function RegisterPage() {
           }
         })
         .catch(() => {});
+    }
 
-      const handleAccountsChanged = (accounts: string[]) => {
-        if (isWalletDisconnected()) return;
-        if (accounts.length > 0) {
-          setAccount(accounts[0]);
-          checkExisting(accounts[0]);
-        } else {
-          setAccount(null);
-          setExistingAccount(null);
-        }
-      };
-
-      if (window.ethereum?.on) {
-        window.ethereum.on('accountsChanged', handleAccountsChanged);
+    const handleAccountsChanged = (accounts: string[]) => {
+      if (isWalletDisconnected()) return;
+      if (accounts.length > 0) {
+        setAccount(accounts[0]);
+        checkExisting(accounts[0]);
+      } else {
+        setAccount(null);
+        setExistingAccount(null);
       }
+    };
+
+    if (typeof window !== 'undefined' && window.ethereum?.on) {
+      window.ethereum.on('accountsChanged', handleAccountsChanged);
     }
 
     function onDisconnected() {
@@ -155,6 +152,9 @@ export default function RegisterPage() {
     window.addEventListener('wallet_disconnected', onDisconnected);
     window.addEventListener('wallet_connected', onConnected);
     return () => {
+      if (typeof window !== 'undefined' && window.ethereum?.removeListener) {
+        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+      }
       window.removeEventListener('wallet_disconnected', onDisconnected);
       window.removeEventListener('wallet_connected', onConnected);
     };
@@ -317,7 +317,7 @@ export default function RegisterPage() {
             onClick={handleConnect}
             className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition"
           >
-            Kết nối MetaMask
+            Kết nối Ví ngay
           </button>
         )}
       </div>

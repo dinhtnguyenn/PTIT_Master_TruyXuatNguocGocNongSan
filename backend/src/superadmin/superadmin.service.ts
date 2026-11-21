@@ -383,4 +383,19 @@ export class SuperadminService {
   async deleteConfig(key: string) {
     return this.configService.delete(key);
   }
+
+  // 6. XÓA TOÀN BỘ DỮ LIỆU CSDL (Clean Database phục vụ kiểm thử)
+  async cleanDatabase() {
+    // Xóa toàn bộ Batch trước (do có quan hệ khóa ngoại trỏ tới UserAccount)
+    const deletedBatches = await this.prisma.batch.deleteMany();
+    // Xóa toàn bộ tài khoản người dùng
+    const deletedUsers = await this.prisma.userAccount.deleteMany();
+
+    return {
+      success: true,
+      message: `Đã xóa toàn bộ dữ liệu CSDL thành công (${deletedBatches.count} lô hàng, ${deletedUsers.count} tài khoản người dùng).`,
+      deletedBatches: deletedBatches.count,
+      deletedUsers: deletedUsers.count,
+    };
+  }
 }

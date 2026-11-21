@@ -22,6 +22,7 @@ import {
   Lock,
   LogOut,
   Sliders,
+  AlertTriangle,
 } from 'lucide-react';
 import { connectWallet, disconnectWallet, truncateAddress, isWalletDisconnected } from '../../lib/web3';
 import { API_BASE_URL, ROLE_LABELS, STAGE_LABELS } from '../../lib/constants';
@@ -538,6 +539,40 @@ export default function SuperadminPage() {
     }
   }
 
+  async function handleCleanDatabase() {
+    const confirmed = await confirmDialog({
+      title: 'CẢNH BÁO NGUY HIỂM: Xóa Toàn Bộ CSDL',
+      message:
+        'Bạn có chắc chắn muốn XÓA TOÀN BỘ dữ liệu trong Database (tất cả các lô hàng nông sản và tất cả tài khoản người dùng)? Hành động này không thể hoàn tác! (Lưu ý: Dữ liệu đã ghi trên Blockchain Polygon Amoy sẽ không bị ảnh hưởng).',
+      confirmText: 'Xóa Sạch CSDL',
+      cancelText: 'Hủy bỏ',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
+
+    setTableLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/superadmin/clean-database`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.message || 'Không thể xóa dữ liệu CSDL');
+      }
+      const data = await res.json();
+      toast.success(data.message || 'Đã xóa toàn bộ dữ liệu CSDL thành công!');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('account_updated'));
+      }
+      await loadAllData();
+    } catch (err: any) {
+      toast.error(err.message || 'Lỗi khi xóa CSDL', 'Lỗi thực thi');
+    } finally {
+      setTableLoading(false);
+    }
+  }
+
   function openCreateConfigModal() {
     setEditingConfig(null);
     setConfigForm({ key: '', value: '', description: '' });
@@ -681,6 +716,14 @@ export default function SuperadminPage() {
 
         <div className="flex items-center gap-3">
           <button
+            onClick={handleCleanDatabase}
+            disabled={tableLoading}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-xs font-semibold text-white shadow-sm transition disabled:opacity-50"
+            title="Xóa toàn bộ dữ liệu (Batches & Người dùng) trong Database"
+          >
+            <Trash2 className="w-3.5 h-3.5" /> Xóa Toàn Bộ CSDL
+          </button>
+          <button
             onClick={() => loadAllData()}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 border border-slate-700 transition"
           >
@@ -795,6 +838,27 @@ export default function SuperadminPage() {
               className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold shadow hover:bg-indigo-700 transition whitespace-nowrap"
             >
               Quản lý vai trò <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Vùng Nguy Hiểm: Xóa Toàn Bộ CSDL */}
+          <div className="bg-rose-50/70 p-6 rounded-2xl border border-rose-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                <h3 className="text-sm font-bold text-rose-950">Vùng Quản Trị CSDL: Xóa Toàn Bộ Dữ Liệu (Clean Database)</h3>
+              </div>
+              <p className="text-xs text-rose-800 max-w-2xl leading-relaxed">
+                Xóa sạch toàn bộ dữ liệu lô hàng nông sản (Batches) và các tài khoản người dùng đăng ký (UserAccounts) trong cơ sở dữ liệu PostgreSQL để phục vụ việc kiểm thử hệ thống từ đầu. Dữ liệu lịch sử đã xác thực trên Blockchain Polygon Amoy được lưu trữ vĩnh viễn và không bị xóa.
+              </p>
+            </div>
+            <button
+              onClick={handleCleanDatabase}
+              disabled={tableLoading}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition whitespace-nowrap disabled:opacity-50"
+            >
+              <Trash2 className="w-4 h-4" />
+              Xóa Toàn Bộ CSDL
             </button>
           </div>
         </div>
