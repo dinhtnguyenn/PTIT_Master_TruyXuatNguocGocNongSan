@@ -36,6 +36,7 @@ import {
   isHardcodedAdmin,
   CONTRACT_ABI,
   getDynamicContractAddress,
+  getDynamicExplorerUrl,
 } from '../../lib/constants';
 import { useToast } from '../../components/ToastProvider';
 import { ethers } from 'ethers';
@@ -82,6 +83,14 @@ export default function SupplyChainPortalPage() {
     qrDataUrl: string;
     txHash: string;
   } | null>(null);
+
+  const [explorerUrl, setExplorerUrl] = useState<string>('https://amoy.polygonscan.com');
+
+  useEffect(() => {
+    getDynamicExplorerUrl().then((url) => {
+      if (url) setExplorerUrl(url.replace(/\/+$/, ''));
+    });
+  }, []);
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -1017,16 +1026,39 @@ export default function SupplyChainPortalPage() {
 
       {statusAlert && (
         <div
-          className={`p-3.5 rounded-xl text-xs border overflow-hidden break-words ${
+          className={`p-4 rounded-xl text-xs border overflow-hidden break-words shadow-xs ${
             statusAlert.type === 'success'
-              ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-              : 'bg-rose-50 border-rose-200 text-rose-900'
+              ? 'bg-emerald-50/80 border-emerald-300 text-emerald-950'
+              : 'bg-rose-50 border-rose-300 text-rose-950'
           }`}
         >
-          <p className="font-semibold break-words leading-relaxed">{statusAlert.message}</p>
-          {statusAlert.txHash && (
-            <p className="font-mono text-[11px] mt-1 break-all">Mã giao dịch Blockchain: {statusAlert.txHash}</p>
-          )}
+          <div className="flex items-start gap-2.5">
+            {statusAlert.type === 'success' ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+            ) : (
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+            )}
+            <div className="flex-1 space-y-2">
+              <p className="font-semibold break-words leading-relaxed">{statusAlert.message}</p>
+              {statusAlert.txHash && (
+                <div className="pt-2 border-t border-emerald-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                  <div className="text-[11px] text-slate-700">
+                    <span className="text-slate-500 font-medium">Mã giao dịch Blockchain:</span>{' '}
+                    <span className="font-mono">{statusAlert.txHash}</span>
+                  </div>
+                  <a
+                    href={`${explorerUrl}/tx/${statusAlert.txHash}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-xs transition shrink-0"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    Xem chi tiết giao dịch Blockchain
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -1599,6 +1631,16 @@ export default function SupplyChainPortalPage() {
             >
               <Download className="w-3.5 h-3.5" /> Tải ảnh Mã QR về máy
             </a>
+            {createdBatchModal.txHash && (
+              <a
+                href={`${explorerUrl}/tx/${createdBatchModal.txHash}`}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full py-2 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition"
+              >
+                <ExternalLink className="w-3.5 h-3.5" /> Xem chi tiết giao dịch Blockchain
+              </a>
+            )}
             <button
               type="button"
               onClick={() => {
