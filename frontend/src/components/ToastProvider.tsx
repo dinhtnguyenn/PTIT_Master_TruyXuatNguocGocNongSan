@@ -112,10 +112,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     <ToastContext.Provider value={{ toast: toast.current, confirmDialog }}>
       {children}
 
-      {/* Toast Stack */}
+      {/* Toast Stack - z-[10000] để luôn hiển thị nổi trên các Modal (z-[9999]) */}
       <div
         aria-live="polite"
-        className="fixed top-16 right-4 z-[100] flex flex-col gap-2.5 w-[calc(100vw-2rem)] max-w-sm pointer-events-none"
+        className="fixed top-16 right-4 z-[10000] flex flex-col gap-2.5 w-[calc(100vw-2rem)] max-w-sm pointer-events-none"
       >
         {toasts.map((item) => {
           const styles = {

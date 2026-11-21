@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { Camera, Upload, X, AlertCircle, Loader2 } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
+import { useToast } from './ToastProvider';
 
 interface QrScannerModalProps {
   isOpen: boolean;
@@ -15,9 +16,9 @@ interface QrScannerModalProps {
 
 export default function QrScannerModal({ isOpen, onClose, onScanSuccess, title }: QrScannerModalProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<'camera' | 'file'>('camera');
   const [cameraError, setCameraError] = useState<string | null>(null);
-  const [fileError, setFileError] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
   const [isProcessingFile, setIsProcessingFile] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -102,14 +103,12 @@ export default function QrScannerModal({ isOpen, onClose, onScanSuccess, title }
     }
   }
 
-  // Chuyển tab an toàn và reset lỗi riêng biệt
+  // Chuyển tab an toàn
   function switchTab(tab: 'camera' | 'file') {
     if (tab === activeTab) return;
     setActiveTab(tab);
     if (tab === 'file') {
       stopCamera();
-    } else {
-      setFileError(null);
     }
   }
 
@@ -118,7 +117,6 @@ export default function QrScannerModal({ isOpen, onClose, onScanSuccess, title }
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setFileError(null);
     setIsProcessingFile(true);
 
     let html5QrCode: Html5Qrcode | null = null;
@@ -129,7 +127,7 @@ export default function QrScannerModal({ isOpen, onClose, onScanSuccess, title }
       await handleSuccess(decodedText);
     } catch (err: any) {
       console.warn('Lỗi giải mã ảnh QR:', err);
-      setFileError('Không tìm thấy mã QR trong ảnh này. Vui lòng chọn ảnh khác rõ nét hơn.');
+      toast.error('Hình ảnh không chứa mã QR hợp lệ. Vui lòng chọn ảnh khác rõ nét hơn.', 'Ảnh không hợp lệ');
     } finally {
       if (html5QrCode) {
         try {
@@ -149,7 +147,6 @@ export default function QrScannerModal({ isOpen, onClose, onScanSuccess, title }
   function handleCloseModal() {
     stopCamera();
     setCameraError(null);
-    setFileError(null);
     onClose();
   }
 
@@ -246,13 +243,6 @@ export default function QrScannerModal({ isOpen, onClose, onScanSuccess, title }
             </div>
           ) : (
             <div key="file-tab-view" className="space-y-3">
-              {fileError && (
-                <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
-                  <span>{fileError}</span>
-                </div>
-              )}
-
               <div className="text-center">
                 <label
                   htmlFor="qr-file-input"
