@@ -48,7 +48,12 @@ export default function SupplyChainPortalPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [activeBatches, setActiveBatches] = useState<any[]>([]);
-  const [statusAlert, setStatusAlert] = useState<{ type: 'success' | 'error'; message: string; txHash?: string } | null>(null);
+  const [statusAlert, setStatusAlert] = useState<{
+    type: 'success' | 'error';
+    message: string;
+    txHash?: string;
+    batchId?: string;
+  } | null>(null);
   const [selectedRole, setSelectedRole] = useState<string>('');
 
   // Quét mã QR & Kiểm tra lô hàng Blockchain & Thứ tự quy trình
@@ -666,6 +671,7 @@ export default function SupplyChainPortalPage() {
         type: 'success',
         message: `Đã tạo lô hàng '${createdBatchId}' và ghi nhận thành công trên Blockchain!`,
         txHash: receipt.hash,
+        batchId: createdBatchId,
       });
 
       // Tạo mã QR cho lô hàng vừa tạo
@@ -751,6 +757,7 @@ export default function SupplyChainPortalPage() {
         type: 'success',
         message: `Kiểm định lô hàng '${inspectorForm.batchId}' thành công và đã ghi nhận trên Blockchain!`,
         txHash: receipt.hash,
+        batchId: inspectorForm.batchId,
       });
       resetBatchVerification('INSPECTOR');
       setInspectorForm({
@@ -819,6 +826,7 @@ export default function SupplyChainPortalPage() {
         type: 'success',
         message: `Ghi nhận vận chuyển lô hàng '${logisticsForm.batchId}' thành công trên Blockchain!`,
         txHash: receipt.hash,
+        batchId: logisticsForm.batchId,
       });
       resetBatchVerification('LOGISTICS');
       setLogisticsForm({
@@ -890,6 +898,7 @@ export default function SupplyChainPortalPage() {
         type: 'success',
         message: `Tiếp nhận phân phối lô hàng '${distributorForm.batchId}' thành công trên Blockchain!`,
         txHash: receipt.hash,
+        batchId: distributorForm.batchId,
       });
       resetBatchVerification('DISTRIBUTOR');
       setDistributorForm({
@@ -1045,15 +1054,27 @@ export default function SupplyChainPortalPage() {
                     <span className="text-slate-500 font-medium">Mã giao dịch Blockchain:</span>{' '}
                     <span className="font-mono">{statusAlert.txHash}</span>
                   </div>
-                  <a
-                    href={`${explorerUrl}/tx/${statusAlert.txHash}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-xs transition shrink-0"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    Xem chi tiết giao dịch Blockchain
-                  </a>
+                  <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                    {statusAlert.batchId && (
+                      <Link
+                        href={`/trace/${statusAlert.batchId}`}
+                        target="_blank"
+                        className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-900 border border-emerald-300 rounded-lg text-xs font-semibold shadow-xs transition shrink-0"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        Xem chi tiết sản phẩm
+                      </Link>
+                    )}
+                    <a
+                      href={`${explorerUrl}/tx/${statusAlert.txHash}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-xs transition shrink-0"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      Xem giao dịch Blockchain
+                    </a>
+                  </div>
                 </div>
               )}
             </div>
@@ -1630,6 +1651,13 @@ export default function SupplyChainPortalPage() {
             >
               <Download className="w-3.5 h-3.5" /> Tải ảnh Mã QR về máy
             </a>
+            <Link
+              href={`/trace/${createdBatchModal.batchId}`}
+              target="_blank"
+              className="w-full py-2 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition"
+            >
+              <ExternalLink className="w-3.5 h-3.5" /> Xem chi tiết sản phẩm
+            </Link>
             <button
               type="button"
               onClick={() => {
