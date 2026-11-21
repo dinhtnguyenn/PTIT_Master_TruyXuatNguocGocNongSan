@@ -1491,6 +1491,7 @@ export default function SupplyChainPortalPage() {
                   <label className="block text-slate-600 font-medium mb-1">Ghi chú bảo quản</label>
                   <textarea
                     rows={2}
+                    placeholder="Nhập ghi chú về nhiệt độ, độ ẩm, tình trạng bảo quản (nếu có)..."
                     value={logisticsForm.storageNotes}
                     onChange={(e) => setLogisticsForm({ ...logisticsForm, storageNotes: e.target.value })}
                     className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
@@ -1600,6 +1601,7 @@ export default function SupplyChainPortalPage() {
                   <label className="block text-slate-600 font-medium mb-1">Ghi chú tiếp nhận</label>
                   <textarea
                     rows={2}
+                    placeholder="Nhập ghi chú khi tiếp nhận lô hàng (nếu có)..."
                     value={distributorForm.receiptNotes}
                     onChange={(e) => setDistributorForm({ ...distributorForm, receiptNotes: e.target.value })}
                     className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
