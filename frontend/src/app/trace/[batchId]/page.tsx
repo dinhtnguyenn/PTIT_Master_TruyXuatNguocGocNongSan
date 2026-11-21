@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import {
   CheckCircle2,
-  Clock,
   Download,
   AlertTriangle,
   ExternalLink,
@@ -39,7 +38,6 @@ export default function TraceDetailPage() {
   const [batch, setBatch] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
-  const [verified, setVerified] = useState(false);
   const [explorerUrl, setExplorerUrl] = useState<string>('https://amoy.polygonscan.com');
 
   useEffect(() => {
@@ -66,38 +64,6 @@ export default function TraceDetailPage() {
             : `/trace/${batchId}`;
         const qrUrl = await QRCode.toDataURL(currentUrl, { width: 200, margin: 1 });
         setQrDataUrl(qrUrl);
-
-        // Đối chiếu với Smart Contract trên Polygon Amoy
-        try {
-          const contract = await getContract(false);
-          const proof = await contract.getBatchProof(batchId);
-          let isValid = false;
-          if (
-            data.producerDataHash &&
-            proof.production.dataHash.toLowerCase() === data.producerDataHash.toLowerCase()
-          ) {
-            isValid = true;
-          }
-          if (
-            data.inspectorDataHash &&
-            proof.inspection.dataHash.toLowerCase() !== data.inspectorDataHash.toLowerCase()
-          ) {
-            isValid = false;
-          }
-          if (
-            data.logisticsDataHash &&
-            proof.logistics.dataHash.toLowerCase() !== data.logisticsDataHash.toLowerCase()
-          ) {
-            isValid = false;
-          }
-          if (
-            data.distributorDataHash &&
-            proof.distribution.dataHash.toLowerCase() !== data.distributorDataHash.toLowerCase()
-          ) {
-            isValid = false;
-          }
-          setVerified(isValid);
-        } catch (err) {}
       } catch (err) {
       } finally {
         setLoading(false);
@@ -158,38 +124,6 @@ export default function TraceDetailPage() {
               </a>
             </div>
           </div>
-        )}
-      </div>
-
-      {/* Blockchain Verification Badge */}
-      <div
-        className={`rounded-xl p-3.5 border flex items-center justify-between text-xs ${
-          verified
-            ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-            : 'bg-slate-50 border-slate-200 text-slate-700'
-        }`}
-      >
-        <div className="flex items-center gap-2">
-          {verified ? (
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-          ) : (
-            <Clock className="w-4 h-4 text-slate-400 flex-shrink-0" />
-          )}
-          <span>
-            {verified
-              ? 'Dữ liệu được xác thực toàn vẹn trên Blockchain Polygon'
-              : 'Dữ liệu đang được đồng bộ và xác thực trên hệ thống'}
-          </span>
-        </div>
-        {batch.producerTxHash && (
-          <a
-            href={`${explorerUrl}/tx/${batch.producerTxHash}`}
-            target="_blank"
-            rel="noreferrer"
-            className="text-[11px] font-mono text-emerald-700 hover:underline flex items-center gap-1"
-          >
-            Giao dịch: {truncateAddress(batch.producerTxHash)} <ExternalLink className="w-3 h-3" />
-          </a>
         )}
       </div>
 

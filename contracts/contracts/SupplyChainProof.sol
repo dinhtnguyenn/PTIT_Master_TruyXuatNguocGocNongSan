@@ -29,7 +29,6 @@ contract SupplyChainProof is AccessControl {
 
     struct BatchInfo {
         string batchId;
-        string productName;
         Stage currentStage;
         StepProof production;
         StepProof inspection;
@@ -40,7 +39,7 @@ contract SupplyChainProof is AccessControl {
     mapping(string => BatchInfo) private _batches;
     mapping(string => bool) private _batchExists;
 
-    event BatchCreated(string indexed batchId, string productName, address indexed producer, bytes32 dataHash, uint256 timestamp);
+    event BatchCreated(string indexed batchId, address indexed producer, bytes32 dataHash, uint256 timestamp);
     event BatchInspected(string indexed batchId, address indexed inspector, bytes32 dataHash, uint256 timestamp);
     event BatchTransported(string indexed batchId, address indexed logistics, bytes32 dataHash, uint256 timestamp);
     event BatchDelivered(string indexed batchId, address indexed distributor, bytes32 dataHash, uint256 timestamp);
@@ -54,22 +53,19 @@ contract SupplyChainProof is AccessControl {
      */
     function recordProduction(
         string calldata batchId,
-        string calldata productName,
         bytes32 dataHash
     ) external onlyRole(PRODUCER_ROLE) {
         require(!_batchExists[batchId], "Batch already exists");
         require(bytes(batchId).length > 0, "Batch ID cannot be empty");
-        require(bytes(productName).length > 0, "Product name cannot be empty");
         require(dataHash != bytes32(0), "Data hash required");
 
         BatchInfo storage b = _batches[batchId];
         b.batchId = batchId;
-        b.productName = productName;
         b.currentStage = Stage.Created;
         b.production = StepProof(dataHash, msg.sender, block.timestamp);
 
         _batchExists[batchId] = true;
-        emit BatchCreated(batchId, productName, msg.sender, dataHash, block.timestamp);
+        emit BatchCreated(batchId, msg.sender, dataHash, block.timestamp);
     }
 
     /**

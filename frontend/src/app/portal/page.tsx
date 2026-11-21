@@ -638,10 +638,9 @@ export default function SupplyChainPortalPage() {
         throw new Error(msg || 'Dữ liệu sản xuất chưa hợp lệ');
       }
 
-      // Bước 2: Ký & gửi giao dịch lên Blockchain TRƯỚC
+      // Bước 2: Ký & gửi giao dịch lên Blockchain TRƯỚC (chỉ lưu batchId và dataHash trên on-chain)
       const receipt = await sendContractTx('recordProduction', [
         producerForm.batchId,
-        producerForm.productName,
         prepData.dataHash,
       ]);
 
