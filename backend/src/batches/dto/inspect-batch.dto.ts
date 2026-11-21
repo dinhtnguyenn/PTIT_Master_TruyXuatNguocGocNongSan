@@ -37,6 +37,10 @@ export class InspectBatchDto {
   @IsString()
   certImageUrl?: string;
 
+  @IsOptional()
+  @IsString()
+  certImageCid?: string;
+
   @IsNotEmpty({ message: 'Địa chỉ ví Inspector không được để trống' })
   @IsString()
   inspectorWallet: string;

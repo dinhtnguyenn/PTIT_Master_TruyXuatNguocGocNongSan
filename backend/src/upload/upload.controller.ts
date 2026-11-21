@@ -9,6 +9,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import * as fs from 'fs';
+import { computeIpfsCidV0, pinFileToPinata } from './ipfs.util';
 
 const uploadDir = './uploads';
 if (!fs.existsSync(uploadDir)) {
@@ -42,15 +43,26 @@ export class UploadController {
       },
     }),
   )
-  uploadFile(@UploadedFile() file: Express.Multer.File) {
+  async uploadFile(@UploadedFile() file: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException('Không tìm thấy file tải lên');
     }
     const fileUrl = `/uploads/${file.filename}`;
+    const fileBuffer = fs.readFileSync(file.path);
+    let cid = computeIpfsCidV0(fileBuffer);
+
+    // Nếu có cấu hình Pinata, đồng bộ lên Pinata IPFS
+    const pinataRes = await pinFileToPinata(fileBuffer, file.originalname);
+    if (pinataRes?.cid) {
+      cid = pinataRes.cid;
+    }
+
     return {
       success: true,
       filename: file.filename,
-      url: fileUrl,
+      url: pinataRes?.gatewayUrl || fileUrl,
+      localUrl: fileUrl,
+      cid: cid,
       size: file.size,
       mimetype: file.mimetype,
     };

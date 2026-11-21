@@ -126,6 +126,7 @@ export default function SupplyChainPortalPage() {
     cultivationStartDate: '',
     harvestDate: '',
     productImageUrl: '',
+    productImageCid: '',
   });
 
   // Form Inspector (Bảng 2)
@@ -139,6 +140,7 @@ export default function SupplyChainPortalPage() {
     issuedDate: '',
     expiryDate: '',
     certImageUrl: '',
+    certImageCid: '',
   });
 
   // Form Logistics (Bảng 3)
@@ -239,13 +241,22 @@ export default function SupplyChainPortalPage() {
       });
       const data = await res.json();
       if (res.ok && data.url) {
-        const fullUrl = `${API_BASE_URL.replace('/api', '')}${data.url}`;
+        const fullUrl = data.url.startsWith('http') ? data.url : `${API_BASE_URL.replace('/api', '')}${data.url}`;
+        const cid = data.cid || '';
         if (target === 'product') {
-          setProducerForm((prev) => ({ ...prev, productImageUrl: fullUrl }));
+          setProducerForm((prev) => ({
+            ...prev,
+            productImageUrl: fullUrl,
+            productImageCid: cid,
+          }));
         } else {
-          setInspectorForm((prev) => ({ ...prev, certImageUrl: fullUrl }));
+          setInspectorForm((prev) => ({
+            ...prev,
+            certImageUrl: fullUrl,
+            certImageCid: cid,
+          }));
         }
-        toast.success('Tải ảnh lên thành công!');
+        toast.success(`Tải ảnh thành công! ${cid ? `(IPFS CID: ${cid})` : ''}`);
       } else {
         toast.error(data.message || 'Lỗi tải ảnh lên máy chủ', 'Lỗi tải ảnh');
       }
@@ -695,6 +706,7 @@ export default function SupplyChainPortalPage() {
         cultivationStartDate: '',
         harvestDate: '',
         productImageUrl: '',
+        productImageCid: '',
       });
       loadBatches();
     } catch (err: any) {
@@ -764,6 +776,7 @@ export default function SupplyChainPortalPage() {
         issuedDate: '',
         expiryDate: '',
         certImageUrl: '',
+        certImageCid: '',
       });
       loadBatches();
     } catch (err: any) {
@@ -1206,6 +1219,24 @@ export default function SupplyChainPortalPage() {
                 onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'product')}
                 className="text-xs file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:bg-slate-100"
               />
+              {producerForm.productImageCid && (
+                <div className="mt-2 p-2 bg-emerald-50 rounded-lg border border-emerald-200 text-xs text-emerald-800 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 overflow-hidden">
+                    <span className="font-semibold shrink-0">Mã định danh IPFS (CID):</span>
+                    <span className="font-mono text-[11px] truncate">{producerForm.productImageCid}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(producerForm.productImageCid);
+                      toast.success('Đã sao chép mã IPFS CID!');
+                    }}
+                    className="text-[11px] text-emerald-700 hover:text-emerald-800 font-semibold underline shrink-0 cursor-pointer"
+                  >
+                    Sao chép
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -1323,6 +1354,24 @@ export default function SupplyChainPortalPage() {
                     onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'cert')}
                     className="text-xs file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:bg-slate-100"
                   />
+                  {inspectorForm.certImageCid && (
+                    <div className="mt-2 p-2 bg-emerald-50 rounded-lg border border-emerald-200 text-xs text-emerald-800 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 overflow-hidden">
+                        <span className="font-semibold shrink-0">Mã định danh IPFS (CID):</span>
+                        <span className="font-mono text-[11px] truncate">{inspectorForm.certImageCid}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(inspectorForm.certImageCid);
+                          toast.success('Đã sao chép mã IPFS CID!');
+                        }}
+                        className="text-[11px] text-emerald-700 hover:text-emerald-800 font-semibold underline shrink-0 cursor-pointer"
+                      >
+                        Sao chép
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 

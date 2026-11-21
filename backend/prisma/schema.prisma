@@ -42,6 +42,7 @@ model Batch {
   cultivationStartDate DateTime
   harvestDate          DateTime
   productImageUrl      String?
+  productImageCid      String?
   producerDataHash     String?
   producerTxHash       String?
   producerWallet       String?
@@ -55,6 +56,7 @@ model Batch {
   issuedDate           DateTime?
   expiryDate           DateTime?
   certImageUrl         String?
+  certImageCid         String?
   inspectorDataHash    String?
   inspectorTxHash      String?
   inspectorWallet      String?

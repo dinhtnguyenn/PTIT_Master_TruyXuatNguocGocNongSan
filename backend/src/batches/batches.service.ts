@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { computeSha256 } from '../hash.util';
+import { extractCidFromUrl } from '../upload/ipfs.util';
 import { CreateProducerBatchDto } from './dto/create-producer-batch.dto';
 import { InspectBatchDto } from './dto/inspect-batch.dto';
 import { TransportBatchDto } from './dto/transport-batch.dto';
@@ -48,6 +49,8 @@ export class BatchesService implements OnModuleInit {
       throw new BadRequestException(`Mã lô hàng '${dto.batchId}' đã tồn tại!`);
     }
 
+    const finalProductCid = dto.productImageCid?.trim() || extractCidFromUrl(dto.productImageUrl) || '';
+
     const payload = {
       batchId: dto.batchId,
       productName: dto.productName,
@@ -60,6 +63,7 @@ export class BatchesService implements OnModuleInit {
       cultivationStartDate: dto.cultivationStartDate,
       harvestDate: dto.harvestDate,
       productImageUrl: dto.productImageUrl || '',
+      productImageCid: finalProductCid,
       producerWallet: wallet,
     };
 
@@ -70,6 +74,7 @@ export class BatchesService implements OnModuleInit {
   // 1. PRODUCER: Lưu lô sản phẩm sau khi đã xác thực (và ký Blockchain thành công)
   async recordProducer(dto: CreateProducerBatchDto) {
     const { dataHash, wallet } = await this.prepareProducer(dto);
+    const finalProductCid = dto.productImageCid?.trim() || extractCidFromUrl(dto.productImageUrl) || null;
 
     const batch = await this.prisma.batch.create({
       data: {
@@ -84,6 +89,7 @@ export class BatchesService implements OnModuleInit {
         cultivationStartDate: new Date(dto.cultivationStartDate),
         harvestDate: new Date(dto.harvestDate),
         productImageUrl: dto.productImageUrl,
+        productImageCid: finalProductCid,
         producerDataHash: dataHash,
         producerTxHash: dto.producerTxHash || null,
         producerWallet: wallet,
@@ -118,6 +124,8 @@ export class BatchesService implements OnModuleInit {
       throw new BadRequestException(`Lô hàng không ở trạng thái hợp lệ để kiểm định!`);
     }
 
+    const finalCertCid = dto.certImageCid?.trim() || extractCidFromUrl(dto.certImageUrl) || '';
+
     const payload = {
       batchId: dto.batchId,
       inspectionResult: dto.inspectionResult,
@@ -128,6 +136,7 @@ export class BatchesService implements OnModuleInit {
       issuedDate: dto.issuedDate,
       expiryDate: dto.expiryDate,
       certImageUrl: dto.certImageUrl || '',
+      certImageCid: finalCertCid,
       inspectorWallet: wallet,
     };
 
@@ -138,6 +147,7 @@ export class BatchesService implements OnModuleInit {
   // 2. INSPECTOR: Ghi nhận kiểm định
   async recordInspector(dto: InspectBatchDto) {
     const { dataHash, wallet } = await this.prepareInspector(dto);
+    const finalCertCid = dto.certImageCid?.trim() || extractCidFromUrl(dto.certImageUrl) || null;
 
     const updated = await this.prisma.batch.update({
       where: { batchId: dto.batchId },
@@ -150,6 +160,7 @@ export class BatchesService implements OnModuleInit {
         issuedDate: new Date(dto.issuedDate),
         expiryDate: new Date(dto.expiryDate),
         certImageUrl: dto.certImageUrl,
+        certImageCid: finalCertCid,
         inspectorDataHash: dataHash,
         inspectorTxHash: dto.inspectorTxHash || null,
         inspectorWallet: wallet,

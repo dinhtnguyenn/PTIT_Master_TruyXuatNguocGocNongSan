@@ -45,6 +45,10 @@ export class CreateProducerBatchDto {
   @IsString()
   productImageUrl?: string;
 
+  @IsOptional()
+  @IsString()
+  productImageCid?: string;
+
   @IsNotEmpty({ message: 'Địa chỉ ví Producer không được để trống' })
   @IsString()
   producerWallet: string;

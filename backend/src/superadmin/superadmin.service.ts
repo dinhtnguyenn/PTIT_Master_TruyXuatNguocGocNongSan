@@ -272,6 +272,7 @@ export class SuperadminService {
         cultivationStartDate: data.cultivationStartDate ? new Date(data.cultivationStartDate) : new Date(),
         harvestDate: data.harvestDate ? new Date(data.harvestDate) : new Date(),
         productImageUrl: data.productImageUrl || null,
+        productImageCid: data.productImageCid || null,
         producerWallet: data.producerWallet || creatorWallet,
         producerTxHash: data.producerTxHash || null,
         producerDataHash: data.producerDataHash || null,
@@ -284,6 +285,7 @@ export class SuperadminService {
         issuedDate: data.issuedDate ? new Date(data.issuedDate) : null,
         expiryDate: data.expiryDate ? new Date(data.expiryDate) : null,
         certImageUrl: data.certImageUrl || null,
+        certImageCid: data.certImageCid || null,
         inspectorWallet: data.inspectorWallet || null,
         inspectorTxHash: data.inspectorTxHash || null,
         inspectorDataHash: data.inspectorDataHash || null,
@@ -325,10 +327,10 @@ export class SuperadminService {
 
     const updateData: any = {};
     const stringFields = [
-      'productName', 'category', 'seedOrigin', 'farmingSupplies', 'productionLocation', 'productImageUrl',
+      'productName', 'category', 'seedOrigin', 'farmingSupplies', 'productionLocation', 'productImageUrl', 'productImageCid',
       'producerWallet', 'producerTxHash', 'producerDataHash', 'stage',
       'inspectionResult', 'inspectionCriteria', 'certificateCode', 'certificateType', 'issuingAuthority',
-      'certImageUrl', 'inspectorWallet', 'inspectorTxHash', 'inspectorDataHash',
+      'certImageUrl', 'certImageCid', 'inspectorWallet', 'inspectorTxHash', 'inspectorDataHash',
       'transporterName', 'transporterContact', 'transporterType', 'shippingCode', 'originLocation', 'destLocation',
       'storageNotes', 'logisticsWallet', 'logisticsTxHash', 'logisticsDataHash',
       'distributorName', 'distributorContact', 'distributorType', 'receiptNotes',

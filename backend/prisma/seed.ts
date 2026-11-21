@@ -95,6 +95,7 @@ async function main() {
     cultivationStartDate: '2024-01-10T00:00:00.000Z',
     harvestDate: '2024-05-15T00:00:00.000Z',
     productImageUrl: 'https://images.unsplash.com/photo-1553279768-865429fa0078?w=800',
+    productImageCid: 'QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco',
     producerWallet: producerWallet,
   };
 
@@ -108,6 +109,7 @@ async function main() {
     issuedDate: '2024-05-16T00:00:00.000Z',
     expiryDate: '2025-05-16T00:00:00.000Z',
     certImageUrl: 'https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?w=800',
+    certImageCid: 'QmZ4tDuvesekSs4qM5ZBKpXiZGun7S2CYtEZRB3DYXkjGx',
     inspectorWallet: inspectorWallet,
   };
 
@@ -159,6 +161,7 @@ async function main() {
       cultivationStartDate: new Date(producerPayload.cultivationStartDate),
       harvestDate: new Date(producerPayload.harvestDate),
       productImageUrl: producerPayload.productImageUrl,
+      productImageCid: producerPayload.productImageCid,
       producerDataHash: pHash,
       producerTxHash: '0x71a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f80',
       producerWallet: producerWallet,
@@ -171,6 +174,7 @@ async function main() {
       issuedDate: new Date(inspectorPayload.issuedDate),
       expiryDate: new Date(inspectorPayload.expiryDate),
       certImageUrl: inspectorPayload.certImageUrl,
+      certImageCid: inspectorPayload.certImageCid,
       inspectorDataHash: iHash,
       inspectorTxHash: '0x82b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8091',
       inspectorWallet: inspectorWallet,
