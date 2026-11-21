@@ -151,17 +151,9 @@ export default function TraceDetailPage() {
 
         {qrDataUrl && (
           <div className="flex items-center gap-3 bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-            <button
-              type="button"
-              onClick={() => openZoom(qrDataUrl, 'Mã QR truy xuất nguồn gốc')}
-              className="group relative overflow-hidden rounded-lg border border-slate-200 hover:border-emerald-500 cursor-zoom-in transition shrink-0"
-              title="Bấm để phóng to mã QR"
-            >
-              <img src={qrDataUrl} alt="Mã QR" className="w-14 h-14 rounded-lg transition duration-200 group-hover:scale-105" />
-              <div className="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/25 flex items-center justify-center transition-colors">
-                <ZoomIn className="w-3.5 h-3.5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
-            </button>
+            <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shrink-0">
+              <img src={qrDataUrl} alt="Mã QR" className="w-14 h-14 rounded-lg block" />
+            </div>
             <div>
               <p className="text-[10px] font-bold text-slate-600 uppercase">Mã QR Sản Phẩm</p>
               <a
