@@ -13,7 +13,7 @@ export class ConfigService implements OnModuleInit {
     const defaults = [
       {
         key: 'CONTRACT_ADDRESS',
-        value: process.env.CONTRACT_ADDRESS || '0x68Af0988167fddD7Eb5CE70485EA41f3A4a582a6',
+        value: process.env.CONTRACT_ADDRESS || '0x309f3A376Ea8c8d3f9462529b921f55cb612AB25',
         description: 'Địa chỉ Smart Contract SupplyChainProof trên Polygon Amoy',
       },
       {

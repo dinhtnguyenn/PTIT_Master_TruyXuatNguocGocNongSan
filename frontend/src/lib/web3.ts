@@ -142,6 +142,9 @@ export function formatBlockchainError(err: any): string {
   if (raw.includes('-32603') || raw.includes('Internal JSON-RPC error') || raw.includes('could not coalesce error')) {
     return 'Lỗi kết nối mạng Blockchain (JSON-RPC -32603). Giao dịch chưa được ghi nhận và dữ liệu chưa được lưu vào hệ thống. Vui lòng kiểm tra số dư POL, đổi RPC mạng Polygon Amoy trên MetaMask sang https://polygon-amoy-bor-rpc.publicnode.com (hoặc vào Cài đặt MetaMask -> Nâng cao -> Xóa dữ liệu tab hoạt động) rồi thử lại.';
   }
+  if (raw.includes('require(false)') || raw.includes('no data present')) {
+    return 'Giao dịch bị từ chối bởi Hợp đồng thông minh (reverted). Vui lòng kiểm tra lại quyền hạn của ví hoặc trạng thái hiện tại của lô hàng.';
+  }
   return err?.reason || err?.shortMessage || err?.message || 'Giao dịch Blockchain không thành công. Dữ liệu chưa được lưu vào hệ thống.';
 }
 
