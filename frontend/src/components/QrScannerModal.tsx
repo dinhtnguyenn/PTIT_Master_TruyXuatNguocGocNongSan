@@ -175,7 +175,7 @@ export default function QrScannerModal({ isOpen, onClose, onScanSuccess, title }
         {/* Body Content */}
         <div className="p-5">
           {errorMsg && (
-            <div className="mb-4 p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs flex items-start gap-2">
+            <div className="mb-3 p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs flex items-start gap-2">
               <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
               <span>{errorMsg}</span>
             </div>
@@ -192,7 +192,7 @@ export default function QrScannerModal({ isOpen, onClose, onScanSuccess, title }
               </p>
             </div>
           ) : (
-            <div className="space-y-4 py-4 text-center">
+            <div className="text-center">
               <div id="file-scanner-temp" className="hidden" />
               <label
                 htmlFor="qr-file-input"
