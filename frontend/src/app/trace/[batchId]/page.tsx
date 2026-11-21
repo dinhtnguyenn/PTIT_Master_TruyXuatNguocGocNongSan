@@ -223,12 +223,12 @@ export default function TraceDetailPage() {
             <p><span className="text-slate-400 font-medium">Ngày bắt đầu canh tác:</span> {formatDate(batch.cultivationStartDate)}</p>
             <p><span className="text-slate-400 font-medium">Ngày thu hoạch:</span> {formatDate(batch.harvestDate)}</p>
             <p><span className="text-slate-400 font-medium">Ví Nhà sản xuất:</span> <span className="font-mono">{truncateAddress(batch.producerWallet)}</span></p>
-            <div className="sm:col-span-2 pt-1 border-t border-slate-100">
+            <div className="sm:col-span-2 pt-3 border-t border-slate-100">
               <span className="text-slate-400 font-medium">Vật tư nông nghiệp:</span> {batch.farmingSupplies}
             </div>
             {batch.productImageUrl && (
-              <div className="sm:col-span-2 pt-2">
-                <span className="text-slate-400 font-medium block mb-1">Ảnh nông sản / ruộng trồng:</span>
+              <div className="sm:col-span-2 pt-3 border-t border-slate-100">
+                <span className="text-slate-400 font-medium block mb-1.5">Ảnh nông sản / ruộng trồng:</span>
                 <img src={formatImageUrl(batch.productImageUrl)} alt="Ảnh sản phẩm" className="h-32 object-cover rounded-lg border border-slate-200" />
               </div>
             )}
@@ -263,8 +263,8 @@ export default function TraceDetailPage() {
               <p><span className="text-slate-400 font-medium">Ngày hết hạn:</span> {formatDate(batch.expiryDate)}</p>
               <p><span className="text-slate-400 font-medium">Ví Đơn vị kiểm định:</span> <span className="font-mono">{truncateAddress(batch.inspectorWallet)}</span></p>
               {batch.certImageUrl && (
-                <div className="sm:col-span-2 pt-2 border-t border-slate-100">
-                  <span className="text-slate-400 font-medium block mb-1">Ảnh giấy chứng nhận:</span>
+                <div className="sm:col-span-2 pt-3 border-t border-slate-100">
+                  <span className="text-slate-400 font-medium block mb-1.5">Ảnh giấy chứng nhận:</span>
                   <img src={formatImageUrl(batch.certImageUrl)} alt="Chứng nhận" className="h-32 object-cover rounded-lg border border-slate-200" />
                 </div>
               )}
@@ -303,7 +303,9 @@ export default function TraceDetailPage() {
               <p><span className="text-slate-400 font-medium">Thời gian hoàn tất:</span> {formatDateTime(batch.completionTime)}</p>
               <p><span className="text-slate-400 font-medium">Nhiệt độ:</span> {batch.temperature}°C</p>
               <p><span className="text-slate-400 font-medium">Độ ẩm:</span> {batch.humidity}%</p>
-              <p className="sm:col-span-2"><span className="text-slate-400 font-medium">Ghi chú bảo quản:</span> {batch.storageNotes || 'Không'}</p>
+              <div className="sm:col-span-2 pt-3 border-t border-slate-100">
+                <span className="text-slate-400 font-medium">Ghi chú bảo quản:</span> {batch.storageNotes || 'Không'}
+              </div>
             </div>
           ) : (
             <div className="p-4 text-xs text-slate-400 italic">Chưa có thông tin vận chuyển cho lô này.</div>
@@ -335,7 +337,9 @@ export default function TraceDetailPage() {
               <p><span className="text-slate-400 font-medium">Thời gian tiếp nhận:</span> {formatDateTime(batch.receivedTime)}</p>
               <p><span className="text-slate-400 font-medium">Số lượng thực nhận:</span> {batch.actualQuantity}</p>
               <p><span className="text-slate-400 font-medium">Trọng lượng thực nhận:</span> {batch.actualWeight} kg</p>
-              <p className="sm:col-span-2"><span className="text-slate-400 font-medium">Ghi chú tiếp nhận:</span> {batch.receiptNotes}</p>
+              <div className="sm:col-span-2 pt-3 border-t border-slate-100">
+                <span className="text-slate-400 font-medium">Ghi chú tiếp nhận:</span> {batch.receiptNotes || 'Không'}
+              </div>
             </div>
           ) : (
             <div className="p-4 text-xs text-slate-400 italic">Chưa có thông tin phân phối cho lô này.</div>
