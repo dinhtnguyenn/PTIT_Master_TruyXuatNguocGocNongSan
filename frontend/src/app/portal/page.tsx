@@ -1630,16 +1630,6 @@ export default function SupplyChainPortalPage() {
             >
               <Download className="w-3.5 h-3.5" /> Tải ảnh Mã QR về máy
             </a>
-            {createdBatchModal.txHash && (
-              <a
-                href={`${explorerUrl}/tx/${createdBatchModal.txHash}`}
-                target="_blank"
-                rel="noreferrer"
-                className="w-full py-2 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition"
-              >
-                <ExternalLink className="w-3.5 h-3.5" /> Xem chi tiết giao dịch Blockchain
-              </a>
-            )}
             <button
               type="button"
               onClick={() => {
