@@ -36,6 +36,31 @@ export async function getProvider() {
   return new ethers.JsonRpcProvider(rpcUrl);
 }
 
+export async function updateMetaMaskRpc() {
+  if (typeof window === 'undefined' || !window.ethereum) {
+    throw new Error('Vui lòng cài đặt tiện ích ví MetaMask trên trình duyệt!');
+  }
+  const rpcUrl = await getDynamicRpcUrl();
+  const explorerUrl = await getDynamicExplorerUrl();
+
+  await window.ethereum.request({
+    method: 'wallet_addEthereumChain',
+    params: [
+      {
+        chainId: '0x13882',
+        chainName: 'Polygon Amoy Testnet',
+        nativeCurrency: { name: 'POL', symbol: 'POL', decimals: 18 },
+        rpcUrls: [
+          'https://polygon-amoy-bor-rpc.publicnode.com',
+          'https://polygon-amoy.drpc.org',
+          rpcUrl,
+        ],
+        blockExplorerUrls: [explorerUrl.endsWith('/') ? explorerUrl : `${explorerUrl}/`],
+      },
+    ],
+  });
+}
+
 export async function ensurePolygonAmoyNetwork() {
   if (typeof window === 'undefined' || !window.ethereum) return;
   try {

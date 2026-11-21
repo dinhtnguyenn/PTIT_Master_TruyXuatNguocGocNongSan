@@ -30,6 +30,7 @@ import {
   sendContractTx,
   formatBlockchainError,
   getProvider,
+  updateMetaMaskRpc,
 } from '../../lib/web3';
 import {
   API_BASE_URL,
@@ -1113,6 +1114,24 @@ export default function SupplyChainPortalPage() {
             )}
             <div className="flex-1 space-y-2">
               <p className="font-semibold break-words leading-relaxed">{statusAlert.message}</p>
+              {statusAlert.type === 'error' && statusAlert.message.includes('-32603') && (
+                <div className="pt-2 border-t border-rose-200/80 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await updateMetaMaskRpc();
+                        toast.success('Đã gửi yêu cầu cập nhật RPC sang MetaMask! Vui lòng bấm Phê duyệt (Approve) trên cửa sổ popup của MetaMask.');
+                      } catch (e: any) {
+                        toast.error(e.message || 'Không thể cập nhật RPC tự động');
+                      }
+                    }}
+                    className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" /> Tự động đổi RPC Polygon Amoy (1-Click)
+                  </button>
+                </div>
+              )}
               {statusAlert.txHash && (
                 <div className="pt-2 border-t border-emerald-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                   <div className="text-[11px] text-slate-700">
