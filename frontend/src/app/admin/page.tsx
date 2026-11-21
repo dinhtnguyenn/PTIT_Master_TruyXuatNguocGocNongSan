@@ -381,7 +381,7 @@ export default function AdminPage() {
               <p className="text-2xl font-bold text-amber-600 mt-1">{batchStats?.byStage?.inTransit || 0}</p>
             </div>
             <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-              <span className="text-slate-400 font-medium">Đã tiếp nhận phân phối</span>
+              <span className="text-slate-400 font-medium">Đã phân phối</span>
               <p className="text-2xl font-bold text-purple-600 mt-1">{batchStats?.byStage?.delivered || 0}</p>
             </div>
           </div>
@@ -425,7 +425,7 @@ export default function AdminPage() {
                   <span className="font-bold text-amber-600">{batchStats?.byStage?.inTransit || 0}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Đã tiếp nhận phân phối</span>
+                  <span className="text-slate-500">Đã phân phối</span>
                   <span className="font-bold text-purple-600">{batchStats?.byStage?.delivered || 0}</span>
                 </div>
               </div>
