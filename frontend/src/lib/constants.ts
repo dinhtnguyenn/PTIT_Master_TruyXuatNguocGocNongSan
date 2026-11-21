@@ -89,6 +89,42 @@ export const STAGE_LABELS: Record<string, { label: string; color: string }> = {
   DELIVERED: { label: 'Đã tiếp nhận', color: 'bg-purple-100 text-purple-800 border-purple-300' },
 };
 
+const padZero = (n: number | string) => n.toString().padStart(2, '0');
+
+/**
+ * Format ngày theo định dạng chuẩn: dd/mm/yyyy
+ */
+export function formatDate(dateInput: any): string {
+  if (!dateInput) return 'Chưa cập nhật';
+  if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput.trim())) {
+    const [y, m, d] = dateInput.trim().split('-');
+    return `${padZero(d)}/${padZero(m)}/${y}`;
+  }
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return 'Chưa cập nhật';
+  return `${padZero(d.getDate())}/${padZero(d.getMonth() + 1)}/${d.getFullYear()}`;
+}
+
+/**
+ * Format thời gian theo định dạng chuẩn: hh:mm:ss
+ */
+export function formatTime(dateInput: any): string {
+  if (!dateInput) return 'Chưa cập nhật';
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return 'Chưa cập nhật';
+  return `${padZero(d.getHours())}:${padZero(d.getMinutes())}:${padZero(d.getSeconds())}`;
+}
+
+/**
+ * Format ngày và giờ theo định dạng chuẩn: hh:mm:ss dd/mm/yyyy
+ */
+export function formatDateTime(dateInput: any): string {
+  if (!dateInput) return 'Chưa cập nhật';
+  const d = new Date(dateInput);
+  if (isNaN(d.getTime())) return 'Chưa cập nhật';
+  return `${padZero(d.getHours())}:${padZero(d.getMinutes())}:${padZero(d.getSeconds())} ${padZero(d.getDate())}/${padZero(d.getMonth() + 1)}/${d.getFullYear()}`;
+}
+
 export function formatRelativeTime(dateInput: string | number | Date | undefined | null): string {
   if (!dateInput) return 'Chưa cập nhật';
   const date = typeof dateInput === 'number'
@@ -112,12 +148,12 @@ export function formatRelativeTime(dateInput: string | number | Date | undefined
   const diffDay = Math.floor(diffHour / 24);
   if (diffDay <= 30) return `${diffDay} ngày trước`;
 
-  const pad = (n: number) => n.toString().padStart(2, '0');
-  const hours = pad(date.getHours());
-  const minutes = pad(date.getMinutes());
-  const day = pad(date.getDate());
-  const month = pad(date.getMonth() + 1);
+  const hours = padZero(date.getHours());
+  const minutes = padZero(date.getMinutes());
+  const seconds = padZero(date.getSeconds());
+  const day = padZero(date.getDate());
+  const month = padZero(date.getMonth() + 1);
   const year = date.getFullYear();
-  return `${hours}:${minutes} - ${day}/${month}/${year}`;
+  return `${hours}:${minutes}:${seconds} ${day}/${month}/${year}`;
 }
 

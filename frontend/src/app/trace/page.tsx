@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Search, QrCode, ArrowRight } from 'lucide-react';
-import { API_BASE_URL, STAGE_LABELS, formatRelativeTime } from '../../lib/constants';
+import { API_BASE_URL, STAGE_LABELS, formatDateTime } from '../../lib/constants';
 import QrScannerModal from '../../components/QrScannerModal';
 
 export default function TraceIndexPage() {
@@ -104,7 +104,7 @@ export default function TraceIndexPage() {
 
               <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
                 <span className="text-[11px] text-slate-400">
-                  Cập nhật: {formatRelativeTime(batch.updatedAt || batch.createdAt || batch.harvestDate)}
+                  Cập nhật: {formatDateTime(batch.updatedAt || batch.createdAt || batch.harvestDate)}
                 </span>
                 <Link
                   href={`/trace/${batch.batchId}`}

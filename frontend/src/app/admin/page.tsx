@@ -3,23 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { Users, BarChart3, Wallet, RefreshCw, ShieldAlert, ShieldCheck } from 'lucide-react';
 import { connectWallet, truncateAddress, isWalletDisconnected, sendContractTx, formatBlockchainError } from '../../lib/web3';
-import { API_BASE_URL, ROLE_HASHES, ROLE_LABELS, STATUS_LABELS, isHardcodedAdmin } from '../../lib/constants';
+import { API_BASE_URL, ROLE_HASHES, ROLE_LABELS, STATUS_LABELS, isHardcodedAdmin, formatDateTime } from '../../lib/constants';
 import { useToast } from '../../components/ToastProvider';
 import CopyableAddress from '../../components/CopyableAddress';
-
-function formatDateTime(dateStr?: string | Date | null): string {
-  if (!dateStr) return '—';
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return '—';
-  return d.toLocaleString('vi-VN', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
-}
 
 export default function AdminPage() {
   const { toast, confirmDialog } = useToast();

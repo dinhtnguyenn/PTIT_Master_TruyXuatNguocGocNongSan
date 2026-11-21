@@ -14,7 +14,14 @@ import {
 } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import QRCode from 'qrcode';
-import { API_BASE_URL, STAGE_LABELS, getDynamicExplorerUrl, formatRelativeTime } from '../../../lib/constants';
+import {
+  API_BASE_URL,
+  STAGE_LABELS,
+  getDynamicExplorerUrl,
+  formatDate,
+  formatDateTime,
+  formatRelativeTime,
+} from '../../../lib/constants';
 import { getContract, truncateAddress } from '../../../lib/web3';
 import CopyableAddress from '../../../components/CopyableAddress';
 
@@ -23,18 +30,6 @@ function formatImageUrl(url?: string | null): string {
   if (url.startsWith('http://') || url.startsWith('https://')) return url;
   const host = API_BASE_URL.replace(/\/api\/?$/, '');
   return `${host}${url.startsWith('/') ? '' : '/'}${url}`;
-}
-
-function formatDate(dateValue?: any): string {
-  if (!dateValue) return 'Chưa cập nhật';
-  const d = new Date(dateValue);
-  return isNaN(d.getTime()) ? 'Chưa cập nhật' : d.toLocaleDateString('vi-VN');
-}
-
-function formatDateTime(dateValue?: any): string {
-  if (!dateValue) return 'Chưa cập nhật';
-  const d = new Date(dateValue);
-  return isNaN(d.getTime()) ? 'Chưa cập nhật' : d.toLocaleString('vi-VN');
 }
 
 export default function TraceDetailPage() {
@@ -149,7 +144,7 @@ export default function TraceDetailPage() {
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900">{batch.productName}</h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Loại: {batch.category || '—'} • Cập nhật: {formatRelativeTime(batch.updatedAt || batch.createdAt || batch.harvestDate)}
+            Loại: {batch.category || '—'} • Cập nhật: {formatDateTime(batch.updatedAt || batch.createdAt || batch.harvestDate)}
           </p>
         </div>
 
