@@ -28,6 +28,7 @@ import { connectWallet, disconnectWallet, truncateAddress, isWalletDisconnected 
 import { API_BASE_URL, ROLE_LABELS, STAGE_LABELS } from '../../lib/constants';
 import { useToast } from '../../components/ToastProvider';
 import CopyableAddress from '../../components/CopyableAddress';
+import { DateInput } from '../../components/DateInput';
 
 const ALL_ROLES = ['PRODUCER', 'INSPECTOR', 'LOGISTICS', 'DISTRIBUTOR', 'ADMIN'];
 const ALL_STAGES = ['CREATED', 'INSPECTED', 'IN_TRANSIT', 'DELIVERED'];
@@ -77,9 +78,9 @@ export default function SuperadminPage() {
   const [batchForm, setBatchForm] = useState<any>({
     batchId: '',
     productName: '',
-    category: 'Nông sản',
-    quantity: 1,
-    weight: 1,
+    category: '',
+    quantity: '',
+    weight: '',
     stage: 'CREATED',
     seedOrigin: '',
     farmingSupplies: '',
@@ -430,15 +431,15 @@ export default function SuperadminPage() {
     setBatchForm({
       batchId: 'BATCH-' + Date.now().toString().slice(-6),
       productName: '',
-      category: 'Nông sản xuất khẩu',
-      quantity: 1000,
-      weight: 500,
+      category: '',
+      quantity: '',
+      weight: '',
       stage: 'CREATED',
-      seedOrigin: 'Giống chứng nhận VietGAP',
-      farmingSupplies: 'Phân vi sinh hữu cơ',
-      productionLocation: 'Hợp tác xã nông sản',
-      cultivationStartDate: new Date().toISOString().split('T')[0],
-      harvestDate: new Date().toISOString().split('T')[0],
+      seedOrigin: '',
+      farmingSupplies: '',
+      productionLocation: '',
+      cultivationStartDate: '',
+      harvestDate: '',
       producerWallet: account || '',
       producerTxHash: '',
       producerDataHash: '',
@@ -1501,19 +1502,17 @@ export default function SuperadminPage() {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block font-semibold text-slate-700 mb-1">Ngày bắt đầu gieo trồng</label>
-                      <input
-                        type="date"
-                        value={batchForm.cultivationStartDate}
-                        onChange={(e) => setBatchForm({ ...batchForm, cultivationStartDate: e.target.value })}
+                      <DateInput
+                        value={batchForm.cultivationStartDate || ''}
+                        onChange={(val) => setBatchForm({ ...batchForm, cultivationStartDate: val })}
                         className="w-full px-3 py-2 rounded-xl border border-slate-300"
                       />
                     </div>
                     <div>
                       <label className="block font-semibold text-slate-700 mb-1">Ngày thu hoạch</label>
-                      <input
-                        type="date"
-                        value={batchForm.harvestDate}
-                        onChange={(e) => setBatchForm({ ...batchForm, harvestDate: e.target.value })}
+                      <DateInput
+                        value={batchForm.harvestDate || ''}
+                        onChange={(val) => setBatchForm({ ...batchForm, harvestDate: val })}
                         className="w-full px-3 py-2 rounded-xl border border-slate-300"
                       />
                     </div>
@@ -1580,19 +1579,17 @@ export default function SuperadminPage() {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block font-semibold text-slate-700 mb-1">Ngày cấp chứng nhận</label>
-                      <input
-                        type="date"
+                      <DateInput
                         value={batchForm.issuedDate || ''}
-                        onChange={(e) => setBatchForm({ ...batchForm, issuedDate: e.target.value })}
+                        onChange={(val) => setBatchForm({ ...batchForm, issuedDate: val })}
                         className="w-full px-3 py-2 rounded-xl border border-slate-300"
                       />
                     </div>
                     <div>
                       <label className="block font-semibold text-slate-700 mb-1">Ngày hết hạn</label>
-                      <input
-                        type="date"
+                      <DateInput
                         value={batchForm.expiryDate || ''}
-                        onChange={(e) => setBatchForm({ ...batchForm, expiryDate: e.target.value })}
+                        onChange={(val) => setBatchForm({ ...batchForm, expiryDate: val })}
                         className="w-full px-3 py-2 rounded-xl border border-slate-300"
                       />
                     </div>

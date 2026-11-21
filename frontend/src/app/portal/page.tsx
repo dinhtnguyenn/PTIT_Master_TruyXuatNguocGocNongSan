@@ -22,6 +22,7 @@ import {
 import QRCode from 'qrcode';
 import QrScannerModal from '../../components/QrScannerModal';
 import CopyableAddress from '../../components/CopyableAddress';
+import { DateInput, DateTimeInput } from '../../components/DateInput';
 import {
   connectWallet,
   truncateAddress,
@@ -114,12 +115,25 @@ export default function SupplyChainPortalPage() {
   }, [createdBatchModal]);
 
   // Form Producer (Bảng 1)
-  const [producerForm, setProducerForm] = useState({
-    batchId: `BATCH-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+  const [producerForm, setProducerForm] = useState<{
+    batchId: string;
+    productName: string;
+    category: string;
+    quantity: number | '';
+    weight: number | '';
+    seedOrigin: string;
+    farmingSupplies: string;
+    productionLocation: string;
+    cultivationStartDate: string;
+    harvestDate: string;
+    productImageUrl: string;
+    productImageCid: string;
+  }>({
+    batchId: '',
     productName: '',
     category: '',
-    quantity: 100,
-    weight: 200,
+    quantity: '',
+    weight: '',
     seedOrigin: '',
     farmingSupplies: '',
     productionLocation: '',
@@ -132,10 +146,10 @@ export default function SupplyChainPortalPage() {
   // Form Inspector (Bảng 2)
   const [inspectorForm, setInspectorForm] = useState({
     batchId: '',
-    inspectionResult: 'Đạt tiêu chuẩn an toàn',
-    inspectionCriteria: 'Dư lượng thuốc BVTV, vi sinh vật',
+    inspectionResult: '',
+    inspectionCriteria: '',
     certificateCode: '',
-    certificateType: 'VietGAP',
+    certificateType: '',
     issuingAuthority: '',
     issuedDate: '',
     expiryDate: '',
@@ -144,7 +158,20 @@ export default function SupplyChainPortalPage() {
   });
 
   // Form Logistics (Bảng 3)
-  const [logisticsForm, setLogisticsForm] = useState({
+  const [logisticsForm, setLogisticsForm] = useState<{
+    batchId: string;
+    transporterName: string;
+    transporterContact: string;
+    transporterType: string;
+    shippingCode: string;
+    originLocation: string;
+    destLocation: string;
+    departureTime: string;
+    completionTime: string;
+    temperature: number | '';
+    humidity: number | '';
+    storageNotes: string;
+  }>({
     batchId: '',
     transporterName: '',
     transporterContact: '',
@@ -154,20 +181,29 @@ export default function SupplyChainPortalPage() {
     destLocation: '',
     departureTime: '',
     completionTime: '',
-    temperature: 20.0,
-    humidity: 70.0,
+    temperature: '',
+    humidity: '',
     storageNotes: '',
   });
 
   // Form Distributor (Bảng 4)
-  const [distributorForm, setDistributorForm] = useState({
+  const [distributorForm, setDistributorForm] = useState<{
+    batchId: string;
+    distributorName: string;
+    distributorContact: string;
+    distributorType: string;
+    receivedTime: string;
+    actualQuantity: number | '';
+    actualWeight: number | '';
+    receiptNotes: string;
+  }>({
     batchId: '',
     distributorName: '',
     distributorContact: '',
     distributorType: 'Tổ chức',
     receivedTime: '',
-    actualQuantity: 100,
-    actualWeight: 200,
+    actualQuantity: '',
+    actualWeight: '',
     receiptNotes: '',
   });
 
@@ -637,10 +673,16 @@ export default function SupplyChainPortalPage() {
 
     try {
       // Bước 1: Kiểm tra dữ liệu & lấy mã băm SHA-256 (KHÔNG ghi CSDL)
+      const producerPayload = {
+        ...producerForm,
+        quantity: Number(producerForm.quantity) || 0,
+        weight: Number(producerForm.weight) || 0,
+        producerWallet: account,
+      };
       const prepRes = await fetch(`${API_BASE_URL}/batches/prepare/producer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...producerForm, producerWallet: account }),
+        body: JSON.stringify(producerPayload),
       });
       const prepData = await prepRes.json();
       if (!prepRes.ok) {
@@ -659,8 +701,7 @@ export default function SupplyChainPortalPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...producerForm,
-          producerWallet: account,
+          ...producerPayload,
           producerTxHash: receipt.hash,
         }),
       });
@@ -695,11 +736,11 @@ export default function SupplyChainPortalPage() {
       } catch (err) {}
 
       setProducerForm({
-        batchId: `BATCH-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+        batchId: '',
         productName: '',
         category: '',
-        quantity: 100,
-        weight: 200,
+        quantity: '',
+        weight: '',
         seedOrigin: '',
         farmingSupplies: '',
         productionLocation: '',
@@ -768,10 +809,10 @@ export default function SupplyChainPortalPage() {
       resetBatchVerification('INSPECTOR');
       setInspectorForm({
         batchId: '',
-        inspectionResult: 'Đạt tiêu chuẩn an toàn',
-        inspectionCriteria: 'Dư lượng thuốc BVTV, vi sinh vật',
+        inspectionResult: '',
+        inspectionCriteria: '',
         certificateCode: '',
-        certificateType: 'VietGAP',
+        certificateType: '',
         issuingAuthority: '',
         issuedDate: '',
         expiryDate: '',
@@ -804,6 +845,8 @@ export default function SupplyChainPortalPage() {
     const finalShippingCode = logisticsForm.transporterType === 'Cá nhân' ? '' : logisticsForm.shippingCode.trim();
     const logisticsPayload = {
       ...logisticsForm,
+      temperature: Number(logisticsForm.temperature) || 0,
+      humidity: Number(logisticsForm.humidity) || 0,
       shippingCode: finalShippingCode,
       logisticsWallet: account,
     };
@@ -856,8 +899,8 @@ export default function SupplyChainPortalPage() {
         destLocation: '',
         departureTime: '',
         completionTime: '',
-        temperature: 20.0,
-        humidity: 70.0,
+        temperature: '',
+        humidity: '',
         storageNotes: '',
       });
       loadBatches();
@@ -880,10 +923,16 @@ export default function SupplyChainPortalPage() {
     setStatusAlert(null);
 
     try {
+      const distributorPayload = {
+        ...distributorForm,
+        actualQuantity: Number(distributorForm.actualQuantity) || 0,
+        actualWeight: Number(distributorForm.actualWeight) || 0,
+        distributorWallet: account,
+      };
       const prepRes = await fetch(`${API_BASE_URL}/batches/prepare/distributor`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...distributorForm, distributorWallet: account }),
+        body: JSON.stringify(distributorPayload),
       });
       const prepData = await prepRes.json();
       if (!prepRes.ok) {
@@ -900,8 +949,7 @@ export default function SupplyChainPortalPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...distributorForm,
-          distributorWallet: account,
+          ...distributorPayload,
           distributorTxHash: receipt.hash,
         }),
       });
@@ -924,8 +972,8 @@ export default function SupplyChainPortalPage() {
         distributorContact: '',
         distributorType: 'Tổ chức',
         receivedTime: '',
-        actualQuantity: 100,
-        actualWeight: 200,
+        actualQuantity: '',
+        actualWeight: '',
         receiptNotes: '',
       });
       loadBatches();
@@ -1110,13 +1158,28 @@ export default function SupplyChainPortalPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
             <div>
-              <label className="block text-slate-800 font-bold mb-1">Mã lô hàng *</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-slate-800 font-bold">Mã lô hàng *</label>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setProducerForm((f) => ({
+                      ...f,
+                      batchId: `BATCH-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+                    }))
+                  }
+                  className="text-[11px] text-emerald-600 hover:text-emerald-700 font-medium cursor-pointer"
+                >
+                  + Tạo mã tự động
+                </button>
+              </div>
               <input
                 type="text"
                 required
-                readOnly
+                placeholder="Ví dụ: BATCH-2026-0001"
                 value={producerForm.batchId}
-                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono font-bold bg-slate-100 cursor-not-allowed select-all"
+                onChange={(e) => setProducerForm({ ...producerForm, batchId: e.target.value })}
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono font-bold"
               />
             </div>
             <div>
@@ -1124,6 +1187,7 @@ export default function SupplyChainPortalPage() {
               <input
                 type="text"
                 required
+                placeholder="Ví dụ: Trà Tân Cương Tước Thiệt..."
                 value={producerForm.productName}
                 onChange={(e) => setProducerForm({ ...producerForm, productName: e.target.value })}
                 className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
@@ -1134,6 +1198,7 @@ export default function SupplyChainPortalPage() {
               <input
                 type="text"
                 required
+                placeholder="Ví dụ: Trà xanh, Nông sản sấy khô..."
                 value={producerForm.category}
                 onChange={(e) => setProducerForm({ ...producerForm, category: e.target.value })}
                 className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
@@ -1144,9 +1209,16 @@ export default function SupplyChainPortalPage() {
                 <label className="block text-slate-600 font-medium mb-1">Số lượng *</label>
                 <input
                   type="number"
+                  min="1"
                   required
+                  placeholder="0"
                   value={producerForm.quantity}
-                  onChange={(e) => setProducerForm({ ...producerForm, quantity: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setProducerForm({
+                      ...producerForm,
+                      quantity: e.target.value === '' ? '' : Number(e.target.value),
+                    })
+                  }
                   className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
                 />
               </div>
@@ -1154,9 +1226,17 @@ export default function SupplyChainPortalPage() {
                 <label className="block text-slate-600 font-medium mb-1">Trọng lượng (kg) *</label>
                 <input
                   type="number"
+                  min="0.01"
+                  step="any"
                   required
+                  placeholder="0"
                   value={producerForm.weight}
-                  onChange={(e) => setProducerForm({ ...producerForm, weight: Number(e.target.value) })}
+                  onChange={(e) =>
+                    setProducerForm({
+                      ...producerForm,
+                      weight: e.target.value === '' ? '' : Number(e.target.value),
+                    })
+                  }
                   className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
                 />
               </div>
@@ -1166,6 +1246,7 @@ export default function SupplyChainPortalPage() {
               <input
                 type="text"
                 required
+                placeholder="Ví dụ: Giống F1 chất lượng cao..."
                 value={producerForm.seedOrigin}
                 onChange={(e) => setProducerForm({ ...producerForm, seedOrigin: e.target.value })}
                 className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
@@ -1176,6 +1257,7 @@ export default function SupplyChainPortalPage() {
               <input
                 type="text"
                 required
+                placeholder="Ví dụ: Hợp tác xã Nông sản Thái Nguyên..."
                 value={producerForm.productionLocation}
                 onChange={(e) => setProducerForm({ ...producerForm, productionLocation: e.target.value })}
                 className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
@@ -1183,21 +1265,19 @@ export default function SupplyChainPortalPage() {
             </div>
             <div>
               <label className="block text-slate-600 font-medium mb-1">Ngày bắt đầu canh tác *</label>
-              <input
-                type="date"
+              <DateInput
                 required
                 value={producerForm.cultivationStartDate}
-                onChange={(e) => setProducerForm({ ...producerForm, cultivationStartDate: e.target.value })}
+                onChange={(val) => setProducerForm({ ...producerForm, cultivationStartDate: val })}
                 className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
               />
             </div>
             <div>
               <label className="block text-slate-600 font-medium mb-1">Ngày thu hoạch *</label>
-              <input
-                type="date"
+              <DateInput
                 required
                 value={producerForm.harvestDate}
-                onChange={(e) => setProducerForm({ ...producerForm, harvestDate: e.target.value })}
+                onChange={(val) => setProducerForm({ ...producerForm, harvestDate: val })}
                 className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
               />
             </div>
@@ -1278,6 +1358,7 @@ export default function SupplyChainPortalPage() {
                   <input
                     type="text"
                     required
+                    placeholder="Ví dụ: Đạt tiêu chuẩn an toàn..."
                     value={inspectorForm.inspectionResult}
                     onChange={(e) => setInspectorForm({ ...inspectorForm, inspectionResult: e.target.value })}
                     className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
@@ -1299,6 +1380,7 @@ export default function SupplyChainPortalPage() {
                   <input
                     type="text"
                     required
+                    placeholder="Ví dụ: VietGAP, GlobalGAP, OCOP..."
                     value={inspectorForm.certificateType}
                     onChange={(e) => setInspectorForm({ ...inspectorForm, certificateType: e.target.value })}
                     className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
@@ -1309,6 +1391,7 @@ export default function SupplyChainPortalPage() {
                   <input
                     type="text"
                     required
+                    placeholder="Ví dụ: Trung tâm Chứng nhận & Kiểm định..."
                     value={inspectorForm.issuingAuthority}
                     onChange={(e) => setInspectorForm({ ...inspectorForm, issuingAuthority: e.target.value })}
                     className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
@@ -1317,21 +1400,19 @@ export default function SupplyChainPortalPage() {
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="block text-slate-600 font-medium mb-1">Ngày cấp *</label>
-                    <input
-                      type="date"
+                    <DateInput
                       required
                       value={inspectorForm.issuedDate}
-                      onChange={(e) => setInspectorForm({ ...inspectorForm, issuedDate: e.target.value })}
+                      onChange={(val) => setInspectorForm({ ...inspectorForm, issuedDate: val })}
                       className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
                     />
                   </div>
                   <div>
                     <label className="block text-slate-600 font-medium mb-1">Ngày hết hạn *</label>
-                    <input
-                      type="date"
+                    <DateInput
                       required
                       value={inspectorForm.expiryDate}
-                      onChange={(e) => setInspectorForm({ ...inspectorForm, expiryDate: e.target.value })}
+                      onChange={(val) => setInspectorForm({ ...inspectorForm, expiryDate: val })}
                       className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
                     />
                   </div>
@@ -1341,6 +1422,7 @@ export default function SupplyChainPortalPage() {
                   <textarea
                     rows={2}
                     required
+                    placeholder="Ví dụ: Dư lượng thuốc BVTV, vi sinh vật, kim loại nặng..."
                     value={inspectorForm.inspectionCriteria}
                     onChange={(e) => setInspectorForm({ ...inspectorForm, inspectionCriteria: e.target.value })}
                     className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
@@ -1493,21 +1575,19 @@ export default function SupplyChainPortalPage() {
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <label className="block text-slate-600 font-medium mb-1">Thời gian khởi hành *</label>
-                    <input
-                      type="datetime-local"
+                    <DateTimeInput
                       required
                       value={logisticsForm.departureTime}
-                      onChange={(e) => setLogisticsForm({ ...logisticsForm, departureTime: e.target.value })}
+                      onChange={(val) => setLogisticsForm({ ...logisticsForm, departureTime: val })}
                       className="w-full px-2 py-1.5 rounded-lg border border-slate-300 text-xs"
                     />
                   </div>
                   <div>
                     <label className="block text-slate-600 font-medium mb-1">Thời gian hoàn tất *</label>
-                    <input
-                      type="datetime-local"
+                    <DateTimeInput
                       required
                       value={logisticsForm.completionTime}
-                      onChange={(e) => setLogisticsForm({ ...logisticsForm, completionTime: e.target.value })}
+                      onChange={(val) => setLogisticsForm({ ...logisticsForm, completionTime: val })}
                       className="w-full px-2 py-1.5 rounded-lg border border-slate-300 text-xs"
                     />
                   </div>
@@ -1519,8 +1599,14 @@ export default function SupplyChainPortalPage() {
                       type="number"
                       step="0.1"
                       required
+                      placeholder="0.0"
                       value={logisticsForm.temperature}
-                      onChange={(e) => setLogisticsForm({ ...logisticsForm, temperature: Number(e.target.value) })}
+                      onChange={(e) =>
+                        setLogisticsForm({
+                          ...logisticsForm,
+                          temperature: e.target.value === '' ? '' : Number(e.target.value),
+                        })
+                      }
                       className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
                     />
                   </div>
@@ -1530,8 +1616,14 @@ export default function SupplyChainPortalPage() {
                       type="number"
                       step="0.1"
                       required
+                      placeholder="0.0"
                       value={logisticsForm.humidity}
-                      onChange={(e) => setLogisticsForm({ ...logisticsForm, humidity: Number(e.target.value) })}
+                      onChange={(e) =>
+                        setLogisticsForm({
+                          ...logisticsForm,
+                          humidity: e.target.value === '' ? '' : Number(e.target.value),
+                        })
+                      }
                       className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
                     />
                   </div>
@@ -1588,6 +1680,7 @@ export default function SupplyChainPortalPage() {
                   <input
                     type="text"
                     required
+                    placeholder="Ví dụ: Chuỗi Siêu thị Nông sản Sạch..."
                     value={distributorForm.distributorName}
                     onChange={(e) => setDistributorForm({ ...distributorForm, distributorName: e.target.value })}
                     className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
@@ -1598,6 +1691,7 @@ export default function SupplyChainPortalPage() {
                   <input
                     type="text"
                     required
+                    placeholder="Ví dụ: 0912 345 678 / contact@..."
                     value={distributorForm.distributorContact}
                     onChange={(e) => setDistributorForm({ ...distributorForm, distributorContact: e.target.value })}
                     className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
@@ -1616,11 +1710,10 @@ export default function SupplyChainPortalPage() {
                 </div>
                 <div>
                   <label className="block text-slate-600 font-medium mb-1">Thời gian tiếp nhận *</label>
-                  <input
-                    type="datetime-local"
+                  <DateTimeInput
                     required
                     value={distributorForm.receivedTime}
-                    onChange={(e) => setDistributorForm({ ...distributorForm, receivedTime: e.target.value })}
+                    onChange={(val) => setDistributorForm({ ...distributorForm, receivedTime: val })}
                     className="w-full px-2 py-1.5 rounded-lg border border-slate-300 text-xs"
                   />
                 </div>
@@ -1629,9 +1722,16 @@ export default function SupplyChainPortalPage() {
                     <label className="block text-slate-600 font-medium mb-1">Số lượng thực nhận *</label>
                     <input
                       type="number"
+                      min="1"
                       required
+                      placeholder="0"
                       value={distributorForm.actualQuantity}
-                      onChange={(e) => setDistributorForm({ ...distributorForm, actualQuantity: Number(e.target.value) })}
+                      onChange={(e) =>
+                        setDistributorForm({
+                          ...distributorForm,
+                          actualQuantity: e.target.value === '' ? '' : Number(e.target.value),
+                        })
+                      }
                       className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
                     />
                   </div>
@@ -1639,9 +1739,17 @@ export default function SupplyChainPortalPage() {
                     <label className="block text-slate-600 font-medium mb-1">Trọng lượng thực nhận (kg) *</label>
                     <input
                       type="number"
+                      min="0.01"
+                      step="any"
                       required
+                      placeholder="0"
                       value={distributorForm.actualWeight}
-                      onChange={(e) => setDistributorForm({ ...distributorForm, actualWeight: Number(e.target.value) })}
+                      onChange={(e) =>
+                        setDistributorForm({
+                          ...distributorForm,
+                          actualWeight: e.target.value === '' ? '' : Number(e.target.value),
+                        })
+                      }
                       className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs"
                     />
                   </div>
